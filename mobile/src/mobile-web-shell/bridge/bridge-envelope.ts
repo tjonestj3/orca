@@ -9,8 +9,14 @@ import { BridgeInitRouteSchema, type BridgeInitRoute } from './bridge-init-route
 import { BridgePageRouteGrantsSchema } from './bridge-page-route-grants'
 import { BridgeSafeAreaInsetsSchema } from './bridge-safe-area-insets'
 import { BridgeKeyboardInsetSchema } from './bridge-keyboard-inset'
+import { BridgeFoldDivisionSchema } from './bridge-fold-division'
 import { BridgeNotifySchema } from './bridge-notify-envelope'
 import { BRIDGE_BACK_FRAME } from './bridge-page-back'
+import {
+  BRIDGE_TERMINAL_KEY_FRAME,
+  BRIDGE_TERMINAL_KEY_IDS,
+  BridgeTerminalKeyRailSchema
+} from './bridge-terminal-key'
 import { BRIDGE_ID_PATTERN, idSchema, methodSchema, versionSchema } from './bridge-frame-fields'
 
 export {
@@ -217,6 +223,12 @@ const BridgeHostMessageSchema = z.union([
   }),
   // Back names no destination; only the native stack knows what screen lies beneath.
   z.object({ v: versionSchema, type: z.literal(BRIDGE_BACK_FRAME) }),
+  // One press on the shell's key rail. Sent only to a page granted the rail, which knows the frame.
+  z.object({
+    v: versionSchema,
+    type: z.literal(BRIDGE_TERMINAL_KEY_FRAME),
+    key: z.enum(BRIDGE_TERMINAL_KEY_IDS)
+  }),
   z.object({
     v: versionSchema,
     type: z.literal('end'),
@@ -239,6 +251,12 @@ const BridgeHostMessageSchema = z.union([
     route: BridgeInitRouteSchema.optional(),
     safeAreaInsets: BridgeSafeAreaInsetsSchema.optional(),
     keyboardInset: BridgeKeyboardInsetSchema.optional(),
+    /** The fold splitting the page on a partially folded device; absent reads as none. Salvaged so a
+     *  value this page cannot read drops the field, not `init`. */
+    foldDivision: salvagedOptional('foldDivision', BridgeFoldDivisionSchema).optional(),
+    /** The keys the shell's rail shows beside this page, which then drops them from its own row.
+     *  Absent reads as no rail. */
+    terminalKeyRail: salvagedOptional('terminalKeyRail', BridgeTerminalKeyRailSchema).optional(),
     host: BridgeInitHostSchema.optional(),
     storage: BridgeInitStorageSchema.optional(),
     // Advisory page fast path for oversized keys; the shell independently refuses writes because older pages ignore this additive field (ruling 33.6).

@@ -1,4 +1,5 @@
 import type { MobileWebBundleManifestRead } from '../transport/mobile-web-bundle-reply-schemas'
+import { BRIDGE_TERMINAL_KEY_RAIL_GRANT } from './bridge/bridge-terminal-key'
 import { BRIDGE_EXTERNAL_NAVIGATION_GRANT } from './cancelled-navigation-target'
 import { BRIDGE_HAPTICS_GRANT } from './bridge/bridge-haptics-notify'
 import { BRIDGE_NATIVE_VERB_NAMES } from './bridge/bridge-native-verbs'
@@ -15,6 +16,8 @@ export const MOBILE_WEB_SHELL_GRANTS = [
   BRIDGE_HAPTICS_GRANT,
   // No page notify exists for cancelled browser navigation; this capability tells the page whether native can open those links externally.
   BRIDGE_EXTERNAL_NAVIGATION_GRANT,
+  // iPhone Duo key rail: the shell draws terminal keys in a side inset strip and forwards each press as a frame.
+  BRIDGE_TERMINAL_KEY_RAIL_GRANT,
   // Derive advertised verbs from the handler table’s tuple so neither side can grow alone.
   ...BRIDGE_NATIVE_VERB_NAMES
 ] as const

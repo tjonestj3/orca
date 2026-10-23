@@ -72,7 +72,7 @@ export const MOBILE_WEB_PAGE_ROUTES = [
       'native.audio.read',
       'native.audio.stop'
     ],
-    // Optional media.name preserves attachment on older shells by falling back to filename derived from type.
-    optionalGrants: ['externalNavigation', 'native.media.name']
+    // Optional media.name preserves attachment on older shells by falling back to filename derived from type; terminalKeyRail hands keys to the iPhone Duo side rail, else the page keeps its own row.
+    optionalGrants: ['externalNavigation', 'native.media.name', 'terminalKeyRail']
   }
 ]

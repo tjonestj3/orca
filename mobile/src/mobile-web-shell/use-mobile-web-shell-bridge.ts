@@ -10,6 +10,8 @@ import { recordShellLifecycleLine } from './shell-lifecycle-line-recorder'
 import type { BridgeInitRoute } from './bridge/bridge-envelope'
 import type { BridgeClearableRouteParam } from './bridge/bridge-route-update'
 import type { BridgeSafeAreaInsets } from './bridge/bridge-safe-area-insets'
+import type { BridgeFoldDivision } from './bridge/bridge-fold-division'
+import type { BridgeTerminalKeyId, BridgeTerminalKeyRail } from './bridge/bridge-terminal-key'
 import type { BridgeHapticsKind } from './bridge/bridge-haptics-notify'
 import { createBridgeHost, type BridgeHost } from './bridge-host'
 import type { BridgeSessionBack } from './bridge-host-back'
@@ -45,6 +47,12 @@ export type MobileWebShellBridgeView = {
   readonly publishRoute: (route: BridgeInitRoute) => void
   readonly publishSafeAreaInsets: (insets: BridgeSafeAreaInsets) => void
   readonly publishKeyboardInset: (height: number) => void
+  /** Hands the mounted host a moved fold; dropped with no host, as the insets are. */
+  readonly publishFoldDivision: (division: BridgeFoldDivision | null) => void
+  /** Tells the mounted host the key rail shows or hides; dropped with no host. */
+  readonly publishTerminalKeyRail: (keys: BridgeTerminalKeyRail) => void
+  /** Hands the page one rail press. False with no host, or a page not granted the rail. */
+  readonly sendTerminalKey: (key: BridgeTerminalKeyId) => boolean
   // Return false if no host/document can take Back so the navigator keeps the press.
   readonly sendBack: () => boolean
 }
@@ -57,6 +65,10 @@ export type MobileWebShellBridgeArgs = {
   route: BridgeInitRoute
   safeAreaInsets: BridgeSafeAreaInsets
   keyboardInset: number
+  /** What the first `init` of a new host carries; later moves go through `publishFoldDivision`. */
+  foldDivision: BridgeFoldDivision | null
+  /** What the first `init` of a new host carries; later moves go through `publishTerminalKeyRail`. */
+  terminalKeyRail: BridgeTerminalKeyRail
   pageRoutes: readonly string[]
   pageRouteGrants: readonly { pathname: string; grants: readonly string[] }[]
   // Effective session grants include the served-route union when this page owns the host area.
@@ -76,6 +88,8 @@ export type MobileWebShellBridgeArgs = {
   onPagePainted: () => void
   // Document resets explicitly publish false so retired pages cannot retain Back.
   onPageBackClaim: (claimed: boolean) => void
+  /** The page shows a terminal with its key row, or stopped; false again on each new document. */
+  onTerminalKeyRailClaim: (claimed: boolean) => void
   onRouteParamClear: (param: BridgeClearableRouteParam, value: string) => void
   onRouteRefused: (issue: string) => void
   onBinaryFramesDropped: (total: number) => void
@@ -119,6 +133,8 @@ export function useMobileWebShellBridge(args: MobileWebShellBridgeArgs): MobileW
       route: latest.route,
       safeAreaInsets: latest.safeAreaInsets,
       keyboardInset: latest.keyboardInset,
+      foldDivision: latest.foldDivision,
+      terminalKeyRail: latest.terminalKeyRail,
       pageRoutes: latest.pageRoutes,
       pageRouteGrants: latest.pageRouteGrants,
       routeGrants: latest.routeGrants,
@@ -154,7 +170,8 @@ export function useMobileWebShellBridge(args: MobileWebShellBridgeArgs): MobileW
       onBinaryFramesDropped: (total) => argsRef.current.onBinaryFramesDropped(total),
       onPageReady: () => argsRef.current.onPageReady(),
       onPagePainted: () => argsRef.current.onPagePainted(),
-      onPageBackClaim: (claimed) => argsRef.current.onPageBackClaim(claimed)
+      onPageBackClaim: (claimed) => argsRef.current.onPageBackClaim(claimed),
+      onTerminalKeyRailClaim: (claimed) => argsRef.current.onTerminalKeyRailClaim(claimed)
     })
     hostRef.current = { sessionId, host }
     // Reset host-owned drop totals on rebuild so a new lower count cannot look like frames being recovered.
@@ -224,6 +241,33 @@ export function useMobileWebShellBridge(args: MobileWebShellBridgeArgs): MobileW
         if (mounted !== null && mounted.sessionId === sessionId) {
           mounted.host.publishKeyboardInset(height)
         }
+      },
+      [buildId, client, sessionId, snapshot]
+    ),
+    publishFoldDivision: useCallback(
+      (division: BridgeFoldDivision | null) => {
+        const mounted = hostRef.current
+        if (mounted !== null && mounted.sessionId === sessionId) {
+          mounted.host.publishFoldDivision(division)
+        }
+      },
+      [buildId, client, sessionId, snapshot]
+    ),
+    publishTerminalKeyRail: useCallback(
+      (keys: BridgeTerminalKeyRail) => {
+        const mounted = hostRef.current
+        if (mounted !== null && mounted.sessionId === sessionId) {
+          mounted.host.publishTerminalKeyRail(keys)
+        }
+      },
+      [buildId, client, sessionId, snapshot]
+    ),
+    sendTerminalKey: useCallback(
+      (key: BridgeTerminalKeyId) => {
+        const mounted = hostRef.current
+        return (
+          mounted !== null && mounted.sessionId === sessionId && mounted.host.sendTerminalKey(key)
+        )
       },
       [buildId, client, sessionId, snapshot]
     ),

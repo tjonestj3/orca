@@ -8,7 +8,11 @@ import {
 } from './bridge-caps'
 import { BridgeConnectionCache } from './bridge-client-connection-cache'
 import type { BridgeRpcClientDiagnostic } from './bridge-client-diagnostics'
-import { createBridgeClientShellSession } from './bridge-client-shell-session'
+import {
+  createBridgeClientShellSession,
+  shellSessionListeners,
+  type BridgeShellSessionListeners
+} from './bridge-client-shell-session'
 import type { BridgeShellSession } from './bridge-client-session'
 import { createBridgeInitHandshake, createPageReadyFrame } from './bridge-client-init-handshake'
 import {
@@ -23,7 +27,7 @@ import {
 import type { BridgeHapticsKind } from './bridge-haptics-notify'
 import { createBridgeInboundFrameReader } from './bridge-client-inbound-frames'
 import { createBridgeClientNotifications } from './bridge-client-notifications'
-import type { BridgeSafeAreaInsets } from './bridge-safe-area-insets'
+import { createBridgeClientTerminalKeys } from './bridge-client-terminal-keys'
 import { createPageBackConsumers, type PageBackConsumer } from './page-back-consumers'
 import { BridgeClientRequests } from './bridge-client-requests'
 import { readBridgeRequestFrameOptions, readBridgeRpcEnvelope } from './bridge-client-rpc-envelope'
@@ -34,8 +38,7 @@ import {
   BRIDGE_PROTOCOL_VERSION,
   BRIDGE_RPC_ENVELOPE_GRANT,
   type BridgeClientMessage,
-  type BridgeConnectionSnapshot,
-  type BridgeInitRoute
+  type BridgeConnectionSnapshot
 } from './bridge-envelope'
 
 export type { BridgeShellSession } from './bridge-client-session'
@@ -62,12 +65,11 @@ export type BridgeRpcClientOptions = {
   onDiagnostic?: (diagnostic: BridgeRpcClientDiagnostic) => void
 }
 
-export type BridgeRpcClient = RpcClient & {
-  onReady: (listener: () => void) => () => void
-  // Publish changed params only, never initial/repeated init. Clear consumed one-shot params so repeat taps to the same pane still appear as real changes.
-  onRouteUpdate: (listener: (route: BridgeInitRoute | null) => void) => () => void
-  onSafeAreaInsetsUpdate: (listener: (insets: BridgeSafeAreaInsets) => void) => () => void
-  onKeyboardInsetUpdate: (listener: (height: number) => void) => () => void
+export type BridgeRpcClient = RpcClient & BridgeShellSessionListeners & BridgeRpcClientMembers
+
+type BridgeRpcClientMembers = {
+  // Claim the shell's key rail while a terminal and its key row are on screen, until disposal; nothing is sent to a shell without the grant.
+  claimTerminalKeyRail: ReturnType<typeof createBridgeClientTerminalKeys>['claim']
   getShellSession: () => BridgeShellSession | null
   // False without navigate lets tap handlers fall back safely instead of throwing into uncaught UI callbacks.
   notifyNavigate: (href: string) => boolean
@@ -192,9 +194,11 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
       handshake.stop()
       shellSession.accept(message)
       back.reassert()
+      terminalKeys.reassert()
     },
     acceptState,
-    acceptBack: back.press
+    acceptBack: back.press,
+    acceptTerminalKey: (key) => terminalKeys.accept(key)
   })
 
   function receive(json: string): void {
@@ -297,6 +301,7 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     isClosed: () => closed,
     hasGrant
   })
+  const terminalKeys = createBridgeClientTerminalKeys(notifications.notifyTerminalKeyRailClaim)
 
   const unsubscribeFromMessages = options.onMessage(receive)
   handshake.start()
@@ -337,10 +342,8 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     notifyPagePainted: notifications.notifyPagePainted,
     claimBack: back.claim,
     close,
-    onReady: shellSession.onReady,
-    onRouteUpdate: shellSession.onRouteUpdate,
-    onSafeAreaInsetsUpdate: shellSession.onSafeAreaInsetsUpdate,
-    onKeyboardInsetUpdate: shellSession.onKeyboardInsetUpdate,
+    ...shellSessionListeners(shellSession),
+    claimTerminalKeyRail: terminalKeys.claim,
     getShellSession: shellSession.current,
     clearRouteParam: (param, value) =>
       posted({

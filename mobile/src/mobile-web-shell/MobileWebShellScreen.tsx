@@ -38,6 +38,8 @@ import { SHELL_OPENING_LABEL, ShellPageCover, ShellWaitingFrame } from './ShellW
 import { ShellDownloadProgress } from './ShellDownloadProgress'
 import { useReportedShellOverlayLoad, type ShellOverlayLoad } from './shell-overlay-load'
 import { pageSafeAreaInsets, usePublishedSafeAreaInsets } from './page-safe-area-insets'
+import { usePageFoldDivision, usePublishedFoldDivision } from './page-fold-division'
+import { usePublishedShellKeyRail, useShellKeyRail } from './terminal-key-rail'
 import { hostProfileUnreadableLine, pageFaultLine } from './shell-lifecycle-log'
 import { recordShellLifecycleLine } from './shell-lifecycle-line-recorder'
 
@@ -167,10 +169,13 @@ export function MobileWebShellScreen({
   // Edge-to-edge disables adjustResize and zeroes WebView IME insets, so visualViewport never shrinks; publish native keyboard height to the page.
   const keyboardInset = Math.max(0, useKeyboardOcclusion())
   const pageInsets = pageSafeAreaInsets({ insets, topCovered: noticeShown })
+  const pageFold = usePageFoldDivision()
+  const readySessionId = state.kind === 'ready' ? state.sessionId : null
+  const keyRail = useShellKeyRail({ sessionId: readySessionId, overlay, routeGrants })
   const { snapshot, unreadable, readStorage, refreshStorage, writeStorage, readWorkspaceKey } =
     usePageHostSnapshot(hostId, route.pathname, ownsHostArea)
   // Create the media registry before the bridge; its staged files must belong to this page session.
-  const serveDeviceVerb = useNativeDeviceVerbs(state.kind === 'ready' ? state.sessionId : null)
+  const serveDeviceVerb = useNativeDeviceVerbs(readySessionId)
   const serveNativeVerb = (verb: BridgeNativeVerb, params: unknown): Promise<unknown> =>
     verb === 'native.storage.read'
       ? readWorkspaceKey(storageReadParamsSchema.parse(params).key).then((value) => ({ value }))
@@ -187,6 +192,8 @@ export function MobileWebShellScreen({
     route,
     safeAreaInsets: pageInsets,
     keyboardInset,
+    foldDivision: pageFold.division,
+    terminalKeyRail: keyRail.keys,
     pageRoutes,
     pageRouteGrants,
     routeGrants,
@@ -211,6 +218,7 @@ export function MobileWebShellScreen({
     // Keep the cover until the page reports its own first frame.
     onPagePainted: reportPagePainted,
     onPageBackClaim: reportPageBackClaim,
+    onTerminalKeyRailClaim: keyRail.reportClaim,
     onRouteParamClear: (param, value) => {
       onRouteParamClear?.(param, value)
     },
@@ -267,6 +275,8 @@ export function MobileWebShellScreen({
   useEffect(() => {
     publishKeyboardInset(keyboardInset)
   }, [publishKeyboardInset, keyboardInset])
+  usePublishedFoldDivision(bridge.publishFoldDivision, pageFold.division)
+  usePublishedShellKeyRail(keyRail.keys, bridge)
 
   // Use navigation screen options to disable this stack entry’s gesture; the router has no such option.
   useShellPageBack({
@@ -326,6 +336,7 @@ export function MobileWebShellScreen({
   }
   return (
     <View
+      ref={pageFold.rootRef}
       style={[
         styles.shellRoot,
         // The page pads system bars from init insets; a visible banner owns the status-bar strip.
@@ -347,6 +358,7 @@ export function MobileWebShellScreen({
         ref={bridge.viewRef}
         // Overlays cannot cover the screen beneath; hide their opaque WebView until first paint.
         style={[styles.shellView, overlay && pageFrame !== 'painted' && styles.unpaintedOverlay]}
+        onLayout={pageFold.onShellLayout}
         generationDirectory={state.generationDirectory}
         sessionId={state.sessionId}
         bridgeEnabled={bridge.bridgeEnabled}

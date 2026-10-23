@@ -14,6 +14,8 @@ import {
   ZERO_SAFE_AREA_INSETS,
   type BridgeSafeAreaInsets
 } from './bridge-safe-area-insets'
+import type { BridgeFoldDivision } from './bridge-fold-division'
+import type { BridgeTerminalKeyRail } from './bridge-terminal-key'
 
 // Grant the intersection of implemented capabilities and route declarations, plus protocol fault. Use the same resolved list for init and enforcement; new names need no version bump.
 export const BRIDGE_NATIVE_GRANTS: readonly string[] = [
@@ -30,6 +32,10 @@ export function createBridgeInitFrame(args: {
   pageRoutes: readonly string[]
   safeAreaInsets?: BridgeSafeAreaInsets
   keyboardInset?: number
+  /** The fold splitting the page, in its px; null or absent when none does. */
+  foldDivision?: BridgeFoldDivision | null
+  /** The keys the shell's rail shows beside the page; omitted while none does. */
+  terminalKeyRail?: BridgeTerminalKeyRail
   // Omit absent manifest pairs so older routing behavior remains available.
   pageRouteGrants?: readonly { pathname: string; grants: readonly string[] }[]
   granted: readonly string[]
@@ -61,6 +67,12 @@ export function createBridgeInitFrame(args: {
     ...(args.keyboardInset === undefined || args.keyboardInset === 0
       ? {}
       : { keyboardInset: args.keyboardInset }),
+    ...(args.foldDivision === undefined || args.foldDivision === null
+      ? {}
+      : { foldDivision: { ...args.foldDivision } }),
+    ...(args.terminalKeyRail === undefined || args.terminalKeyRail.length === 0
+      ? {}
+      : { terminalKeyRail: [...args.terminalKeyRail] }),
     pageRoutes: [...args.pageRoutes],
     // Copy entries so no frame retains access to the shell’s held route-grant objects.
     ...(args.pageRouteGrants === undefined

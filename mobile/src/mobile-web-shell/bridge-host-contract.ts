@@ -5,6 +5,8 @@ import type { BridgeRefusal } from './bridge/bridge-caps'
 import type { BridgeInitHost, BridgeInitRoute } from './bridge/bridge-envelope'
 import type { BridgeClearableRouteParam } from './bridge/bridge-route-update'
 import type { BridgeSafeAreaInsets } from './bridge/bridge-safe-area-insets'
+import type { BridgeFoldDivision } from './bridge/bridge-fold-division'
+import type { BridgeTerminalKeyRail } from './bridge/bridge-terminal-key'
 import type { BridgeHapticsKind } from './bridge/bridge-haptics-notify'
 import type { BridgeErrorCapture } from './bridge/bridge-error-capture'
 import type { BridgeNativeVerb } from './bridge/bridge-native-verbs'
@@ -69,6 +71,10 @@ export type BridgeHostOptions = {
   safeAreaInsets?: BridgeSafeAreaInsets
   // Default to zero; publishKeyboardInset moves native keyboard height later.
   keyboardInset?: number
+  /** The fold splitting the page on a partially folded device; moved later with `publishFoldDivision`. */
+  foldDivision?: BridgeFoldDivision | null
+  /** The keys the shell's rail shows beside the page; moved later with `publishTerminalKeyRail`. */
+  terminalKeyRail?: BridgeTerminalKeyRail
   // Read identity at forward time because this host outlives renders; replace the page placeholder as init promised or the desktop refuses spoofed sends.
   readClientIdentity: () => string | null
   // Read allowlisted storage synchronously for every init so document reloads include writes made since mount.
@@ -91,6 +97,8 @@ export type BridgeHostOptions = {
   onPagePainted: () => void
   // Required for native interception: only a live claim owns Back. Document-ending paths publish false so callers need not infer staleness.
   onPageBackClaim: (claimed: boolean) => void
+  /** The page shows a terminal with its key row, or stopped; false also arrives on each document start/end, and the page re-claims on the next `init`. */
+  onTerminalKeyRailClaim?: (claimed: boolean) => void
   // Clear a consumed one-shot param only if its value still matches; a newer tap may already have replaced it (ruling 34).
   onRouteParamClear: (param: BridgeClearableRouteParam, value: string) => void
   // Escalate invalid shell routes visibly; a page-only console warning would leave a blank document retrying forever.

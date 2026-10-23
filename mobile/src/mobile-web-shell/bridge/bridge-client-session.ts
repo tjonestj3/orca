@@ -5,6 +5,8 @@ import type {
   BridgeInitRoute
 } from './bridge-envelope'
 import { ZERO_SAFE_AREA_INSETS, type BridgeSafeAreaInsets } from './bridge-safe-area-insets'
+import type { BridgeFoldDivision } from './bridge-fold-division'
+import type { BridgeTerminalKeyRail } from './bridge-terminal-key'
 
 export type BridgeShellSession = {
   sessionId: string
@@ -16,6 +18,10 @@ export type BridgeShellSession = {
   pageRouteGrants: readonly { pathname: string; grants: readonly string[] }[] | null
   safeAreaInsets: BridgeSafeAreaInsets
   keyboardInset: number
+  /** The fold splitting the page on a partially folded device; null when none does or the shell predates the field. */
+  foldDivision: BridgeFoldDivision | null
+  /** The keys the shell's rail shows beside this page; empty for every shell before the field. */
+  terminalKeyRail: BridgeTerminalKeyRail
   host: BridgeInitHost | null
   storage: Readonly<Record<string, string>>
   // Oversize keys are withheld from storage and reject writes locally; older shells omit this additive field (ruling 33.6).
@@ -36,6 +42,8 @@ export function readShellSession(
     pageRouteGrants: message.pageRouteGrants ?? null,
     safeAreaInsets: message.safeAreaInsets ?? ZERO_SAFE_AREA_INSETS,
     keyboardInset: message.keyboardInset ?? 0,
+    foldDivision: message.foldDivision ?? null,
+    terminalKeyRail: message.terminalKeyRail ?? [],
     host: message.host ?? null,
     storage: message.storage ?? {},
     storageOversize: message.storageOversize ?? [],

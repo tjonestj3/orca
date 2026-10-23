@@ -21,6 +21,13 @@ import { createBridgeHostBack, type BridgeSessionBack } from './bridge-host-back
 import { createBridgeNotifyForwarder } from './bridge-host-notify'
 import { createBridgeHostRoute } from './bridge-host-route'
 import type { BridgeSafeAreaInsets } from './bridge/bridge-safe-area-insets'
+import type { BridgeFoldDivision } from './bridge/bridge-fold-division'
+import {
+  BRIDGE_TERMINAL_KEY_FRAME,
+  BRIDGE_TERMINAL_KEY_RAIL_GRANT,
+  type BridgeTerminalKeyId,
+  type BridgeTerminalKeyRail
+} from './bridge/bridge-terminal-key'
 import type { BridgeHostOptions } from './bridge-host-contract'
 
 export type { BridgeHostDiagnostic, BridgeHostOptions } from './bridge-host-contract'
@@ -31,6 +38,12 @@ export type BridgeHost = {
   publishRoute: (next: BridgeInitRoute) => void
   publishSafeAreaInsets: (next: BridgeSafeAreaInsets) => void
   publishKeyboardInset: (next: number) => void
+  /** Hands this session a moved fold over the same re-sent `init`. */
+  publishFoldDivision: (next: BridgeFoldDivision | null) => void
+  /** Tells this session the shell's key rail shows or hides, over the same re-sent `init`. */
+  publishTerminalKeyRail: (next: BridgeTerminalKeyRail) => void
+  /** Hands the page one rail key press; false when the session lacks the rail grant or no document holds the view. */
+  sendTerminalKey: (key: BridgeTerminalKeyId) => boolean
   // False leaves Back to native navigation, including pages predating this frame.
   sendBack: () => boolean
   // Transfer the session’s Back state on client-driven host rebuild; the mounted page never reclaims it. Ending sessions simply discard it.
@@ -63,7 +76,9 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
     },
     onRefused: (issue) => options.onDiagnostic?.({ kind: 'route-update-refused', issue }),
     ...(options.safeAreaInsets === undefined ? {} : { safeAreaInsets: options.safeAreaInsets }),
-    ...(options.keyboardInset === undefined ? {} : { keyboardInset: options.keyboardInset })
+    ...(options.keyboardInset === undefined ? {} : { keyboardInset: options.keyboardInset }),
+    ...(options.foldDivision === undefined ? {} : { foldDivision: options.foldDivision }),
+    ...(options.terminalKeyRail === undefined ? {} : { terminalKeyRail: options.terminalKeyRail })
   })
   let closed = false
   // Close ends document service until the next ready. Native delivery preserves frame order, so stragglers remain between those markers without an epoch.
@@ -119,6 +134,8 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
           route,
           safeAreaInsets: routes.safeAreaInsets(),
           keyboardInset: routes.keyboardInset(),
+          foldDivision: routes.foldDivision(),
+          terminalKeyRail: routes.terminalKeyRail(),
           pageRoutes,
           ...(parsedRouteGrants?.success === true
             ? { pageRouteGrants: parsedRouteGrants.data }
@@ -180,7 +197,8 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
     granted,
     initSent: () => initSent,
     route: () => routes.current(),
-    onBackClaim: back.readClaim
+    onBackClaim: back.readClaim,
+    onTerminalKeyRailClaim: (claimed) => options.onTerminalKeyRailClaim?.(claimed)
   })
 
   function settleAll(notify: boolean): void {
@@ -202,6 +220,8 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
     if (message.type === 'ready') {
       serving = true
       back.readReady()
+      // Dropped like the Back claim: a page still showing a terminal claims again on this `init`.
+      options.onTerminalKeyRailClaim?.(false)
       // Answer every ready with current state; this repairs missed frames without host retries (ruling 34).
       sendInit()
       options.onPageReady()
@@ -243,6 +263,7 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
         settleAll(false)
         serving = false
         back.drop()
+        options.onTerminalKeyRailClaim?.(false)
         return
     }
   }
@@ -279,6 +300,19 @@ export function createBridgeHost(options: BridgeHostOptions): BridgeHost {
     },
     publishKeyboardInset: (next) => {
       routes.publishKeyboardInset(next, deliverable())
+    },
+    publishFoldDivision: (next) => {
+      routes.publishFoldDivision(next, deliverable())
+    },
+    publishTerminalKeyRail: (next) => {
+      routes.publishTerminalKeyRail(next, deliverable())
+    },
+    sendTerminalKey: (key) => {
+      if (!granted.includes(BRIDGE_TERMINAL_KEY_RAIL_GRANT) || !deliverable()) {
+        return false
+      }
+      send({ v: BRIDGE_PROTOCOL_VERSION, type: BRIDGE_TERMINAL_KEY_FRAME, key })
+      return true
     },
     sendBack: back.send,
     readSessionBack: back.read,
