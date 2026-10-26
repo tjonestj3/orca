@@ -36,7 +36,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] App Store Connect app record (App 6827262904) + API key FKKU3969ZA → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`; internal group with automatic distribution
 - [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
 - [x] First CI build green: run 40380464518, 0.0.59 (1) signed and uploaded to TestFlight 2026-10-26 14:24 (~27 min)
-- [ ] Installed via TestFlight, tested on the Duo
+- [x] Installed via TestFlight on the Duo 2026-10-26; full-screen typing confirmed working with the stock desktop app
+- [ ] Phase 2 (optional): Linux desktop build from this branch for the terminal key rail + fold-aware pages
 
 ## Apple setup (one time)
 
