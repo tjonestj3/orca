@@ -9,6 +9,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 | Base             | stablyai/orca#32733 (larskghf, "support iPhone Duo"), rebased onto `upstream/main`      |
 | Bundle ID        | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides)              |
 | Home-screen name | Orca Duo (installs beside the App Store Orca)                                           |
+| Icon             | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`)    |
 | Build            | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner, Xcode 27.1 → TestFlight |
 | Signing material | `~/dev/orca-duo-signing/` (local only, never committed)                                 |
 
@@ -26,8 +27,13 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
   - Vitest: 11149 passed. Remaining failures are environmental/pre-existing: 2 need Bun installed, `mobile-agent-launch-architecture.test.ts` fails identically on pristine upstream main.
 - [x] Bundle ID + display name configurable by env (`IOS_BUNDLE_IDENTIFIER`, `ORCA_IOS_APP_NAME`); Fastfile reads `IOS_BUNDLE_IDENTIFIER`
 - [x] Distribution key + CSR generated in `~/dev/orca-duo-signing/`
-- [ ] **Thomas:** Apple setup (below)
-- [ ] Convert .cer → .p12, set repo secrets
+- [x] Pushed `duo-beta` to the fork (over SSH; the gh token lacks `workflow` scope for HTTPS pushes of workflow files)
+- [x] Fork Actions enabled; the 9 workflows from the fork's stale June `main` disabled (`gh workflow enable` to undo)
+- [x] App ID `com.krahnborn.orca.duo` registered with Push
+- [x] Apple Distribution cert issued 2026-10-26 (expires 2027-10-26) from our CSR; `.p12` built in `~/dev/orca-duo-signing/`; Team ID LN2PTZ4HYL
+- [ ] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (Thomas runs the `gh secret set` lines)
+  - Don't revoke the June 2026 Apple Distribution cert: it's the Spell Volt/Codemagic one, key not here
+- [ ] App Store Connect app record + API key → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`
 - [ ] First CI build green
 - [ ] Installed via TestFlight, tested on the Duo
 
@@ -45,6 +51,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 5. **TestFlight group**: the app → TestFlight → Internal Testing → + group, add yourself,
    tick **Enable automatic distribution**.
 6. Team ID: Membership details page (10 characters).
+7. **Enable Actions on the fork** (GitHub never runs workflows on a fork until you do):
+   https://github.com/tjonestj3/orca/actions → "I understand my workflows, go ahead and enable them".
 
 ## Repo secrets (`gh secret set -R tjonestj3/orca …`)
 
