@@ -43,6 +43,8 @@ vi.mock('@orca/expo-two-way-audio', mocks['@orca/expo-two-way-audio'])
 vi.mock('expo-keep-awake', mocks['expo-keep-awake'])
 vi.mock('expo-image-picker', mocks['expo-image-picker'])
 vi.mock('expo-file-system', mocks['expo-file-system'])
+// The folded-strip nav rail draws nothing without a side strip; keep its icons out of these mocks.
+vi.mock('../layout/side-nav-rail', () => ({ useHostSideNavRail: () => undefined }))
 vi.mock('lucide-react-native', mocks['lucide-react-native'])
 vi.mock('react-native-safe-area-context', mocks['react-native-safe-area-context'])
 vi.mock('../../modules/orca-mobile-web-shell/src', mocks['../../modules/orca-mobile-web-shell/src'])

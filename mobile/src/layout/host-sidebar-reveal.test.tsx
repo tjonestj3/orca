@@ -21,6 +21,8 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 }
 }))
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }))
+// The folded-strip nav rail draws nothing without a side strip; keep its icons out of these mocks.
+vi.mock('./side-nav-rail', () => ({ useHostSideNavRail: () => undefined }))
 vi.mock('lucide-react-native', () => ({
   ChevronLeft: 'ChevronLeft',
   Folder: 'Folder',

@@ -19,7 +19,8 @@ type SideRailOwner = symbol
 type RailContent = { owner: SideRailOwner; node: ReactNode }
 
 function createRailStore() {
-  let content: RailContent | null = null
+  // Every screen's claim, oldest first; the newest draws, and an older one returns when it leaves.
+  let claims: RailContent[] = []
   const listeners = new Set<() => void>()
   const notify = () => {
     for (const listener of listeners) {
@@ -27,21 +28,26 @@ function createRailStore() {
     }
   }
   return {
-    read: () => content,
+    read: () => claims.at(-1) ?? null,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
         listeners.delete(listener)
       }
     },
+    // A screen redrawing keeps its place rather than jumping above a newer claim.
     show: (owner: SideRailOwner, node: ReactNode) => {
-      content = { owner, node }
+      const index = claims.findIndex((claim) => claim.owner === owner)
+      claims =
+        index === -1
+          ? [...claims, { owner, node }]
+          : claims.map((claim, i) => (i === index ? { owner, node } : claim))
       notify()
     },
     // Only the screen that showed it takes it down, so a screen leaving never hides its successor's.
     hide: (owner: SideRailOwner) => {
-      if (content?.owner === owner) {
-        content = null
+      if (claims.some((claim) => claim.owner === owner)) {
+        claims = claims.filter((claim) => claim.owner !== owner)
         notify()
       }
     }
