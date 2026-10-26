@@ -31,7 +31,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] Fork Actions enabled; the 9 workflows from the fork's stale June `main` disabled (`gh workflow enable` to undo)
 - [x] App ID `com.krahnborn.orca.duo` registered with Push
 - [x] Apple Distribution cert issued 2026-10-26 (expires 2027-10-26) from our CSR; `.p12` built in `~/dev/orca-duo-signing/`; Team ID LN2PTZ4HYL
-- [ ] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (Thomas runs the `gh secret set` lines)
+- [x] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (2026-10-26)
   - Don't revoke the June 2026 Apple Distribution cert: it's the Spell Volt/Codemagic one, key not here
 - [ ] App Store Connect app record + API key → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`
 - [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
