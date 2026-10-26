@@ -22,6 +22,8 @@ import { isOverlayPageRoute } from '../../src/new-workspace/overlay-page-route'
 // Keep at least this much room for the detail pane when resizing the sidebar.
 const MIN_DETAIL_WIDTH = 320
 const RESIZE_EDGE_WIDTH = 24
+// A drag released this close to the fold snaps back to it.
+const FOLD_SNAP_DISTANCE = 48
 
 // Clamp restored sidebar width to current window so a smaller device retains usable detail space.
 function clampSidebarToWindow(width: number, windowWidth: number): number {
@@ -47,6 +49,9 @@ export default function HostGroupLayout() {
   const windowWidthRef = useRef(windowWidth)
   windowWidthRef.current = windowWidth
   const dragStartRef = useRef(sidebarWidth)
+  // Sidebar follows the fold until the user drags it elsewhere.
+  const [foldPinned, setFoldPinned] = useState(true)
+  const foldWidthRef = useRef<number | null>(null)
 
   useEffect(() => {
     let stale = false
@@ -77,13 +82,17 @@ export default function HostGroupLayout() {
   // Book posture: the sidebar takes the half before the fold and the detail the half after it, so
   // the terminal never runs across the crease.
   const foldSplit = useFoldSplit()
-  const foldSidebarWidth =
+  const foldCandidateWidth =
     showSidebar &&
     foldSplit?.axis === 'vertical' &&
     foldSplit.start >= HOST_SIDEBAR_MIN_WIDTH &&
     foldSplit.size - foldSplit.end >= MIN_DETAIL_WIDTH
       ? foldSplit.start
       : null
+  foldWidthRef.current = foldCandidateWidth
+  const foldSidebarWidth = foldPinned ? foldCandidateWidth : null
+  // Drags start from the width on screen, which is the fold's while pinned.
+  widthRef.current = foldSidebarWidth ?? sidebarWidth
   const foldGap = foldSidebarWidth === null || !foldSplit ? 0 : foldSplit.end - foldSplit.start
   const canCollapseSidebar = showSidebar && detailHasContent && foldSidebarWidth === null
 
@@ -96,6 +105,14 @@ export default function HostGroupLayout() {
 
   // Use an overlaid leaf drag handle: Android ScrollView/FlatList captures touches before a parent PanResponder.
   // Claim start/capture because nothing lies beneath the handle; keep it off the sidebar container.
+  const settleDrag = () => {
+    const foldWidth = foldWidthRef.current
+    if (foldWidth !== null && Math.abs(widthRef.current - foldWidth) <= FOLD_SNAP_DISTANCE) {
+      setFoldPinned(true)
+      return
+    }
+    void saveHostSidebarWidth(widthRef.current)
+  }
   const resizer = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -107,13 +124,14 @@ export default function HostGroupLayout() {
         dragStartRef.current = widthRef.current
       },
       onPanResponderMove: (_evt, g) => {
+        setFoldPinned(false)
         setSidebarWidth(clampSidebarToWindow(dragStartRef.current + g.dx, windowWidthRef.current))
       },
       onPanResponderRelease: () => {
-        void saveHostSidebarWidth(widthRef.current)
+        settleDrag()
       },
       onPanResponderTerminate: () => {
-        void saveHostSidebarWidth(widthRef.current)
+        settleDrag()
       }
     })
   ).current
@@ -129,10 +147,8 @@ export default function HostGroupLayout() {
               hostId={hostId}
               onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
             />
-            {/* Edge drag handle captures Android gestures above the list; the fold sets the width in book posture. */}
-            {foldSidebarWidth === null ? (
-              <View style={styles.resizeHandle} {...resizer.panHandlers} />
-            ) : null}
+            {/* Edge drag handle captures Android gestures above the list; dragging also unpins it from the fold. */}
+            <View style={styles.resizeHandle} {...resizer.panHandlers} />
           </View>
         ) : null}
         {foldGap > 0 ? <View style={{ width: foldGap }} /> : null}
