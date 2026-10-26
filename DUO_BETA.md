@@ -18,6 +18,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 1. `chore(mobile): build iOS with the 27.1 SDK` (from #32733)
 2. `feat(mobile): adapt to iPhone Duo folding and its status column` (from #32733)
 3. `chore(duo-beta): personal TestFlight build` (bundle ID/name via env, own workflow, upstream CI removed, this file)
+4. `feat(duo-beta): drag the workspace sidebar off the fold` (ours: #32733 locks the sidebar to the crease when unfolded; now draggable, snaps back within 48pt)
 
 ## Status
 
