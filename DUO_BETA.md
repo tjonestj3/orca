@@ -37,8 +37,18 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
 - [x] First CI build green: run 40380464518, 0.0.59 (1) signed and uploaded to TestFlight 2026-10-26 14:24 (~27 min)
 - [x] Installed via TestFlight on the Duo 2026-10-26; full-screen typing confirmed working with the stock desktop app
-- [~] Phase 2 trial (2026-10-26): desktop from this branch in dev mode, isolated profile `~/.config/orca-duo-dev`
-  (seeded read-only from `~/.config/orca`); stock Orca and its auto-updates untouched. Deciding whether to keep it.
+- [x] Phase 2 trialed 2026-10-26 (dev-mode desktop, isolated profile `~/.config/orca-duo-dev`): not worth a custom
+      desktop. Decision: custom phone app + stock auto-updating desktop.
+
+## Maintenance
+
+- **TestFlight builds expire 90 days after upload.** 0.0.59 (1) expires ~2027-01-24. Rebuild before then
+  ("update the duo build": rebase on upstream, push, ~30 min to TestFlight).
+- Rebuild every month or two anyway: the stock desktop keeps updating, and old-shell/new-desktop compatibility is
+  designed in but drifts over time.
+- Distribution cert expires 2027-10-26; API key FKKU3969ZA doesn't expire. Both live only in
+  `~/dev/orca-duo-signing/` + GitHub secrets: back them up.
+- Exit: when upstream ships Duo support in the store app, delete Orca Duo and its App Store Connect record.
 
 ## Apple setup (one time)
 
