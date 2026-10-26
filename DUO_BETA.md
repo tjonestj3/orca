@@ -27,7 +27,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] Bundle ID + display name configurable by env (`IOS_BUNDLE_IDENTIFIER`, `ORCA_IOS_APP_NAME`); Fastfile reads `IOS_BUNDLE_IDENTIFIER`
 - [x] Distribution key + CSR generated in `~/dev/orca-duo-signing/`
 - [x] Pushed `duo-beta` to the fork (over SSH; the gh token lacks `workflow` scope for HTTPS pushes of workflow files)
-- [ ] **Thomas:** Apple setup + enable fork Actions (below)
+- [x] Fork Actions enabled; the 9 workflows from the fork's stale June `main` disabled (`gh workflow enable` to undo)
+- [ ] **Thomas:** Apple setup (below)
 - [ ] Convert .cer → .p12, set repo secrets
 - [ ] First CI build green
 - [ ] Installed via TestFlight, tested on the Duo
