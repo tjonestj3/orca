@@ -34,6 +34,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [ ] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (Thomas runs the `gh secret set` lines)
   - Don't revoke the June 2026 Apple Distribution cert: it's the Spell Volt/Codemagic one, key not here
 - [ ] App Store Connect app record + API key → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`
+- [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
 - [ ] First CI build green
 - [ ] Installed via TestFlight, tested on the Duo
 
