@@ -3,15 +3,15 @@
 Personal TestFlight build of Orca mobile with iPhone Duo support, until upstream ships it.
 Not for upstream: this branch also deletes upstream CI so pushes here don't run their whole pipeline.
 
-| | |
-|---|---|
-| Branch | `duo-beta` on `tjonestj3/orca` |
-| Base | stablyai/orca#32733 (larskghf, "support iPhone Duo"), rebased onto `upstream/main` |
-| Bundle ID | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides) |
-| Home-screen name | Orca Duo (installs beside the App Store Orca) |
-| Icon | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`) |
-| Build | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner, Xcode 27.1 → TestFlight |
-| Signing material | `~/dev/orca-duo-signing/` (local only, never committed) |
+|                  |                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| Branch           | `duo-beta` on `tjonestj3/orca`                                                          |
+| Base             | stablyai/orca#32733 (larskghf, "support iPhone Duo"), rebased onto `upstream/main`      |
+| Bundle ID        | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides)              |
+| Home-screen name | Orca Duo (installs beside the App Store Orca)                                           |
+| Icon             | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`)    |
+| Build            | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner, Xcode 27.1 → TestFlight |
+| Signing material | `~/dev/orca-duo-signing/` (local only, never committed)                                 |
 
 ## Commits on top of upstream
 
@@ -37,7 +37,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
 - [x] First CI build green: run 40380464518, 0.0.59 (1) signed and uploaded to TestFlight 2026-10-26 14:24 (~27 min)
 - [x] Installed via TestFlight on the Duo 2026-10-26; full-screen typing confirmed working with the stock desktop app
-- [ ] Phase 2 (optional): Linux desktop build from this branch for the terminal key rail + fold-aware pages
+- [~] Phase 2 trial (2026-10-26): desktop from this branch in dev mode, isolated profile `~/.config/orca-duo-dev`
+  (seeded read-only from `~/.config/orca`); stock Orca and its auto-updates untouched. Deciding whether to keep it.
 
 ## Apple setup (one time)
 
@@ -58,17 +59,32 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 
 ## Repo secrets (`gh secret set -R tjonestj3/orca …`)
 
-| Secret | Value |
-|---|---|
-| `ASC_KEY_ID` | API key ID |
-| `ASC_ISSUER_ID` | Issuer ID |
-| `ASC_API_KEY_P8` | base64 of the `.p8` |
-| `APPLE_TEAM_ID` | Team ID |
-| `IOS_DIST_CERT_P12` | base64 of the `.p12` built from `dist.key` + `.cer` |
-| `IOS_DIST_CERT_PASSWORD` | the `.p12` password |
+| Secret                   | Value                                               |
+| ------------------------ | --------------------------------------------------- |
+| `ASC_KEY_ID`             | API key ID                                          |
+| `ASC_ISSUER_ID`          | Issuer ID                                           |
+| `ASC_API_KEY_P8`         | base64 of the `.p8`                                 |
+| `APPLE_TEAM_ID`          | Team ID                                             |
+| `IOS_DIST_CERT_P12`      | base64 of the `.p12` built from `dist.key` + `.cer` |
+| `IOS_DIST_CERT_PASSWORD` | the `.p12` password                                 |
 
 Build the `.p12` with legacy encryption, or macOS `security import` on the runner rejects it:
 `openssl pkcs12 -export -legacy -inkey dist.key -in distribution.pem -out dist.p12`
+
+## Running the Duo desktop (phase 2 trial)
+
+Dev mode, not a packaged AppImage: a packaged build would share (and could migrate) the real `~/.config/orca`
+profile and the `orca-ide` CLI pointer. Dev mode keeps everything in its own profile, beside the stock app.
+
+```sh
+cd ~/dev/orca-duo
+pnpm build:mobile-web                                         # the Duo phone pages the desktop serves
+ORCA_DEV_USER_DATA_PATH=$HOME/.config/orca-duo-dev pnpm dev
+```
+
+Pair Orca Duo to this instance as an extra host. Profile was seeded once with
+`pnpm dev:seed-profile --from=$HOME/.config/orca --to=$HOME/.config/orca-duo-dev` (copies repos/workspaces/settings,
+never terminal sessions or automations). To undo the trial: stop it and delete `~/.config/orca-duo-dev`.
 
 ## Refreshing from upstream
 
