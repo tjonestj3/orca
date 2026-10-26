@@ -26,7 +26,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
   - Vitest: 11149 passed. Remaining failures are environmental/pre-existing: 2 need Bun installed, `mobile-agent-launch-architecture.test.ts` fails identically on pristine upstream main.
 - [x] Bundle ID + display name configurable by env (`IOS_BUNDLE_IDENTIFIER`, `ORCA_IOS_APP_NAME`); Fastfile reads `IOS_BUNDLE_IDENTIFIER`
 - [x] Distribution key + CSR generated in `~/dev/orca-duo-signing/`
-- [ ] **Thomas:** Apple setup (below)
+- [x] Pushed `duo-beta` to the fork (over SSH; the gh token lacks `workflow` scope for HTTPS pushes of workflow files)
+- [ ] **Thomas:** Apple setup + enable fork Actions (below)
 - [ ] Convert .cer → .p12, set repo secrets
 - [ ] First CI build green
 - [ ] Installed via TestFlight, tested on the Duo
@@ -45,6 +46,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 5. **TestFlight group**: the app → TestFlight → Internal Testing → + group, add yourself,
    tick **Enable automatic distribution**.
 6. Team ID: Membership details page (10 characters).
+7. **Enable Actions on the fork** (GitHub never runs workflows on a fork until you do):
+   https://github.com/tjonestj3/orca/actions → "I understand my workflows, go ahead and enable them".
 
 ## Repo secrets (`gh secret set -R tjonestj3/orca …`)
 
