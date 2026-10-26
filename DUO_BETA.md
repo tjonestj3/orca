@@ -83,6 +83,12 @@ Once upstream ships Duo support, delete the TestFlight app and switch back to th
 
 ## Known limits
 
+- **Intermittent: opening/closing sometimes drops back to the workspace picker** (seen 2026-10-26, parked while Thomas
+  gathers repro details). Open questions: fold/unfold vs app switch/lock? Does the App Store Orca do it too?
+  Leads: stablyai/orca#33210 fixes workspace continuity across layout-class changes (narrow folded ↔ wide open),
+  mostly in desktop-served page code, so it would need the phase 2 desktop build. The iOS scene plugin reuses the
+  running root on scene reconnect, so a cold React restart on resume looks unlikely but isn't ruled out.
+
 - Push notifications won't arrive: Orca's push service sends with Stably's APNs key for their bundle ID.
 - The page-rendered screens (session, chat, worktree list) are served by the desktop app, which bundles them at
   build time (`pnpm build:mobile-web` in every desktop release script). A stock desktop ships pages without the
