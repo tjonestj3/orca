@@ -33,9 +33,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 - [x] Apple Distribution cert issued 2026-10-26 (expires 2027-10-26) from our CSR; `.p12` built in `~/dev/orca-duo-signing/`; Team ID LN2PTZ4HYL
 - [x] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (2026-10-26)
   - Don't revoke the June 2026 Apple Distribution cert: it's the Spell Volt/Codemagic one, key not here
-- [ ] App Store Connect app record + API key → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`
+- [x] App Store Connect app record (App 6827262904) + API key FKKU3969ZA → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`; internal group with automatic distribution
 - [x] `xcode-27` runner label confirmed: run 40380464518 got a runner and stopped at the secrets check, as designed
-- [ ] First CI build green
+- [x] First CI build green: run 40380464518, 0.0.59 (1) signed and uploaded to TestFlight 2026-10-26 14:24 (~27 min)
 - [ ] Installed via TestFlight, tested on the Duo
 
 ## Apple setup (one time)
