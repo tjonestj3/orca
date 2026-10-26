@@ -5,6 +5,7 @@ const APS_ENVIRONMENT =
 // Personal builds sign under their own App ID and install beside the store app; unset keeps app.json.
 const IOS_BUNDLE_IDENTIFIER = process.env.IOS_BUNDLE_IDENTIFIER
 const IOS_APP_NAME = process.env.ORCA_IOS_APP_NAME
+const IOS_ICON = process.env.ORCA_IOS_ICON
 
 module.exports = ({ config }) => ({
   ...config,
@@ -14,6 +15,7 @@ module.exports = ({ config }) => ({
   ios: {
     ...config.ios,
     ...(IOS_BUNDLE_IDENTIFIER ? { bundleIdentifier: IOS_BUNDLE_IDENTIFIER } : {}),
+    ...(IOS_ICON ? { icon: IOS_ICON } : {}),
     // Home-screen label only: renaming `name` would rename the Xcode project fastlane builds.
     ...(IOS_APP_NAME
       ? { infoPlist: { ...config.ios?.infoPlist, CFBundleDisplayName: IOS_APP_NAME } }

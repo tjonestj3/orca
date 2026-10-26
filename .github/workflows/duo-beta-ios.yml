@@ -28,6 +28,8 @@ jobs:
       BUNDLE_FROZEN: 'true'
       IOS_BUNDLE_IDENTIFIER: ${{ vars.IOS_BUNDLE_IDENTIFIER || 'com.krahnborn.orca.duo' }}
       ORCA_IOS_APP_NAME: 'Orca Duo'
+      # Same orca on green so it's easy to tell apart from the store app.
+      ORCA_IOS_ICON: './assets/icon-duo-beta.png'
       FASTLANE_SKIP_UPDATE_CHECK: '1'
       FASTLANE_HIDE_CHANGELOG: '1'
 

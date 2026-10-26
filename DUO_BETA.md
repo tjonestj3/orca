@@ -9,6 +9,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 | Base | stablyai/orca#32733 (larskghf, "support iPhone Duo"), rebased onto `upstream/main` |
 | Bundle ID | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides) |
 | Home-screen name | Orca Duo (installs beside the App Store Orca) |
+| Icon | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`) |
 | Build | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner, Xcode 27.1 → TestFlight |
 | Signing material | `~/dev/orca-duo-signing/` (local only, never committed) |
 
