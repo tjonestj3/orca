@@ -19,7 +19,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 2. `feat(mobile): adapt to iPhone Duo folding and its status column` (from #32733)
 3. `chore(duo-beta): personal TestFlight build` (bundle ID/name via env, own workflow, upstream CI removed, this file)
 4. `feat(duo-beta): drag the workspace sidebar off the fold` (ours: #32733 locks the sidebar to the crease when unfolded; now draggable, snaps back within 48pt)
-5. `feat(duo-beta): navigation in the folded status column` (ours: native buttons in the strip, works with the stock desktop)
+5. Status column + sidebar polish (ours, phone only, works with the stock desktop): nav buttons in the Duo status
+   column folded and unfolded (Back, Workspaces, Floating Workspace, Files, Source control, Computers, Settings);
+   column painted panel grey; sidebar min 220pt, visible grip across the seam, swipe-back off beside the sidebar
 
 ## Status
 
