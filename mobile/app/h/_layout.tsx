@@ -41,8 +41,8 @@ export default function HostGroupLayout() {
   const { hostId, worktreeId } = useGlobalSearchParams<{ hostId?: string; worktreeId?: string }>()
   const pathname = usePathname()
   const overlayRoute = isOverlayPageRoute(pathname)
-  // Folded only: unfolded, the sidebar already holds this navigation.
-  useHostSideNavRail(isWideLayout ? undefined : hostId, worktreeId)
+  // Folded and unfolded alike, as Duo apps use the status column.
+  useHostSideNavRail(hostId, worktreeId)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(HOST_SIDEBAR_DEFAULT_WIDTH)
 
