@@ -1,8 +1,20 @@
 import { useMemo, type ComponentType } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
-import { ChevronLeft, Folder, GitBranch, List, Monitor, Settings } from 'lucide-react-native'
+import {
+  ChevronLeft,
+  Folder,
+  GitBranch,
+  List,
+  Monitor,
+  Settings,
+  SquareTerminal
+} from 'lucide-react-native'
 import { leaveHostRoute } from '../host-route-exit'
+import {
+  floatingWorkspaceSessionPath,
+  isFloatingWorkspaceWorktreeId
+} from '../session/floating-workspace'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import { useSideRailContent } from './side-rail'
 
@@ -43,7 +55,18 @@ export function useHostSideNavRail(hostId: string | undefined, worktreeId: strin
         Icon: List,
         onPress: () => router.dismissTo({ pathname: '/h/[hostId]', params: { hostId } })
       },
-      ...(worktreeId
+      {
+        id: 'floating-workspace',
+        label: 'Floating Workspace',
+        Icon: SquareTerminal,
+        onPress: () => {
+          if (!isFloatingWorkspaceWorktreeId(worktreeId)) {
+            router.push(floatingWorkspaceSessionPath(hostId))
+          }
+        }
+      },
+      // The Floating Workspace has no repo to browse or diff.
+      ...(worktreeId && !isFloatingWorkspaceWorktreeId(worktreeId)
         ? [
             {
               id: 'files',
