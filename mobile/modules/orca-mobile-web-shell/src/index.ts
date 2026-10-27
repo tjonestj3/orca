@@ -1,4 +1,4 @@
-import { requireNativeViewManager } from 'expo-modules-core'
+import { requireNativeModule, requireNativeViewManager } from 'expo-modules-core'
 import type { ComponentType, RefAttributes } from 'react'
 import type { NativeSyntheticEvent, ViewProps } from 'react-native'
 import type { MobileWebShellLoadStatePayload } from './load-state'
@@ -39,6 +39,14 @@ export const OrcaMobileWebShellView: ComponentType<
 > = requireNativeViewManager<
   OrcaMobileWebShellViewProps & RefAttributes<OrcaMobileWebShellViewHandle>
 >('OrcaMobileWebShell')
+
+// iOS only; Android backups are off and older binaries lack the call, so both skip it.
+export async function excludeFromBackup(path: string): Promise<void> {
+  const shell = requireNativeModule<{ excludeFromBackup?: (path: string) => Promise<void> }>(
+    'OrcaMobileWebShell'
+  )
+  await shell.excludeFromBackup?.(path)
+}
 
 export {
   MOBILE_WEB_SHELL_FAILURE_REASONS,

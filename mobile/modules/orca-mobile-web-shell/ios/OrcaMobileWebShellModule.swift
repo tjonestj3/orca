@@ -4,6 +4,14 @@ public class OrcaMobileWebShellModule: Module {
   public func definition() -> ModuleDefinition {
     Name("OrcaMobileWebShell")
 
+    // The page bundle redownloads from the paired desktop, so it has no place in iCloud backups.
+    AsyncFunction("excludeFromBackup") { (path: String) in
+      var url = URL(fileURLWithPath: path, isDirectory: true)
+      var values = URLResourceValues()
+      values.isExcludedFromBackup = true
+      try url.setResourceValues(values)
+    }
+
     View(OrcaMobileWebShellView.self) {
       Events("onLoadState", "onBridgeMessage", "onExternalNavigation")
 
