@@ -158,7 +158,7 @@ export async function saveDisabledTerminalLiveInputHandles(
 const SIDEBAR_WIDTH_KEY = 'orca:hostSidebarWidth'
 
 // Caller also caps this tablet/foldable sidebar against the window to preserve detail space.
-export const HOST_SIDEBAR_MIN_WIDTH = 280
+export const HOST_SIDEBAR_MIN_WIDTH = 220
 export const HOST_SIDEBAR_MAX_WIDTH = 560
 export const HOST_SIDEBAR_DEFAULT_WIDTH = 340
 

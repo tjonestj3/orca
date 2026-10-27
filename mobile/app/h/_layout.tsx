@@ -22,9 +22,9 @@ import { useHostSideNavRail } from '../../src/layout/side-nav-rail'
 
 // Keep at least this much room for the detail pane when resizing the sidebar.
 const MIN_DETAIL_WIDTH = 320
-const RESIZE_EDGE_WIDTH = 24
+const RESIZE_EDGE_WIDTH = 36
 // A drag released this close to the fold snaps back to it.
-const FOLD_SNAP_DISTANCE = 48
+const FOLD_SNAP_DISTANCE = 16
 
 // Clamp restored sidebar width to current window so a smaller device retains usable detail space.
 function clampSidebarToWindow(width: number, windowWidth: number): number {
@@ -41,7 +41,8 @@ export default function HostGroupLayout() {
   const { hostId, worktreeId } = useGlobalSearchParams<{ hostId?: string; worktreeId?: string }>()
   const pathname = usePathname()
   const overlayRoute = isOverlayPageRoute(pathname)
-  useHostSideNavRail(hostId, worktreeId)
+  // Folded only: unfolded, the sidebar already holds this navigation.
+  useHostSideNavRail(isWideLayout ? undefined : hostId, worktreeId)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(HOST_SIDEBAR_DEFAULT_WIDTH)
 
@@ -150,7 +151,9 @@ export default function HostGroupLayout() {
               onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
             />
             {/* Edge drag handle captures Android gestures above the list; dragging also unpins it from the fold. */}
-            <View style={styles.resizeHandle} {...resizer.panHandlers} />
+            <View style={styles.resizeHandle} {...resizer.panHandlers}>
+              <View style={styles.resizeGrip} />
+            </View>
           </View>
         ) : null}
         {foldGap > 0 ? <View style={{ width: foldGap }} /> : null}
@@ -191,7 +194,17 @@ const styles = StyleSheet.create({
     right: 0,
     width: RESIZE_EDGE_WIDTH,
     zIndex: 20,
-    elevation: 20
+    elevation: 20,
+    alignItems: 'flex-end',
+    justifyContent: 'center'
+  },
+  // Shows where to grab; the handle itself is wider than it looks.
+  resizeGrip: {
+    width: 4,
+    height: 48,
+    marginRight: 3,
+    borderRadius: 2,
+    backgroundColor: colors.borderSubtle
   },
   detail: {
     flex: 1,

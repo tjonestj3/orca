@@ -474,7 +474,7 @@ describe('host sidebar width preference', () => {
   })
 
   it('clamps saved widths to the supported sidebar range', () => {
-    expect(clampHostSidebarWidth(270)).toBe(280)
+    expect(clampHostSidebarWidth(200)).toBe(220)
     expect(clampHostSidebarWidth(570)).toBe(560)
     expect(clampHostSidebarWidth(337.6)).toBe(338)
   })
