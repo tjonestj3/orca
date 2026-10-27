@@ -6,7 +6,8 @@ import { HOST_STACK_SCREENS, type HostStackAnimation } from './host-stack-screen
 import { isOverlayPageRoute } from '../new-workspace/overlay-page-route'
 
 // Expo native-stack’s web view ignores animation and switches display; reuse StackRouter with a view that retains popped screens through their exit slide.
-export function HostStack({ animation }: { animation: HostStackAnimation }) {
+// `swipeBack` is native only; web has no edge swipe.
+export function HostStack({ animation }: { animation: HostStackAnimation; swipeBack?: boolean }) {
   return (
     <Navigator>
       {HOST_STACK_SCREENS.map(({ name, title }) => (

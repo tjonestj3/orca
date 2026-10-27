@@ -98,6 +98,7 @@ export default function HostGroupLayout() {
   widthRef.current = foldSidebarWidth ?? sidebarWidth
   const foldGap = foldSidebarWidth === null || !foldSplit ? 0 : foldSplit.end - foldSplit.start
   const canCollapseSidebar = showSidebar && detailHasContent && foldSidebarWidth === null
+  const sidebarShown = showSidebar && (sidebarOpen || foldSidebarWidth !== null)
 
   // Base host detail is a placeholder; hiding its sidebar would leave nothing useful.
   useEffect(() => {
@@ -143,17 +144,13 @@ export default function HostGroupLayout() {
   return (
     <HostProtocolGate hostId={hostId} transparentWhilePending={overlayRoute}>
       <View style={[styles.row, overlayRoute && styles.transparent]}>
-        {showSidebar && (sidebarOpen || foldSidebarWidth !== null) ? (
+        {sidebarShown ? (
           <View style={[styles.sidebar, { width: foldSidebarWidth ?? sidebarWidth }]}>
             <HostScreen
               embedded
               hostId={hostId}
               onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
             />
-            {/* Edge drag handle captures Android gestures above the list; dragging also unpins it from the fold. */}
-            <View style={styles.resizeHandle} {...resizer.panHandlers}>
-              <View style={styles.resizeGrip} />
-            </View>
           </View>
         ) : null}
         {foldGap > 0 ? <View style={{ width: foldGap }} /> : null}
@@ -164,10 +161,23 @@ export default function HostGroupLayout() {
                 showSidebar && !sidebarOpen && foldSidebarWidth === null ? revealSidebar : null
               }
             >
-              <HostStack animation={showSidebar ? 'none' : 'default'} />
+              <HostStack animation={showSidebar ? 'none' : 'default'} swipeBack={!sidebarShown} />
             </HostSidebarRevealContext.Provider>
           </HostAreaServingContext.Provider>
         </View>
+        {/* Above both panes and straddling their seam, so a drag never starts in the detail stack;
+            dragging also unpins the sidebar from the fold. */}
+        {sidebarShown ? (
+          <View
+            style={[
+              styles.resizeHandle,
+              { left: (foldSidebarWidth ?? sidebarWidth) - RESIZE_EDGE_WIDTH / 2 }
+            ]}
+            {...resizer.panHandlers}
+          >
+            <View style={styles.resizeGrip} />
+          </View>
+        ) : null}
       </View>
     </HostProtocolGate>
   )
@@ -191,18 +201,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    right: 0,
     width: RESIZE_EDGE_WIDTH,
     zIndex: 20,
     elevation: 20,
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'center'
   },
   // Shows where to grab; the handle itself is wider than it looks.
   resizeGrip: {
     width: 4,
     height: 48,
-    marginRight: 3,
     borderRadius: 2,
     backgroundColor: colors.borderSubtle
   },

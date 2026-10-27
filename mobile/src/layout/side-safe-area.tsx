@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
+import { colors } from '../theme/mobile-theme'
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -36,6 +37,9 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
   // Native SafeAreaView measures its nearest native provider, so nest one inside the padding; web reads the adjusted context.
   return (
     <View style={[styles.area, { paddingLeft: insets.left, paddingRight: insets.right }]}>
+      {/* Side strips (the iPhone Duo's status column) in the panel color, so they read as app, not a bar. */}
+      {insets.left > 0 ? <View style={[styles.strip, { left: 0, width: insets.left }]} /> : null}
+      {insets.right > 0 ? <View style={[styles.strip, { right: 0, width: insets.right }]} /> : null}
       {Platform.OS === 'web' ? area : <SafeAreaProvider>{area}</SafeAreaProvider>}
     </View>
   )
@@ -48,5 +52,6 @@ export function useWindowSafeAreaInsets(): EdgeInsets {
 }
 
 const styles = StyleSheet.create({
-  area: { flex: 1 }
+  area: { flex: 1 },
+  strip: { position: 'absolute', top: 0, bottom: 0, backgroundColor: colors.bgPanel }
 })
