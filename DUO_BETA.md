@@ -1,41 +1,44 @@
 # Orca Duo Beta (personal build)
 
-Personal TestFlight build of Orca mobile with iPhone Duo support, until upstream ships it.
+Personal iPhone Duo build of Orca, phone and desktop, until upstream ships #35177.
 Not for upstream: this branch also deletes upstream CI so pushes here don't run their whole pipeline.
 
-|                  |                                                                                         |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| Branch           | `duo-beta` on `tjonestj3/orca`                                                          |
-| Base             | stablyai/orca#32733 (larskghf, "support iPhone Duo"), rebased onto `upstream/main`      |
-| Bundle ID        | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides)              |
-| Home-screen name | Orca Duo (installs beside the App Store Orca)                                           |
-| Icon             | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`)    |
-| Build            | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner, Xcode 27.1 → TestFlight |
-| Signing material | `~/dev/orca-duo-signing/` (local only, never committed)                                 |
+|                  |                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Branch           | `duo-beta` on `tjonestj3/orca` (old #32733-based build kept as `duo-beta-v1`)            |
+| Base             | stablyai/orca#35177 (`upstream/iphone-duo-workspace`): #33221 + #33210 carried onto main |
+| Bundle ID        | `com.krahnborn.orca.duo` (repo variable `IOS_BUNDLE_IDENTIFIER` overrides)               |
+| Home-screen name | Orca Duo (installs beside the App Store Orca)                                            |
+| Icon             | `mobile/assets/icon-duo-beta.png`: stock orca recolored onto green (`ORCA_IOS_ICON`)     |
+| Phone build      | `.github/workflows/duo-beta-ios.yml`, GitHub `xcode-27` runner → TestFlight (~30 min)    |
+| Desktop          | "Orca Duo Desktop" in the app menu (`~/.local/bin/orca-duo-desktop`), see below          |
+| Signing material | `~/dev/orca-duo-signing/` (local only, never committed)                                  |
 
-## Commits on top of upstream
+## Commits on top of #35177
 
-1. `chore(mobile): build iOS with the 27.1 SDK` (from #32733)
-2. `feat(mobile): adapt to iPhone Duo folding and its status column` (from #32733)
-3. `chore(duo-beta): personal TestFlight build` (bundle ID/name via env, own workflow, upstream CI removed, this file)
+1. `chore(duo-beta): personal TestFlight build` (bundle ID/name/icon via env, own workflow, upstream CI removed, this file)
+2. `chore(duo-beta): green app icon`
 
-## Status
+Our own fixes from `duo-beta-v1` (camera corner, one-tree status column area, reopening the last screen, draggable
+sidebar) are not carried over. Port one only if #35177 still shows the problem on the Duo.
 
-- [x] Rebased #32733 onto upstream main (2026-10-26, upstream `66fbd81994`)
-  - Conflicts: comment-style churn in the mobile web-shell bridge, iOS workflow runner, `pnpm-workspace.yaml` patches. Kept both patches and upstream's two deleted grant tests stay deleted.
-  - Mobile `tsc` clean, oxfmt clean, `pnpm install --frozen-lockfile` clean.
-  - Vitest: 11149 passed. Remaining failures are environmental/pre-existing: 2 need Bun installed, `mobile-agent-launch-architecture.test.ts` fails identically on pristine upstream main.
-- [x] Bundle ID + display name configurable by env (`IOS_BUNDLE_IDENTIFIER`, `ORCA_IOS_APP_NAME`); Fastfile reads `IOS_BUNDLE_IDENTIFIER`
-- [x] Distribution key + CSR generated in `~/dev/orca-duo-signing/`
-- [x] Pushed `duo-beta` to the fork (over SSH; the gh token lacks `workflow` scope for HTTPS pushes of workflow files)
-- [x] Fork Actions enabled; the 9 workflows from the fork's stale June `main` disabled (`gh workflow enable` to undo)
-- [x] App ID `com.krahnborn.orca.duo` registered with Push
-- [x] Apple Distribution cert issued 2026-10-26 (expires 2027-10-26) from our CSR; `.p12` built in `~/dev/orca-duo-signing/`; Team ID LN2PTZ4HYL
-- [ ] Secrets `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`, `APPLE_TEAM_ID` set (Thomas runs the `gh secret set` lines)
-  - Don't revoke the June 2026 Apple Distribution cert: it's the Spell Volt/Codemagic one, key not here
-- [ ] App Store Connect app record + API key → `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`
-- [ ] First CI build green
-- [ ] Installed via TestFlight, tested on the Duo
+## The Duo desktop
+
+Most of what #35177 changes on the phone (the session screen, its tabs, split panes and the key rail inside it) is
+drawn by pages the desktop serves, so the phone needs a desktop built from the same branch. It runs in dev mode with
+its own profile, beside the stock auto-updating Orca, which it never touches.
+
+- **Open it:** "Orca Duo Desktop" in the app menu, or `orca-duo-desktop` in a terminal. Takes ~30 s to start.
+- **Profile:** `~/.config/orca-duo-dev`, seeded 2026-10-28 from `~/.config/orca`: repos, workspaces, settings, SSH
+  targets and the Orca sign-in. Its terminals and daemon are its own; automations were not copied (they would run
+  twice). Workspaces added later in one app don't appear in the other. Reseed:
+  `pnpm dev:seed-profile --from=$HOME/.config/orca --to=$HOME/.config/orca-duo-dev --reset`.
+- **Both at once:** fine. They share the repos and worktrees on disk, not tabs or terminals. Don't run agents from
+  both apps in the same worktree at once.
+- **Phone:** in Orca Duo, add this desktop as another computer by scanning its pairing QR code (Settings → Mobile in
+  the Duo desktop). Keep the stock desktop paired too if you like; it serves the older pages.
+- **After pulling new commits:** `pnpm install && pnpm build:mobile-web`, then reopen it.
+- The 2026-10-26 trial profile is at `~/.config/orca-duo-dev.trial-2026-10-26`; safe to delete.
 
 ## Apple setup (one time)
 
@@ -71,20 +74,18 @@ Build the `.p12` with legacy encryption, or macOS `security import` on the runne
 ## Refreshing from upstream
 
 ```sh
-git fetch upstream
-git rebase upstream/main        # conflicts land in mobile/src/mobile-web-shell mostly
-git push fork duo-beta --force-with-lease
+git fetch upstream iphone-duo-workspace
+git rebase upstream/iphone-duo-workspace   # our two commits; resolve workflow deletions by keeping only ours
+git push fork duo-beta --force-with-lease  # rebuilds the phone app
+pnpm install && pnpm build:mobile-web       # then reopen the Duo desktop
 ```
 
-If #32733 changes upstream: `git fetch upstream pull/32733/head:pr-32733` and rebuild the first two commits from it.
-Once upstream ships Duo support, delete the TestFlight app and switch back to the store build.
+When #35177 merges and stock Orca (desktop and App Store) ships it: delete Orca Duo, its App Store Connect record,
+the launcher and `~/.config/orca-duo-dev`.
 
 ## Known limits
 
 - Push notifications won't arrive: Orca's push service sends with Stably's APNs key for their bundle ID.
-- The page-rendered screens (session, chat, worktree list) are served by the desktop app, which bundles them at
-  build time (`pnpm build:mobile-web` in every desktop release script). A stock desktop ships pages without the
-  Duo changes: full-screen and the native screens' fold layout work from the phone alone, but the terminal key rail
-  and fold-aware page layout need a desktop build from this branch. Phase 2 if phase 1 looks good.
 - Both apps register the `orca://` scheme; with both installed, iOS picks one for pairing links. Pair by scanning
   the QR code inside Orca Duo.
+- Paired to the stock desktop, Orca Duo shows that desktop's older pages: no split panes, keys in the bottom row.
