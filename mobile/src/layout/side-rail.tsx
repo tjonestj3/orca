@@ -59,7 +59,26 @@ const SideRailContext = createContext<{
   strip: SideRailStrip | null
   directionPadAvailable: boolean
   store: RailStore
+  /** The side of a strip nothing draws in, which screens extend over with the status bar hidden. */
+  extendedSide: SideRailStrip['side'] | null
 } | null>(null)
+
+/**
+ * The side whose strip screens extend over: once a status column has shown, as long as no screen
+ * draws a rail in it. iOS keeps reporting the column's inset with the status bar hidden, and an
+ * app coming back from the background sees it come and go, so the side is remembered.
+ */
+function useExtendedSide(strip: SideRailStrip | null, store: RailStore) {
+  const [seenSide, setSeenSide] = useState<SideRailStrip['side'] | null>(null)
+  const side = strip?.side ?? null
+  useEffect(() => {
+    if (side !== null) {
+      setSeenSide(side)
+    }
+  }, [side])
+  const content = useSyncExternalStore(store.subscribe, store.read)
+  return content === null ? seenSide : null
+}
 
 /**
  * Lets one screen draw controls in a side inset strip the screens are laid out clear of, such as
@@ -83,9 +102,10 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
   // Keyboard clipping changes what fits now, not this device's shortcut defaults.
   const directionPadAvailable =
     hasFoldDivision === true || hasTerminalDirectionPadSpace(unoccludedStrip)
+  const extendedSide = useExtendedSide(unoccludedStrip, store)
   const value = useMemo(
-    () => ({ strip, directionPadAvailable, store }),
-    [strip, directionPadAvailable, store]
+    () => ({ strip, directionPadAvailable, store, extendedSide }),
+    [strip, directionPadAvailable, store, extendedSide]
   )
   return (
     <SideRailContext.Provider value={value}>
@@ -116,6 +136,11 @@ function SideRailOutlet() {
       {content.node}
     </View>
   )
+}
+
+/** The side whose empty strip screens extend over, with the status bar hidden; null otherwise. */
+export function useSideStripExtendedSide(): SideRailStrip['side'] | null {
+  return useContext(SideRailContext)?.extendedSide ?? null
 }
 
 /** The side strip this window has to draw in; null for a window without one. */

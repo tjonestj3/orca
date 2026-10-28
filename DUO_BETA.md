@@ -18,6 +18,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 
 1. `chore(duo-beta): personal TestFlight build` (bundle ID/name/icon via env, own workflow, upstream CI removed, this file)
 2. `chore(duo-beta): green app icon`
+3. `feat(duo-beta): extend over an empty status column` (ours): while no screen draws a rail in the Duo's status
+   column (always, with the stock desktop), the status bar is hidden and screens use the full width, folded and
+   unfolded, as Moshi does. Folded, the cover camera then sits over the top-right of the header; accepted.
+   A desktop serving the key rail brings the column back. `useExtendedSide` in `side-rail.tsx`.
 
 Our own fixes from `duo-beta-v1` (camera corner, one-tree status column area, reopening the last screen, draggable
 sidebar) are not carried over. Port one only if #35177 still shows the problem on the Duo.

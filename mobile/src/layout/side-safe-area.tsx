@@ -8,12 +8,19 @@ import {
   useSafeAreaInsets,
   type EdgeInsets
 } from 'react-native-safe-area-context'
+import { useSideStripExtendedSide } from './side-rail'
 
 const WindowSafeAreaInsetsContext = createContext<EdgeInsets | null>(null)
 
 // Pad side cutouts/navigation bars once, then expose the padded frame and insets so descendants neither pad twice nor size past it.
 export function SideSafeArea({ children }: { children: ReactNode }) {
-  const insets = useSafeAreaInsets()
+  const windowInsets = useSafeAreaInsets()
+  // An empty iPhone Duo status column is given to the screens; iOS keeps its inset after hiding it.
+  const extendedSide = useSideStripExtendedSide()
+  const insets = useMemo(
+    () => (extendedSide === null ? windowInsets : { ...windowInsets, [extendedSide]: 0 }),
+    [extendedSide, windowInsets]
+  )
   const frame = useSafeAreaFrame()
   const areaInsets = useMemo(() => ({ ...insets, left: 0, right: 0 }), [insets])
   const areaFrame = useMemo(
