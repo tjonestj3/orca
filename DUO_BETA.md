@@ -27,6 +27,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    The side rail from item 5 needs the column, so it no longer shows on the Duo; its code stays for other devices.
    Hidden per screen (`statusBarHidden` in the root Stack's options, `UIViewControllerBasedStatusBarAppearance`
    on): under the scene lifecycle iOS ignored React Native's app-wide `setStatusBarHidden` (build 0.0.59 (6)).
+   iOS keeps the column's 84pt side inset with the clock hidden (build (7)), so `StatusColumnArea` zeroes it for
+   every screen and page; the cover screen's camera in the column is padded out as a top inset instead.
 7. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
    `Library/Caches` (which iOS purges) to `Documents/mobile-web`, with no six-desktop cap, so it stops re-downloading
    ~10 MB. Conflict: upstream's base also had `presentPdf`; only `excludeFromBackup` was kept. Drop these commits
