@@ -25,6 +25,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 6. `feat(duo-beta): hide the status column, as Moshi does` (ours): the status bar is hidden once the Duo's status
    column shows, taking the column (clock) with it, so screens fill the window folded, open and in Split View.
    The side rail from item 5 needs the column, so it no longer shows on the Duo; its code stays for other devices.
+   Hidden per screen (`statusBarHidden` in the root Stack's options, `UIViewControllerBasedStatusBarAppearance`
+   on): under the scene lifecycle iOS ignored React Native's app-wide `setStatusBarHidden` (build 0.0.59 (6)).
 7. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
    `Library/Caches` (which iOS purges) to `Documents/mobile-web`, with no six-desktop cap, so it stops re-downloading
    ~10 MB. Conflict: upstream's base also had `presentPdf`; only `excludeFromBackup` was kept. Drop these commits

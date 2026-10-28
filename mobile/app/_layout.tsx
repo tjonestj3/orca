@@ -3,7 +3,7 @@ import { registerPushDismissalTask } from '../src/notifications/push-background-
 import { readNativeNotificationData } from '../src/notifications/native-notification-data'
 import { setNotificationViewingWorkspace } from '../src/notifications/notification-viewing-policy'
 import { useCallback, useEffect, useRef } from 'react'
-import { View, StyleSheet } from 'react-native'
+import { Platform, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useGlobalSearchParams, usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
@@ -182,7 +182,8 @@ export default function RootLayout() {
   return (
     <RpcClientProvider>
       <View style={styles.root} onLayout={onNavigatorLayout}>
-        <StatusBar style="light" hidden={hideStatusColumn} />
+        {/* iOS sets the status bar per screen (screenOptions below): under scenes it ignores the app-wide call. */}
+        {Platform.OS === 'ios' ? null : <StatusBar style="light" />}
         <SideRailProvider>
           <SideSafeArea>
             <Stack
@@ -191,7 +192,11 @@ export default function RootLayout() {
                 headerTintColor: colors.textPrimary,
                 headerTitleStyle: { fontSize: 16, fontWeight: '600' },
                 contentStyle: { backgroundColor: colors.bgBase },
-                headerShadowVisible: false
+                headerShadowVisible: false,
+                // Nested stacks inherit these; needs UIViewControllerBasedStatusBarAppearance (app.json).
+                ...(Platform.OS === 'ios'
+                  ? { statusBarStyle: 'light' as const, statusBarHidden: hideStatusColumn }
+                  : {})
                 // Leave orientation unset: react-native-screens overrides rotation lock even for default; Android manifest fullUser honors the user’s setting.
               }}
             >
