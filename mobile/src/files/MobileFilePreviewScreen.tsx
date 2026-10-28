@@ -5,6 +5,7 @@ import { ChevronLeft, Save } from 'lucide-react-native'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
 import { getWorktreeLabel } from '../session/worktree-label'
 import { colors, spacing } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import { useForceReconnect } from '../transport/host-client-hooks'
 import { useWorkspaceClient } from '../transport/use-workspace-client'
 import { connectionRetryAction } from '../transport/connection-retry-action'
@@ -232,7 +233,7 @@ export function MobileFilePreviewScreen({ route }: Props) {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.header} edges={['top']}>
-        <View style={styles.topBar}>
+        <ClearOfCamera style={styles.topBar}>
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
             onPress={requestBack}
@@ -260,7 +261,7 @@ export function MobileFilePreviewScreen({ route }: Props) {
               <Save size={18} color={colors.textPrimary} strokeWidth={2.2} />
             </Pressable>
           ) : null}
-        </View>
+        </ClearOfCamera>
       </SafeAreaView>
       <MobileFilePreviewBody
         preview={preview}

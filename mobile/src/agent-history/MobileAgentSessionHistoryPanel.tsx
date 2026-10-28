@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ChevronLeft, RefreshCw } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import { useWorkspaceClient } from '../transport/use-workspace-client'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
 import { worktreeCatalogRead } from '../worktree/worktree-catalog-operations'
@@ -261,7 +262,7 @@ function MobileAgentSessionHistoryPanelContent({
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.header} edges={['top']}>
-        <View style={styles.topBar}>
+        <ClearOfCamera style={styles.topBar}>
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
             onPress={() => router.back()}
@@ -287,7 +288,7 @@ function MobileAgentSessionHistoryPanelContent({
           >
             <RefreshCw size={18} color={colors.textSecondary} strokeWidth={2.1} />
           </Pressable>
-        </View>
+        </ClearOfCamera>
       </SafeAreaView>
 
       {screenState.kind === 'loading' ? (

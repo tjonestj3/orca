@@ -6,12 +6,16 @@ import {
   useSafeAreaFrame,
   useSafeAreaInsets
 } from 'react-native-safe-area-context'
+import { CameraCornerContext } from './camera-corner'
 import { useReservedRegions } from './reserved-regions'
-import { insetsWithoutStatusColumn } from './status-column'
+import { cameraCornerOfStatusColumn, insetsWithoutStatusColumn } from './status-column'
 
 /**
- * Lays the app out over the hidden iPhone Duo status column. A camera in it is padded out here
- * rather than handed down, as header SafeAreaViews measure the native inset, which has none for it.
+ * Lays the app out over the hidden iPhone Duo status column. Header SafeAreaViews measure the
+ * native top inset, which has none for the cover screen's camera, so their screens run up under it
+ * as Moshi's do and their rows keep clear of its corner (`ClearOfCamera`). Screens that pad by the
+ * insets in context are handed the camera as a top inset instead. A camera at the bottom, turned
+ * over, is padded out here.
  */
 export function StatusColumnArea({ hidden, children }: { hidden: boolean; children: ReactNode }) {
   const { width, height } = useWindowDimensions()
@@ -30,34 +34,39 @@ export function StatusColumnArea({ hidden, children }: { hidden: boolean; childr
         : insets,
     [hidden, width, height, insets, occlusions]
   )
-  const padTop = clear.top > insets.top ? clear.top : 0
+  const camera = useMemo(
+    () =>
+      hidden
+        ? cameraCornerOfStatusColumn({
+            windowWidth: width,
+            windowHeight: height,
+            insets,
+            occlusions
+          })
+        : null,
+    [hidden, width, height, insets, occlusions]
+  )
   const padBottom = clear.bottom > insets.bottom ? clear.bottom : 0
   const areaInsets = useMemo(
-    () => ({
-      ...clear,
-      top: padTop > 0 ? 0 : clear.top,
-      bottom: padBottom > 0 ? 0 : clear.bottom
-    }),
-    [clear, padTop, padBottom]
+    () => ({ ...clear, bottom: padBottom > 0 ? 0 : clear.bottom }),
+    [clear, padBottom]
   )
   const areaFrame = useMemo(
-    () => ({
-      ...frame,
-      y: frame.y + padTop,
-      height: Math.max(0, frame.height - padTop - padBottom)
-    }),
-    [frame, padTop, padBottom]
+    () => ({ ...frame, height: Math.max(0, frame.height - padBottom) }),
+    [frame, padBottom]
   )
   if (clear === insets) {
     return children
   }
   return (
-    <View style={[styles.area, { paddingTop: padTop, paddingBottom: padBottom }]}>
-      <SafeAreaFrameContext.Provider value={areaFrame}>
-        <SafeAreaInsetsContext.Provider value={areaInsets}>
-          {children}
-        </SafeAreaInsetsContext.Provider>
-      </SafeAreaFrameContext.Provider>
+    <View style={[styles.area, { paddingBottom: padBottom }]}>
+      <CameraCornerContext.Provider value={camera}>
+        <SafeAreaFrameContext.Provider value={areaFrame}>
+          <SafeAreaInsetsContext.Provider value={areaInsets}>
+            {children}
+          </SafeAreaInsetsContext.Provider>
+        </SafeAreaFrameContext.Provider>
+      </CameraCornerContext.Provider>
     </View>
   )
 }

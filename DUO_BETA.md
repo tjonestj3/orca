@@ -29,6 +29,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    on): under the scene lifecycle iOS ignored React Native's app-wide `setStatusBarHidden` (build 0.0.59 (6)).
    iOS keeps the column's 84pt side inset with the clock hidden (build (7)), so `StatusColumnArea` zeroes it for
    every screen and page; the cover screen's camera in the column is padded out as a top inset instead.
+   That left a 67pt black band across the folded screen (build (8)), so headers now run up under the camera
+   as Moshi's do: rows beside it (`ClearOfCamera` in session, host, home, files, source control, history,
+   preview and diff headers) pull their trailing buttons in clear of its corner. Screens that pad by the
+   context insets (settings, sheets, the page) still get the camera as a top inset.
 7. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
    `Library/Caches` (which iOS purges) to `Documents/mobile-web`, with no six-desktop cap, so it stops re-downloading
    ~10 MB. Conflict: upstream's base also had `presentPdf`; only `excludeFromBackup` was kept. Drop these commits

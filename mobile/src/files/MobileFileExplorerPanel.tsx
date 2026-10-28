@@ -22,6 +22,7 @@ import {
   type FileExplorerRow
 } from './file-tree'
 import { colors, spacing } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import {
   beginDirectoryLoad,
   createDirectoryLoadRevisions,
@@ -389,7 +390,7 @@ export function MobileFileExplorerPanel(props: {
         <View style={styles.header}>{headerBar}</View>
       ) : (
         <SafeAreaView style={styles.header} edges={['top']}>
-          {headerBar}
+          <ClearOfCamera>{headerBar}</ClearOfCamera>
         </SafeAreaView>
       )}
       {body}

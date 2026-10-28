@@ -1,6 +1,7 @@
 import { FlatList, Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ListChecks, MoreHorizontal } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import type { MobileDiffReviewQueueFilter } from '../session/mobile-diff-review-queue'
 import { REVIEW_FILTERS, mobileReviewCountLabel } from '../session/mobile-diff-review-screen-model'
 import { shouldShowTrigger } from './mobile-pr-sidebar-presentation'
@@ -43,7 +44,7 @@ export function MobileDiffReviewHeader({
   })
   return (
     <View style={styles.header}>
-      <View style={styles.topBar}>
+      <ClearOfCamera style={styles.topBar}>
         <Pressable
           style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
           onPress={onBack}
@@ -78,7 +79,7 @@ export function MobileDiffReviewHeader({
         >
           <MoreHorizontal size={19} color={colors.textPrimary} strokeWidth={2.2} />
         </Pressable>
-      </View>
+      </ClearOfCamera>
       <View style={styles.progressRow}>
         <Text style={styles.progressText}>
           {reviewedCount}/{queueLength} reviewed

@@ -17,7 +17,8 @@ vi.mock('./reserved-regions', () => ({
   useReservedRegions: () => ({ divisions: [], occlusions: geometry.occlusions })
 }))
 
-const { useHideStatusColumn, insetsWithoutStatusColumn } = await import('./status-column')
+const { useHideStatusColumn, insetsWithoutStatusColumn, cameraCornerOfStatusColumn } =
+  await import('./status-column')
 
 // Measured on the iPhone Duo simulator (iOS 27.1), as in side-rail-strip.test.ts.
 const DUO_COVER_WITH_COLUMN: Geometry = {
@@ -121,5 +122,48 @@ describe('insetsWithoutStatusColumn', () => {
 
   it('leaves a phone without a status column as it is', () => {
     expect(clearOf(IPHONE_PORTRAIT)).toBe(IPHONE_PORTRAIT.insets)
+  })
+})
+
+describe('cameraCornerOfStatusColumn', () => {
+  it('finds the cover screen camera at the top of the column', () => {
+    expect(
+      cameraCornerOfStatusColumn({
+        windowWidth: 466,
+        windowHeight: 678,
+        insets: DUO_COVER_WITH_COLUMN.insets,
+        occlusions: DUO_COVER_WITH_COLUMN.occlusions
+      })
+    ).toEqual({ side: 'right', windowWidth: 466, x: 399.67, y: 29.33, width: 37, height: 37 })
+  })
+
+  it('has none open, turned over or without a column', () => {
+    expect(
+      cameraCornerOfStatusColumn({
+        windowWidth: 951,
+        windowHeight: 669,
+        insets: DUO_INNER.insets,
+        occlusions: DUO_INNER.occlusions
+      })
+    ).toBeNull()
+    expect(
+      cameraCornerOfStatusColumn({
+        windowWidth: 466,
+        windowHeight: 678,
+        insets: { top: 34, right: 0, bottom: 0, left: 84 },
+        occlusions: [
+          { x: 29.33, y: 611.67, width: 37, height: 37 },
+          { x: 0, y: 504, width: 84, height: 174 }
+        ]
+      })
+    ).toBeNull()
+    expect(
+      cameraCornerOfStatusColumn({
+        windowWidth: 402,
+        windowHeight: 874,
+        insets: IPHONE_PORTRAIT.insets,
+        occlusions: []
+      })
+    ).toBeNull()
   })
 })

@@ -18,6 +18,7 @@ import { StatusDot } from '../components/StatusDot'
 import { classifyConnection, type ConnectionVerdict } from '../transport/connection-health'
 import { useCalmConnectionState } from '../transport/calm-connection-state'
 import { colors } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
 
@@ -45,7 +46,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
 
   return (
     <View style={styles.topChrome}>
-      <View style={styles.statusBar}>
+      <ClearOfCamera style={styles.statusBar}>
         <Pressable
           style={styles.backButton}
           onPress={actions.leaveHost}
@@ -140,7 +141,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
             <PanelLeftClose size={14} color={colors.textSecondary} />
           </Pressable>
         ) : null}
-      </View>
+      </ClearOfCamera>
 
       {embedded ? (
         <View style={styles.embeddedToolbar}>
@@ -252,7 +253,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
           </View>
         </View>
       ) : (
-        <View style={styles.toolbar}>
+        <ClearOfCamera style={styles.toolbar}>
           <Pressable
             style={[styles.filterChip, controller.activeFilterCount > 0 && styles.filterChipActive]}
             onPress={() => state.setShowWorkspaceOptions(true)}
@@ -312,7 +313,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
               <Search size={16} color={colors.textSecondary} />
             )}
           </Pressable>
-        </View>
+        </ClearOfCamera>
       )}
     </View>
   )

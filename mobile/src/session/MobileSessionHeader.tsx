@@ -7,6 +7,7 @@ import { StatusDot } from '../components/StatusDot'
 import { styles } from './mobile-session-styles'
 import { useHostSidebarReveal } from '../layout/host-sidebar-reveal'
 import { useResponsiveLayout } from '../layout/responsive-layout'
+import { ClearOfCamera } from '../layout/camera-corner'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 export function MobileSessionHeader({ controller }: { controller: MobileSessionController }) {
@@ -35,7 +36,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
   ) : null
   return (
     <SafeAreaView style={styles.sessionChrome} edges={['top']}>
-      <View style={styles.sessionTopBar}>
+      <ClearOfCamera style={styles.sessionTopBar}>
         {revealSidebar ? (
           <MobileSessionHeaderIconButton
             accessibilityLabel="Show sidebar"
@@ -97,9 +98,9 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
             onPress={() => setShowHeaderMoreActions(true)}
           />
         ) : null}
-      </View>
+      </ClearOfCamera>
 
-      {tabsInTopBar ? null : tabStrip}
+      {tabsInTopBar || tabStrip === null ? null : <ClearOfCamera>{tabStrip}</ClearOfCamera>}
     </SafeAreaView>
   )
 }

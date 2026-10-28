@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { colors } from '../theme/mobile-theme'
+import { ClearOfCamera } from '../layout/camera-corner'
 import { connectionRetryAction } from '../transport/connection-retry-action'
 import { useMobileSourceControlState } from './use-mobile-source-control-state'
 import { useMobileSourceControlActionSheet } from './use-mobile-source-control-action-sheet'
@@ -272,7 +273,7 @@ export function MobileSourceControlPanel({
         <View style={styles.header}>{header}</View>
       ) : (
         <SafeAreaView style={styles.header} edges={['top']}>
-          {header}
+          <ClearOfCamera>{header}</ClearOfCamera>
         </SafeAreaView>
       )}
 
