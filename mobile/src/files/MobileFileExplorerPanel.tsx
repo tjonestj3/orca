@@ -7,7 +7,7 @@ import {
   View,
   type ListRenderItem
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { ChevronLeft, X } from 'lucide-react-native'
 import { useWorkspaceExecutionHost } from '../navigation/workspace-execution-host'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
@@ -22,7 +22,6 @@ import {
   type FileExplorerRow
 } from './file-tree'
 import { colors, spacing } from '../theme/mobile-theme'
-import { ClearOfCamera } from '../layout/camera-corner'
 import {
   beginDirectoryLoad,
   createDirectoryLoadRevisions,
@@ -389,9 +388,9 @@ export function MobileFileExplorerPanel(props: {
       {embedded ? (
         <View style={styles.header}>{headerBar}</View>
       ) : (
-        <SafeAreaView style={styles.header} edges={['top']}>
-          <ClearOfCamera>{headerBar}</ClearOfCamera>
-        </SafeAreaView>
+        <TopSafeAreaView style={styles.header} clearCamera>
+          {headerBar}
+        </TopSafeAreaView>
       )}
       {body}
     </View>

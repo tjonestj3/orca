@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import { HostScreenHeader } from './host-screen-header'
 import { HostScreenOverlays } from './host-screen-overlays'
@@ -17,9 +17,9 @@ export function HostScreenView({ controller }: { controller: HostScreenControlle
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.topChromeSafeArea} edges={['top']}>
+      <TopSafeAreaView style={styles.topChromeSafeArea}>
         <HostScreenHeader controller={controller} />
-      </SafeAreaView>
+      </TopSafeAreaView>
       <HostWorkspaceList controller={controller} />
       <HostScreenOverlays controller={controller} />
     </View>

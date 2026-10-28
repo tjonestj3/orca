@@ -33,6 +33,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    as Moshi's do: rows beside it (`ClearOfCamera` in session, host, home, files, source control, history,
    preview and diff headers) pull their trailing buttons in clear of its corner. Screens that pad by the
    context insets (settings, sheets, the page) still get the camera as a top inset.
+   Build (9): only the root stack's screens moved up; iOS gives nested-stack screens (host list, session) a top
+   inset for the camera. On the cover screen `TopSafeAreaView` replaces those headers' `SafeAreaView`
+   (`edges={['top']}`) and pads by the root window's top inset instead.
 7. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
    `Library/Caches` (which iOS purges) to `Documents/mobile-web`, with no six-desktop cap, so it stops re-downloading
    ~10 MB. Conflict: upstream's base also had `presentPdf`; only `excludeFromBackup` was kept. Drop these commits

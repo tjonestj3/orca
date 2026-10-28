@@ -87,5 +87,10 @@ export function cameraCornerOfStatusColumn(args: WindowGeometry): CameraCorner |
   if (!found || !camera) {
     return null
   }
-  return { side: found.strip.side, windowWidth: args.windowWidth, ...camera }
+  return {
+    side: found.strip.side,
+    windowWidth: args.windowWidth,
+    windowInsetTop: args.insets.top,
+    ...camera
+  }
 }

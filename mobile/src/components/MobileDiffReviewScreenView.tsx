@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { Text, View, type LayoutChangeEvent } from 'react-native'
 import type { useMobileDiffReviewController } from '../session/use-mobile-diff-review-controller'
 import { useResponsiveLayout } from '../layout/responsive-layout'
@@ -48,7 +49,7 @@ export function MobileDiffReviewScreenView({ controller, onBack }: Props) {
   }, [])
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <TopSafeAreaView style={styles.safeArea}>
       <MobileDiffReviewHeader
         filter={controller.filter}
         isWideLayout={isWideLayout}
@@ -146,6 +147,6 @@ export function MobileDiffReviewScreenView({ controller, onBack }: Props) {
           />
         </RightDrawer>
       ) : null}
-    </SafeAreaView>
+    </TopSafeAreaView>
   )
 }

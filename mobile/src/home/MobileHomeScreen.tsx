@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Alert, StyleSheet } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
 import { getProvenCachedWorktrees } from '../cache/worktree-cache'
 import { ActionSheetModal } from '../components/ActionSheetModal'
@@ -102,7 +103,7 @@ export function MobileHomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <TopSafeAreaView style={styles.container}>
       <MobileHomeTopBar onOpenSettings={() => data.router.push('/settings')} />
       {data.hostCatalog.length === 0 ? (
         <MobileHomeEmptyState
@@ -184,7 +185,7 @@ export function MobileHomeScreen() {
         onConfirm={() => void handleRemove()}
         onCancel={() => setConfirmRemove(null)}
       />
-    </SafeAreaView>
+    </TopSafeAreaView>
   )
 }
 

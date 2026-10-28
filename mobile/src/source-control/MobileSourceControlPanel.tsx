@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { colors } from '../theme/mobile-theme'
-import { ClearOfCamera } from '../layout/camera-corner'
 import { connectionRetryAction } from '../transport/connection-retry-action'
 import { useMobileSourceControlState } from './use-mobile-source-control-state'
 import { useMobileSourceControlActionSheet } from './use-mobile-source-control-action-sheet'
@@ -272,9 +271,9 @@ export function MobileSourceControlPanel({
       {embedded ? (
         <View style={styles.header}>{header}</View>
       ) : (
-        <SafeAreaView style={styles.header} edges={['top']}>
-          <ClearOfCamera>{header}</ClearOfCamera>
-        </SafeAreaView>
+        <TopSafeAreaView style={styles.header} clearCamera>
+          {header}
+        </TopSafeAreaView>
       )}
 
       <MobileSourceControlSegments active={activeTab} onSelect={selectTab} />

@@ -13,6 +13,8 @@ import { View, type StyleProp, type ViewStyle } from 'react-native'
 export type CameraCorner = {
   side: 'left' | 'right'
   windowWidth: number
+  /** The window's top inset from iOS, which has none for the camera. */
+  windowInsetTop: number
   x: number
   y: number
   width: number

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { ChevronLeft, Check, RefreshCw, User } from 'lucide-react-native'
 import { loadHosts } from '../transport/host-store'
@@ -322,7 +323,7 @@ export function MobileAccountsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <TopSafeAreaView style={styles.container}>
       <View style={styles.topRow}>
         <Pressable
           style={styles.backButton}
@@ -402,6 +403,6 @@ export function MobileAccountsScreen() {
         cancelLabel={null}
         onCancel={() => setNotice(null)}
       />
-    </SafeAreaView>
+    </TopSafeAreaView>
   )
 }

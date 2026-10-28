@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Pressable, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaFrame } from 'react-native-safe-area-context'
+import { useSafeAreaFrame } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { ChevronLeft, Save } from 'lucide-react-native'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
 import { getWorktreeLabel } from '../session/worktree-label'
@@ -232,7 +233,7 @@ export function MobileFilePreviewScreen({ route }: Props) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.header} edges={['top']}>
+      <TopSafeAreaView style={styles.header}>
         <ClearOfCamera style={styles.topBar}>
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
@@ -262,7 +263,7 @@ export function MobileFilePreviewScreen({ route }: Props) {
             </Pressable>
           ) : null}
         </ClearOfCamera>
-      </SafeAreaView>
+      </TopSafeAreaView>
       <MobileFilePreviewBody
         preview={preview}
         client={client}

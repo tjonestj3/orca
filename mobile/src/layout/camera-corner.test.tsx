@@ -21,6 +21,7 @@ const { CameraCornerContext, ClearOfCamera, cameraClearance } = await import('./
 const CAMERA = {
   side: 'right' as const,
   windowWidth: 466,
+  windowInsetTop: 0,
   x: 399.67,
   y: 29.33,
   width: 37,

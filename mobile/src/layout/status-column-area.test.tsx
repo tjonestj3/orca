@@ -79,6 +79,7 @@ describe('the app over the hidden status column', () => {
     expect(read.camera).toEqual({
       side: 'right',
       windowWidth: 466,
+      windowInsetTop: 0,
       x: 399.67,
       y: 29.33,
       width: 37,

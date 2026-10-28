@@ -1,7 +1,7 @@
 import { loadMobileResumeMetadata } from './mobile-agent-history-resume-metadata'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { ChevronLeft, RefreshCw } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
 import { ClearOfCamera } from '../layout/camera-corner'
@@ -261,7 +261,7 @@ function MobileAgentSessionHistoryPanelContent({
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.header} edges={['top']}>
+      <TopSafeAreaView style={styles.header}>
         <ClearOfCamera style={styles.topBar}>
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
@@ -289,7 +289,7 @@ function MobileAgentSessionHistoryPanelContent({
             <RefreshCw size={18} color={colors.textSecondary} strokeWidth={2.1} />
           </Pressable>
         </ClearOfCamera>
-      </SafeAreaView>
+      </TopSafeAreaView>
 
       {screenState.kind === 'loading' ? (
         <View style={styles.state}>

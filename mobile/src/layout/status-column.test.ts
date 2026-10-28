@@ -134,7 +134,15 @@ describe('cameraCornerOfStatusColumn', () => {
         insets: DUO_COVER_WITH_COLUMN.insets,
         occlusions: DUO_COVER_WITH_COLUMN.occlusions
       })
-    ).toEqual({ side: 'right', windowWidth: 466, x: 399.67, y: 29.33, width: 37, height: 37 })
+    ).toEqual({
+      side: 'right',
+      windowWidth: 466,
+      windowInsetTop: 0,
+      x: 399.67,
+      y: 29.33,
+      width: 37,
+      height: 37
+    })
   })
 
   it('has none open, turned over or without a column', () => {

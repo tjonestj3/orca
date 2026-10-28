@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { TopSafeAreaView } from '../layout/top-safe-area-view'
 import { ChevronLeft, Folder, GitBranch, MoreHorizontal, PanelLeftOpen } from 'lucide-react-native'
 import { MobileSessionHeaderIconButton } from './MobileSessionHeaderIconButton'
 import { MobileSessionTabStrip } from './MobileSessionTabStrip'
@@ -35,7 +35,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
     <MobileSessionTabStrip controller={controller} inTopBar={tabsInTopBar} />
   ) : null
   return (
-    <SafeAreaView style={styles.sessionChrome} edges={['top']}>
+    <TopSafeAreaView style={styles.sessionChrome}>
       <ClearOfCamera style={styles.sessionTopBar}>
         {revealSidebar ? (
           <MobileSessionHeaderIconButton
@@ -101,6 +101,6 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
       </ClearOfCamera>
 
       {tabsInTopBar || tabStrip === null ? null : <ClearOfCamera>{tabStrip}</ClearOfCamera>}
-    </SafeAreaView>
+    </TopSafeAreaView>
   )
 }
