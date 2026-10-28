@@ -27,6 +27,7 @@ import { recoverMobileRelayPairing } from '../src/transport/mobile-relay-pairing
 import { appUpdateChecker } from '../src/app-update/app-update-runtime'
 import { SideSafeArea } from '../src/layout/side-safe-area'
 import { SideRailProvider } from '../src/layout/side-rail'
+import { useHideStatusColumn } from '../src/layout/status-column'
 
 // Keep splash visible until React content is ready to avoid a blank frame.
 SplashScreen.preventAutoHideAsync()
@@ -170,6 +171,9 @@ export default function RootLayout() {
     }
   }, [openNotificationRoute])
 
+  // iPhone Duo: no status column, so screens fill the window edge to edge.
+  const hideStatusColumn = useHideStatusColumn()
+
   // Hide splash only after Stack layout; a placeholder render can precede real screen content and expose a grey gap.
   const onNavigatorLayout = useCallback(async () => {
     await SplashScreen.hideAsync()
@@ -178,7 +182,7 @@ export default function RootLayout() {
   return (
     <RpcClientProvider>
       <View style={styles.root} onLayout={onNavigatorLayout}>
-        <StatusBar style="light" />
+        <StatusBar style="light" hidden={hideStatusColumn} />
         <SideRailProvider>
           <SideSafeArea>
             <Stack

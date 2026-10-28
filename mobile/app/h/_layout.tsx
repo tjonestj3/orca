@@ -41,7 +41,7 @@ export default function HostGroupLayout() {
   const { hostId, worktreeId } = useGlobalSearchParams<{ hostId?: string; worktreeId?: string }>()
   const pathname = usePathname()
   const overlayRoute = isOverlayPageRoute(pathname)
-  // Folded and unfolded alike, as Duo apps use the status column.
+  // Draws only where a status column shows; iPhone Duo hides its own (useHideStatusColumn).
   useHostSideNavRail(hostId, worktreeId)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(HOST_SIDEBAR_DEFAULT_WIDTH)

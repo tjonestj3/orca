@@ -22,6 +22,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 5. Status column + sidebar polish (ours, phone only, works with the stock desktop): nav buttons in the Duo status
    column folded and unfolded (Back, Workspaces, Floating Workspace, Files, Source control, Computers, Settings);
    column painted panel grey; sidebar min 220pt, visible grip across the seam, swipe-back off beside the sidebar
+6. `feat(duo-beta): hide the status column, as Moshi does` (ours): the status bar is hidden once the Duo's status
+   column shows, taking the column (clock) with it, so screens fill the window folded, open and in Split View.
+   The side rail from item 5 needs the column, so it no longer shows on the Duo; its code stays for other devices.
 
 ## Status
 
