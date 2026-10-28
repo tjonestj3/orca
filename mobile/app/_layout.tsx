@@ -28,6 +28,7 @@ import { appUpdateChecker } from '../src/app-update/app-update-runtime'
 import { SideSafeArea } from '../src/layout/side-safe-area'
 import { SideRailProvider } from '../src/layout/side-rail'
 import { useHideStatusColumn } from '../src/layout/status-column'
+import { useReopenLastRoute } from '../src/navigation/use-reopen-last-route'
 import { StatusColumnArea } from '../src/layout/status-column-area'
 
 // Keep splash visible until React content is ready to avoid a blank frame.
@@ -45,11 +46,13 @@ Notifications.setNotificationHandler({
 export default function RootLayout() {
   const router = useRouter()
   const pathname = usePathname()
-  const { hostId, worktreeId, executionHost } = useGlobalSearchParams<{
+  const globalParams = useGlobalSearchParams<{
     hostId?: string
     worktreeId?: string
     executionHost?: string
   }>()
+  const { hostId, worktreeId, executionHost } = globalParams
+  useReopenLastRoute(router, pathname, globalParams)
   useEffect(() => {
     setNotificationViewingWorkspace(
       pathname.includes('/session/') && typeof hostId === 'string' && typeof worktreeId === 'string'

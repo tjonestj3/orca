@@ -87,10 +87,11 @@ describe('the app over the hidden status column', () => {
     })
   })
 
-  it('changes nothing while the column shows', () => {
+  it('changes nothing while the column shows, in the same tree', () => {
     const read = renderCover(false)
-    expect(tree!.root.findAll((node) => String(node.type) === 'View')).toHaveLength(0)
-    expect(read.insets).toBe(WINDOW)
+    expect(tree!.root.findAll((node) => String(node.type) === 'View')).toHaveLength(1)
+    expect(read.insets).toEqual(WINDOW)
+    expect(read.frame).toEqual(FRAME)
     expect(read.camera).toBeNull()
   })
 })

@@ -55,9 +55,9 @@ export function StatusColumnArea({ hidden, children }: { hidden: boolean; childr
     () => ({ ...frame, height: Math.max(0, frame.height - padBottom) }),
     [frame, padBottom]
   )
-  if (clear === insets) {
-    return children
-  }
+  // One tree whatever the insets: iOS reports the cover screen with and without the column while the
+  // app comes back from the background, and swapping wrappers would remount every screen and reset
+  // the navigation (the workspace, Floating Workspace and tab on show) to its launch route.
   return (
     <View style={[styles.area, { paddingBottom: padBottom }]}>
       <CameraCornerContext.Provider value={camera}>

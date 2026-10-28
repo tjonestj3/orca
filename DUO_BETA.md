@@ -36,7 +36,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    Build (9): only the root stack's screens moved up; iOS gives nested-stack screens (host list, session) a top
    inset for the camera. On the cover screen `TopSafeAreaView` replaces those headers' `SafeAreaView`
    (`edges={['top']}`) and pads by the root window's top inset instead.
-7. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
+7. Folded app-switch reset (ours): `StatusColumnArea` returned bare children or a wrapper depending on the
+   insets, and iOS reports the cover screen both ways while the app comes back from the background, so the whole
+   navigator remounted (workspace, Floating Workspace and tab reset). It now always renders one tree. Backstop for
+   iOS closing the app: `useReopenLastRoute` (`src/navigation/`) saves the host screen on show and reopens it on
+   launch, unless launched from a notification tap or older than a day. Related upstream: #33201 (#33210).
+8. stablyai/orca#34540 cherry-picked (3 commits, open upstream at the time): the downloaded desktop page moves from
    `Library/Caches` (which iOS purges) to `Documents/mobile-web`, with no six-desktop cap, so it stops re-downloading
    ~10 MB. Conflict: upstream's base also had `presentPdf`; only `excludeFromBackup` was kept. Drop these commits
    on the next rebase once #34540 is on `upstream/main`.
