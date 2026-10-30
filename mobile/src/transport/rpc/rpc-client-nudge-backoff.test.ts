@@ -146,6 +146,26 @@ describe('revival nudges toward a failing host', () => {
     client.close()
   })
 
+  it('arms the slow retry on the failure that uses up the limit', async () => {
+    const client = connect(ENDPOINT, 'token', 'server-key')
+    while (client.getReconnectAttempt() < 12) {
+      await vi.advanceTimersByTimeAsync(1_000)
+    }
+    const dials = sockets.length
+
+    // A fast 60s retry armed here would keep re-arming in the background and dial once the app returns.
+    recordSocketDeadlineAppState('background')
+    await vi.advanceTimersByTimeAsync(130_000)
+    recordSocketDeadlineAppState('active')
+    await vi.advanceTimersByTimeAsync(100_000)
+    expect(sockets).toHaveLength(dials)
+
+    await vi.advanceTimersByTimeAsync(80_000)
+    expect(sockets).toHaveLength(dials + 1)
+
+    client.close()
+  })
+
   it('dials at once on the fast schedule when a manual retry replaces a dormant client', async () => {
     const dormant = connect(ENDPOINT, 'token', 'server-key')
     await vi.advanceTimersByTimeAsync(PAST_RETRY_LIMIT_MS)

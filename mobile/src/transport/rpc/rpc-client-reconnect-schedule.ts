@@ -30,24 +30,26 @@ export class RpcClientReconnectSchedule {
 
   schedule(): void {
     const trickle = this.attempt >= RPC_RECONNECT_ATTEMPT_LIMIT
-    const dormant = this.isDormant()
+    // The failure that uses up the limit already moves a never-connected host to its slow retry.
+    const enteringDormant = !this.connectedOnce && this.attempt + 1 >= RPC_RECONNECT_ATTEMPT_LIMIT
+    const slow = trickle || enteringDormant
     let delayMs: number
-    if (trickle) {
-      delayMs = dormant ? NEVER_CONNECTED_TRICKLE_DELAY_MS : TRICKLE_RECONNECT_DELAY_MS
+    if (slow) {
+      delayMs = this.connectedOnce ? TRICKLE_RECONNECT_DELAY_MS : NEVER_CONNECTED_TRICKLE_DELAY_MS
       this.options.rejectConnectWaiters('Connection retry limit reached')
     } else {
       delayMs = RECONNECT_DELAYS[Math.min(this.attempt, RECONNECT_DELAYS.length - 1)]!
-      this.attempt++
     }
+    this.attempt = Math.min(this.attempt + 1, RPC_RECONNECT_ATTEMPT_LIMIT)
     console.log('[net] scheduleReconnect', {
       delayMs,
       attempt: this.attempt,
-      trickle,
-      dormant
+      trickle: slow,
+      dormant: this.isDormant()
     })
     this.options.emitLog(
       `Reconnect scheduled in ${delayMs}ms`,
-      trickle ? `Attempt ${this.attempt} (slow retry)` : `Attempt ${this.attempt}`
+      slow ? `Attempt ${this.attempt} (slow retry)` : `Attempt ${this.attempt}`
     )
     this.arm(delayMs)
   }
