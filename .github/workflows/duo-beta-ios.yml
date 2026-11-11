@@ -1,5 +1,8 @@
 name: Orca Jarvis iOS
 
+# Kept at the Duo beta's path: GitHub already has that workflow registered on this fork, and a new path
+# never registered after the large first push of this branch.
+
 # Personal build of Orca mobile with the Jarvis voice screen: builds jarvis-voice under our own App ID
 # and uploads it to TestFlight for internal testing. Mirrors mobile-ios-release.yml's ios-build job
 # without the external-tester distribution.

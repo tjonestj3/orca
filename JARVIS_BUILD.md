@@ -4,13 +4,13 @@ Personal TestFlight build of Orca mobile with a Jarvis voice screen: talk to the
 that runs beside Orca on the paired desktop (`tjonestj3`'s `claude-voice-ios` repo, `brain/`).
 Not for upstream: this branch also deletes upstream CI so pushes here don't run their whole pipeline.
 
-|                  |                                                                              |
-| ---------------- | ---------------------------------------------------------------------------- |
-| Branch           | `jarvis-voice` on `tjonestj3/orca`, cut from `upstream/main` on 2026-11-11   |
-| Bundle ID        | `com.krahnborn.orca.duo` (the Duo beta's App ID; repo variable overrides it) |
-| Home-screen name | Orca Jarvis, green "III" icon (`mobile/assets/icon-jarvis.png`)              |
-| Build            | `.github/workflows/jarvis-ios.yml` on push or by hand → TestFlight           |
-| Signing          | Same repo secrets as the Duo beta (see the duo-beta branch's DUO_BETA.md)    |
+|                  |                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| Branch           | `jarvis-voice` on `tjonestj3/orca`, cut from `upstream/main` on 2026-11-11          |
+| Bundle ID        | `com.krahnborn.orca.duo` (the Duo beta's App ID; repo variable overrides it)        |
+| Home-screen name | Orca Jarvis, green "III" icon (`mobile/assets/icon-jarvis.png`)                     |
+| Build            | `.github/workflows/duo-beta-ios.yml` (the Duo path GitHub knows) on push or by hand |
+| Signing          | Same repo secrets as the Duo beta (see the duo-beta branch's DUO_BETA.md)           |
 
 ## Commits on top of upstream
 
