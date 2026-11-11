@@ -8,7 +8,7 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 | ---------------- | ----------------------------------------------------------------------------------- |
 | Branch           | `jarvis-voice` on `tjonestj3/orca`, cut from `upstream/main` on 2026-11-11          |
 | Bundle ID        | `com.krahnborn.orca.duo` (the Duo beta's App ID; repo variable overrides it)        |
-| Home-screen name | Xeno, green "III" icon (`mobile/assets/icon-jarvis.png`)                            |
+| Home-screen name | Xeno, gold "III" on dark icon (`mobile/assets/icon-jarvis.png`)                     |
 | Build            | `.github/workflows/duo-beta-ios.yml` (the Duo path GitHub knows) on push or by hand |
 | Signing          | Same repo secrets as the Duo beta (see the duo-beta branch's DUO_BETA.md)           |
 
