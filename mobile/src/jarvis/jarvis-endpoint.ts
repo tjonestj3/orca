@@ -29,3 +29,9 @@ export function jarvisHistoryUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)
   return base && `${base}/api/jarvis/history`
 }
+
+// The cheap "is Jarvis there?" check: answered without asking Orca anything.
+export function jarvisPingUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/ping`
+}

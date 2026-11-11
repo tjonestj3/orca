@@ -1,11 +1,11 @@
-import { useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Pressable, View } from 'react-native'
 import { Ear, X } from 'lucide-react-native'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import { classifyBubbleRelease } from './jarvis-bubble-policy'
+import { bubblePress } from './jarvis-bubble-policy'
 import { JarvisOrb } from './JarvisOrb'
 import { useJarvis } from './jarvis-context'
 
@@ -15,27 +15,31 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
   const t = useMobileTranslation()
   const { call, offerUrl, voice, handsFree, openJarvisScreen } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
-  const pressedAt = useRef(0)
   const live = state.phase !== 'idle' && state.phase !== 'error'
+  // Read at press time, so the press keeps the latest call details without being rebuilt mid-hold.
+  const latest = useRef({ offerUrl, voice, openJarvisScreen })
+  latest.current = { offerUrl, voice, openJarvisScreen }
+  const press = useRef(
+    bubblePress({
+      live: () => call.getSnapshot().phase !== 'idle' && call.getSnapshot().phase !== 'error',
+      pressTalk: () => {
+        if (latest.current.offerUrl) {
+          call.pressTalk(latest.current.offerUrl, latest.current.voice)
+        }
+      },
+      releaseTalk: () => call.releaseTalk(),
+      cancelTalk: () => call.cancelTalk(),
+      openScreen: () => latest.current.openJarvisScreen()
+    })
+  ).current
+  useEffect(() => press.unmount, [press])
 
   return (
     <View style={{ width: size, height: size }}>
       <Pressable
         disabled={!offerUrl}
-        onPressIn={() => {
-          pressedAt.current = Date.now()
-          if (offerUrl) {
-            call.pressTalk(offerUrl, voice)
-          }
-        }}
-        onPressOut={() => {
-          if (classifyBubbleRelease(Date.now() - pressedAt.current) === 'talk') {
-            call.releaseTalk()
-          } else {
-            call.cancelTalk()
-            openJarvisScreen()
-          }
-        }}
+        onPressIn={press.pressIn}
+        onPressOut={press.pressOut}
         style={({ pressed }) => [styles.orb, { borderRadius: size / 2 }, pressed && pressedStyle]}
         accessibilityRole="button"
         accessibilityLabel={t('jarvis.bubble.holdToTalk', 'Jarvis. Hold to talk, tap to open.')}

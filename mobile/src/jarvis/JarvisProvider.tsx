@@ -16,7 +16,7 @@ import { JarvisCall } from './jarvis-call'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
-import { jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import { jarvisOfferUrl, jarvisPingUrl } from './jarvis-endpoint'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { viewingTarget } from './jarvis-viewing'
 import {
@@ -76,7 +76,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [handsFree, setHandsFreeState] = useState(false)
   const host = useHostProfile(hostId ?? '')
   const offerUrl = host ? jarvisOfferUrl(host.endpoint) : null
-  const reachable = useReachable(host ? jarvisWorktreesUrl(host.endpoint) : null)
+  const reachable = useReachable(host ? jarvisPingUrl(host.endpoint) : null)
 
   useEffect(() => {
     void loadJarvisHost().then(setHostId)

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { jarvisHistoryUrl, jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import {
+  jarvisHistoryUrl,
+  jarvisOfferUrl,
+  jarvisPingUrl,
+  jarvisWorktreesUrl
+} from './jarvis-endpoint'
 
 describe('jarvisOfferUrl', () => {
   it("uses the paired host's own address on Jarvis's port", () => {
@@ -18,6 +23,12 @@ describe('jarvisOfferUrl', () => {
     )
     expect(jarvisHistoryUrl('ws://100.126.129.22:6768')).toBe(
       'http://100.126.129.22:7860/api/jarvis/history'
+    )
+  })
+
+  it("checks Jarvis is there without asking it about Orca's worktrees", () => {
+    expect(jarvisPingUrl('ws://100.126.129.22:6768')).toBe(
+      'http://100.126.129.22:7860/api/jarvis/ping'
     )
   })
 
