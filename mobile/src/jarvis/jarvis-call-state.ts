@@ -1,3 +1,5 @@
+import { readJarvisMessage, type JarvisMessage } from './jarvis-history'
+
 // What the Jarvis screen shows, driven by the voice server's RTVI events on the data channel.
 export type JarvisPhase =
   | 'idle'
@@ -25,9 +27,12 @@ export type JarvisCallState = {
   readonly said: string
   // Newest first, at most MAX_CARDS.
   readonly cards: readonly JarvisWorktreeCard[]
+  // What Jarvis said during this call (replies and agent updates), oldest first, to play again.
+  readonly messages: readonly JarvisMessage[]
 }
 
 const MAX_CARDS = 3
+const MAX_MESSAGES = 40
 
 // Marks Pipecat's RTVI protocol messages on the data channel; never shown.
 export const RTVI_LABEL = 'rtvi-ai'
@@ -37,13 +42,21 @@ export const IDLE_JARVIS_CALL: JarvisCallState = {
   composing: false,
   heard: '',
   said: '',
-  cards: []
+  cards: [],
+  messages: []
 }
 
 type RtviMessage = {
   label?: unknown
   type?: unknown
-  data?: { text?: unknown; final?: unknown; type?: unknown; new?: unknown; worktree?: unknown }
+  data?: {
+    text?: unknown
+    final?: unknown
+    type?: unknown
+    new?: unknown
+    worktree?: unknown
+    message?: unknown
+  }
 }
 
 function readCard(data: RtviMessage['data']): JarvisWorktreeCard | null {
@@ -96,6 +109,14 @@ export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): Jarvi
     case 'bot-tts-text':
       return text ? { ...state, said: state.said ? `${state.said} ${text}` : text } : state
     case 'server-message': {
+      const said =
+        message.data?.type === 'jarvis-said' ? readJarvisMessage(message.data.message) : null
+      if (said) {
+        return {
+          ...state,
+          messages: [...state.messages.filter((m) => m.id !== said.id), said].slice(-MAX_MESSAGES)
+        }
+      }
       const card = readCard(message.data)
       return card
         ? {

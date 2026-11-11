@@ -17,6 +17,9 @@ type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
 
 export type JarvisCallError = 'microphone' | 'unreachable' | 'dropped'
 
+// What a call opened by a tap starts with instead of the greeting.
+export type JarvisOpening = { readonly ask?: string; readonly replay?: number | 'last' }
+
 export type JarvisCallSnapshot = JarvisCallState & {
   readonly muted: boolean
   readonly error: JarvisCallError | null
@@ -60,22 +63,36 @@ export class JarvisCall {
 
   // A request from a tap (a worktree's update, "talk about this"): sent into a live call, or opens one with it.
   ask(text: string, offerUrl: string, voice: JarvisVoice): void {
-    const channel = this.channel
-    if (channel?.readyState === 'open') {
-      channel.send(
-        JSON.stringify({
-          label: RTVI_LABEL,
-          type: 'client-message',
-          id: `orca-${Date.now()}`,
-          data: { t: 'jarvis-ask', d: { text } }
-        })
-      )
-      return
+    if (!this.sendClientMessage('jarvis-ask', { text })) {
+      void this.start(offerUrl, voice, { ask: text })
     }
-    void this.start(offerUrl, voice, text)
   }
 
-  async start(offerUrl: string, voice: JarvisVoice, ask?: string): Promise<void> {
+  // Play a message again (the last one without an id): Jarvis says it after whatever is playing, or
+  // opens a call that starts with it.
+  replay(id: number | undefined, offerUrl: string, voice: JarvisVoice): void {
+    if (!this.sendClientMessage('jarvis-replay', { id: id ?? null })) {
+      void this.start(offerUrl, voice, { replay: id ?? 'last' })
+    }
+  }
+
+  private sendClientMessage(t: string, d: object): boolean {
+    const channel = this.channel
+    if (channel?.readyState !== 'open') {
+      return false
+    }
+    channel.send(
+      JSON.stringify({
+        label: RTVI_LABEL,
+        type: 'client-message',
+        id: `orca-${Date.now()}`,
+        data: { t, d }
+      })
+    )
+    return true
+  }
+
+  async start(offerUrl: string, voice: JarvisVoice, opening?: JarvisOpening): Promise<void> {
     this.teardown()
     const generation = ++this.generation
     this.set({ ...IDLE_SNAPSHOT, phase: 'connecting', muted: this.snapshot.muted })
@@ -157,7 +174,7 @@ export class JarvisCall {
       const answer = await postOffer(offerUrl, {
         sdp: pc.localDescription?.sdp,
         type: pc.localDescription?.type,
-        request_data: ask ? { voice, ask } : { voice }
+        request_data: { voice, ...opening }
       })
       if (generation !== this.generation) {
         return
@@ -282,7 +299,7 @@ async function postOffer(
   offer: {
     sdp?: string
     type?: string | null
-    request_data: { voice: JarvisVoice; ask?: string }
+    request_data: { voice: JarvisVoice } & JarvisOpening
   }
 ): Promise<{ sdp: string; type: 'answer' }> {
   const abort = new AbortController()
