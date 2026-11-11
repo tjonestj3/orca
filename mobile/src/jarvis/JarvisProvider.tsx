@@ -1,17 +1,21 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode
 } from 'react'
 import { usePathname, useRouter } from 'expo-router'
 import { useHostProfile } from '../host-catalog/use-host-profile'
+import { useSideRailPinned, useSideRailStrip } from '../layout/side-rail'
 import { onDictationStarting } from '../platform/microphone-handoff'
+import { bubbleVisible } from './jarvis-bubble-policy'
 import { JarvisCall } from './jarvis-call'
+import { JarvisContext, type JarvisContextValue } from './jarvis-context'
+import { JarvisBubble } from './JarvisBubble'
+import { JarvisRailOrb } from './JarvisRailOrb'
 import { jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { viewingTarget } from './jarvis-viewing'
@@ -25,30 +29,6 @@ import {
 
 const REACHABLE_POLL_MS = 15_000
 const REACHABLE_TIMEOUT_MS = 4_000
-
-export type JarvisContextValue = {
-  readonly call: JarvisCall
-  readonly hostId: string | null
-  readonly offerUrl: string | null
-  // null until the first check; false while the computer's Jarvis can't be reached.
-  readonly reachable: boolean | null
-  readonly voice: JarvisVoice
-  readonly setVoice: (voice: JarvisVoice) => void
-  readonly handsFree: boolean
-  readonly setHandsFree: (on: boolean) => void
-  readonly adoptHost: (hostId: string) => void
-  readonly openJarvisScreen: () => void
-}
-
-const JarvisContext = createContext<JarvisContextValue | null>(null)
-
-export function useJarvis(): JarvisContextValue {
-  const value = useContext(JarvisContext)
-  if (!value) {
-    throw new Error('useJarvis needs a JarvisProvider above it')
-  }
-  return value
-}
 
 function useReachable(url: string | null): boolean | null {
   const [reachable, setReachable] = useState<boolean | null>(null)
@@ -165,5 +145,29 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       openJarvisScreen
     ]
   )
-  return <JarvisContext.Provider value={value}>{children}</JarvisContext.Provider>
+  // The rail draws outside this provider, so its orb carries the context with it.
+  const strip = useSideRailStrip()
+  const railOrb = useMemo(
+    () =>
+      strip && hostId ? (
+        <JarvisContext.Provider value={value}>
+          <JarvisRailOrb stripWidth={strip.width} />
+        </JarvisContext.Provider>
+      ) : null,
+    [strip, hostId, value]
+  )
+  useSideRailPinned(railOrb)
+  const { phase } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const showBubble = bubbleVisible({
+    live: phase !== 'idle' && phase !== 'error',
+    reachable,
+    onJarvisScreen: pathname.endsWith('/jarvis'),
+    railAvailable: railOrb !== null
+  })
+  return (
+    <JarvisContext.Provider value={value}>
+      {children}
+      {showBubble ? <JarvisBubble /> : null}
+    </JarvisContext.Provider>
+  )
 }

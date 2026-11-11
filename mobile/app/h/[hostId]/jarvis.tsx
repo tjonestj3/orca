@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocalSearchParams } from 'expo-router'
 import { JarvisScreen } from '../../../src/jarvis/JarvisScreen'
-import { useJarvis } from '../../../src/jarvis/JarvisProvider'
+import { useJarvis } from '../../../src/jarvis/jarvis-context'
 
 export default function JarvisRoute() {
   const { hostId } = useLocalSearchParams<{ hostId: string }>()

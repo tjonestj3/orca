@@ -5008,6 +5008,11 @@
       "talkAbout": "Talk about this",
       "sendMessage": "Send a message",
       "openInOrca": "Open in Orca"
+    },
+    "bubble": {
+      "holdToTalk": "Jarvis. Hold to talk, tap to open.",
+      "hangUp": "Hang up Jarvis",
+      "handsFree": "Hands-free is on"
     }
   }
 }
