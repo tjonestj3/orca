@@ -8,6 +8,7 @@ import {
 } from '@orca/expo-two-way-audio'
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake'
 import { BRIDGE_AUDIO_INTERRUPTIONS } from '../mobile-web-shell/bridge/bridge-audio-verbs'
+import { announceDictationStarting } from './microphone-handoff'
 import { createMicrophoneScreenLock } from './microphone-screen-lock'
 import type { NativeAudioEngine } from './native-audio'
 
@@ -34,10 +35,14 @@ export const nativeAudioDeviceEngine: NativeAudioEngine = {
     // Permission refusal has the same page outcome whether or not the OS allows another prompt.
     return permission.granted ? 'granted' : permission.canAskAgain ? 'undetermined' : 'denied'
   },
-  open: async (sampleRate) => ({
-    opened: sampleRate === NATIVE_AUDIO_DEVICE_SAMPLE_RATE && (await initialize()),
-    sampleRate: NATIVE_AUDIO_DEVICE_SAMPLE_RATE
-  }),
+  open: async (sampleRate) => {
+    // A live Jarvis call shares the audio session; it ends before dictation reconfigures it.
+    announceDictationStarting()
+    return {
+      opened: sampleRate === NATIVE_AUDIO_DEVICE_SAMPLE_RATE && (await initialize()),
+      sampleRate: NATIVE_AUDIO_DEVICE_SAMPLE_RATE
+    }
+  },
   begin: () => toggleRecording(true),
   end: () => {
     toggleRecording(false)
