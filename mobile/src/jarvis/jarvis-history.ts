@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 
-// Something Jarvis said: an answer to you, or an agent's update it read out. Kept by the Jarvis server so
-// any of them can be played again, even after the call ended.
+// A line of the conversation, kept by the Jarvis server: what you said or tapped, Jarvis's answer, or an
+// agent's update it read out. Jarvis's lines can be played again, even after the call ended.
 export type JarvisMessage = {
   readonly id: number
-  readonly kind: 'reply' | 'update'
+  readonly kind: 'you' | 'reply' | 'update'
   readonly text: string
   readonly at: number
 }
 
-const MAX_MESSAGES = 40
+const MAX_MESSAGES = 100
 const POLL_MS = 5000
 const FETCH_TIMEOUT_MS = 4000
 
@@ -25,7 +25,7 @@ export function readJarvisMessage(raw: unknown): JarvisMessage | null {
   }
   return {
     id: entry.id,
-    kind: entry.kind === 'update' ? 'update' : 'reply',
+    kind: entry.kind === 'update' || entry.kind === 'you' ? entry.kind : 'reply',
     text: entry.text.trim(),
     at: typeof entry.at === 'number' ? entry.at : 0
   }

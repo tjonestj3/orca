@@ -847,7 +847,8 @@
       "pullRequest": "Pull Request",
       "workspace": "Workspace",
       "automations": "Automations",
-      "jarvis": "Jarvis"
+      "jarvis": "Jarvis",
+      "jarvisTranscript": "Conversation"
     }
   },
   "notifications": {
@@ -4992,18 +4993,16 @@
       "noWorktrees": "Nothing active right now.",
       "hearUpdate": "Hear the latest on {{name}}",
       "rowHint": "Touch and hold to talk about it, send it a message or open it",
-      "messages": "Messages",
-      "noMessages": "What Jarvis says shows up here to play again.",
-      "playAgain": "Play again: {{text}}",
-      "agentUpdate": "Agent update",
-      "jarvisReply": "Jarvis",
       "playLast": "Play the last message again",
       "idleHungUp": "Hung up after 10 quiet minutes.",
       "dictationHungUp": "Jarvis hung up so you could dictate.",
       "tapToStart": "Tap to start hands-free",
       "holdToTalk": "Hold to talk",
       "handsFree": "Hands-free",
-      "handsFreeSwitch": "Hands-free: Jarvis listens without holding"
+      "handsFreeSwitch": "Hands-free: Jarvis listens without holding",
+      "openTranscript": "See the whole conversation",
+      "transcriptLink": "Conversation",
+      "conversation": "Conversation"
     },
     "worktree": {
       "needsYou": "Needs you",
@@ -5018,6 +5017,16 @@
       "holdToTalk": "Jarvis. Hold to talk, tap to open.",
       "hangUp": "Hang up Jarvis",
       "handsFree": "Hands-free is on"
+    },
+    "transcript": {
+      "empty": "Your conversation with Jarvis shows up here.",
+      "agentUpdate": "Agent update",
+      "you": "You",
+      "jarvis": "Jarvis",
+      "playHint": "Plays it again. Touch and hold to copy.",
+      "copyHint": "Touch and hold to copy.",
+      "copied": "Copied",
+      "title": "Conversation"
     }
   }
 }

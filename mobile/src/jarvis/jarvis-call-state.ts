@@ -32,7 +32,7 @@ export type JarvisCallState = {
 }
 
 const MAX_CARDS = 3
-const MAX_MESSAGES = 40
+const MAX_MESSAGES = 100
 
 // Marks Pipecat's RTVI protocol messages on the data channel; never shown.
 export const RTVI_LABEL = 'rtvi-ai'

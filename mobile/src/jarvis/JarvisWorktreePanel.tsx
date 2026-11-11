@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronRight, MessageCircle, Play, Send, SquareArrowOutUpRight } from 'lucide-react-native'
+import { ChevronRight, MessageCircle, Send, SquareArrowOutUpRight } from 'lucide-react-native'
 import { ActionSheetModal } from '../components/ActionSheetModal'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
@@ -11,6 +11,7 @@ import { askForUpdate, askToSendMessage, askToTalkAbout } from './jarvis-asks'
 import type { JarvisWorktreeCard } from './jarvis-call-state'
 import type { JarvisMessage } from './jarvis-history'
 import type { JarvisWorktree } from './jarvis-worktrees'
+import { JarvisTranscript } from './JarvisTranscript'
 
 type Translate = ReturnType<typeof useMobileTranslation>
 
@@ -22,19 +23,14 @@ type Props = {
   readonly enabled: boolean
   readonly onAsk: (text: string) => void
   readonly onOpen: (worktreeId: string) => void
-  // What Jarvis said lately, oldest first; tapping one plays it again.
+  // The conversation lately, oldest first; tapping one of Jarvis's lines plays it again.
   readonly messages: readonly JarvisMessage[]
+  // What Jarvis is hearing right now, shown until the server keeps it.
+  readonly hearing: string
   readonly onReplay: (id: number) => void
 }
 
-type Tab = 'worktrees' | 'messages'
-
-function timeOf(at: number): string {
-  if (!at) {
-    return ''
-  }
-  return new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-}
+type Tab = 'worktrees' | 'conversation'
 
 function stateColor(state: string): string {
   switch (state) {
@@ -64,7 +60,7 @@ function stateLabel(state: string, t: Translate): string {
 
 // Cards for the worktrees in the conversation (tap to open in Orca), then every active worktree:
 // tap for Jarvis's spoken update, touch and hold to talk about it, send its agent a message or open it.
-// The Messages tab lists what Jarvis said lately, newest first: tap one to hear it again.
+// The Conversation tab is the chat with Jarvis, newest at the bottom: tap one of Jarvis's lines to hear it again.
 export function JarvisWorktreePanel({
   cards,
   worktrees,
@@ -73,6 +69,7 @@ export function JarvisWorktreePanel({
   onAsk,
   onOpen,
   messages,
+  hearing,
   onReplay
 }: Props) {
   useMobileColorScheme()
@@ -118,7 +115,7 @@ export function JarvisWorktreePanel({
         style={styles.tabs}
         segments={[
           { value: 'worktrees', label: t('jarvis.screen.worktrees', 'Worktrees') },
-          { value: 'messages', label: t('jarvis.screen.messages', 'Messages') }
+          { value: 'conversation', label: t('jarvis.screen.conversation', 'Conversation') }
         ]}
         selected={tab}
         onSelect={setTab}
@@ -126,40 +123,13 @@ export function JarvisWorktreePanel({
         fill
         tabs
       />
-      {tab === 'messages' ? (
-        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-          {messages.length === 0 ? (
-            <Text style={styles.empty}>
-              {t('jarvis.screen.noMessages', 'What Jarvis says shows up here to play again.')}
-            </Text>
-          ) : (
-            messages.toReversed().map((message) => (
-              <Pressable
-                key={message.id}
-                onPress={() => onReplay(message.id)}
-                disabled={!enabled}
-                style={({ pressed }) => [styles.row, pressed && pressedStyle]}
-                accessibilityRole="button"
-                accessibilityLabel={t('jarvis.screen.playAgain', 'Play again: {{text}}', {
-                  text: message.text
-                })}
-              >
-                <View style={styles.rowText}>
-                  <Text style={styles.meta} numberOfLines={1}>
-                    {message.kind === 'update'
-                      ? t('jarvis.screen.agentUpdate', 'Agent update')
-                      : t('jarvis.screen.jarvisReply', 'Jarvis')}
-                    {message.at ? ` · ${timeOf(message.at)}` : ''}
-                  </Text>
-                  <Text style={styles.messageText} numberOfLines={4}>
-                    {message.text}
-                  </Text>
-                </View>
-                <Play size={18} color={colors.textSecondary} />
-              </Pressable>
-            ))
-          )}
-        </ScrollView>
+      {tab === 'conversation' ? (
+        <JarvisTranscript
+          messages={messages}
+          hearing={hearing}
+          enabled={enabled}
+          onReplay={onReplay}
+        />
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {worktrees.length === 0 ? (
@@ -256,7 +226,6 @@ const styles = themedStyleSheet(() => ({
   },
   cardText: { flexShrink: 1 },
   tabs: { marginHorizontal: spacing.lg, marginTop: spacing.md, marginBottom: spacing.sm },
-  messageText: { color: colors.textPrimary, fontSize: typography.bodySize, lineHeight: 20 },
   list: { flex: 1 },
   listContent: { paddingHorizontal: spacing.lg, gap: spacing.xs, paddingBottom: spacing.sm },
   empty: {

@@ -8,6 +8,7 @@ describe('parseJarvisHistory', () => {
         messages: [
           { id: 1, kind: 'reply', text: ' Sending it. ', at: 10 },
           { id: 2, kind: 'update', text: 'main: PR 300 is open.' },
+          { id: 3, kind: 'you', text: 'and spell duel?', at: 30 },
           { id: 'x', text: 'no id' },
           { id: 4, text: '' },
           null
@@ -15,7 +16,8 @@ describe('parseJarvisHistory', () => {
       })
     ).toEqual([
       { id: 1, kind: 'reply', text: 'Sending it.', at: 10 },
-      { id: 2, kind: 'update', text: 'main: PR 300 is open.', at: 0 }
+      { id: 2, kind: 'update', text: 'main: PR 300 is open.', at: 0 },
+      { id: 3, kind: 'you', text: 'and spell duel?', at: 30 }
     ])
     expect(parseJarvisHistory({})).toEqual([])
     expect(parseJarvisHistory(null)).toEqual([])

@@ -27,6 +27,12 @@ export const HOST_STACK_SCREENS = [
     }
   },
   {
+    name: '[hostId]/jarvis-transcript',
+    get title() {
+      return translate('navigation.hostStackScreens.jarvisTranscript', 'Conversation')
+    }
+  },
+  {
     name: '[hostId]/tasks',
     get title() {
       return translate('navigation.hostStackScreens.tasks', 'Tasks')

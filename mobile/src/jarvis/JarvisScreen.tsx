@@ -2,7 +2,15 @@ import { useSyncExternalStore } from 'react'
 import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, Ear, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Ear,
+  MessagesSquare,
+  Mic,
+  PhoneOff,
+  RotateCcw
+} from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -93,6 +101,10 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const openInOrca = (worktreeId: string): void => {
     router.push({ pathname: '/h/[hostId]/session/[worktreeId]', params: { hostId, worktreeId } })
   }
+  // The whole conversation, pushed over this screen like a worktree.
+  const openTranscript = (): void => {
+    router.push({ pathname: '/h/[hostId]/jarvis-transcript', params: { hostId } })
+  }
   const back = (): void => {
     if (router.canGoBack()) {
       router.back()
@@ -120,6 +132,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         }
         title={t('jarvis.screen.title', 'Jarvis')}
         subtitle={host?.name}
+        trailing={
+          <NavBarButton
+            icon={MessagesSquare}
+            onPress={openTranscript}
+            accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
+          />
+        }
       />
       <View style={styles.stage}>
         <JarvisOrb call={call} phase={state.phase} size={orbSize} />
@@ -131,7 +150,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           {statusLine(state, t)}
         </Text>
       </View>
-      <View style={styles.captions} accessibilityLiveRegion="polite">
+      <Pressable
+        onPress={openTranscript}
+        style={({ pressed }) => [styles.captions, pressed && pressedStyle]}
+        accessibilityRole="button"
+        accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
+        accessibilityLiveRegion="polite"
+      >
         {state.heard ? (
           <Text style={styles.heard} numberOfLines={1}>
             {t('jarvis.screen.youSaid', 'You: {{text}}', { text: state.heard })}
@@ -142,7 +167,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             {state.said}
           </Text>
         ) : null}
-      </View>
+        <View style={styles.transcriptLink}>
+          <Text style={styles.transcriptLinkText}>
+            {t('jarvis.screen.transcriptLink', 'Conversation')}
+          </Text>
+          <ChevronRight size={14} color={colors.textSecondary} />
+        </View>
+      </Pressable>
       <JarvisWorktreePanel
         cards={state.cards}
         worktrees={worktrees}
@@ -151,6 +182,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         onAsk={ask}
         onOpen={openInOrca}
         messages={messages}
+        hearing={live ? state.heard : ''}
         onReplay={replay}
       />
       <View style={styles.controls}>
@@ -189,7 +221,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           )}
         </Pressable>
         <View style={styles.sideControl}>
-          {messages.length > 0 ? (
+          {messages.some((m) => m.kind !== 'you') ? (
             <Pressable
               onPress={() => replay()}
               disabled={!offerUrl}
@@ -244,6 +276,14 @@ const styles = themedStyleSheet(() => ({
     gap: spacing.xs,
     justifyContent: 'flex-start'
   },
+  transcriptLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingTop: spacing.xs
+  },
+  transcriptLinkText: { color: colors.textSecondary, fontSize: typography.metaSize },
   heard: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' },
   said: {
     color: colors.textPrimary,
