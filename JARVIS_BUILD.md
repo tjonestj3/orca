@@ -22,3 +22,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
 over Tailscale on port 7860.
+
+## Upstream PRs carried here
+
+- stablyai/orca#36352 (luben93, open): foreground and network-change nudges keep a failing host's
+  reconnect backoff, and a never-connected host goes dormant after its attempt limit. Refs #13354:
+  Orca over Tailscale on iOS stalling until Tailscale is toggled, possibly triggered by redialing an
+  offline peer (tailscale/tailscale#17967). Ported onto the transport/rpc layout from #39846; its edit
+  to the old rpc-client.test.ts was dropped because upstream removed that test. Drop these two
+  commits once the PR merges upstream.
