@@ -17,7 +17,7 @@ import {
   type JarvisLevels,
   type JarvisOpening
 } from './jarvis-call-types'
-import { micShouldBeOpen } from './jarvis-mic-gate'
+import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
@@ -89,6 +89,7 @@ export class JarvisCall {
   cancelTalk(): void {
     this.set({ ...this.snapshot, holding: false })
     this.applyMic()
+    this.sendClientMessage('jarvis-ptt', { state: 'cancel' })
   }
 
   setHandsFree(on: boolean): void {
@@ -105,10 +106,13 @@ export class JarvisCall {
     this.sendClientMessage('jarvis-context', { worktreeId })
   }
 
-  endFor(reason: 'dictation'): void {
-    if (this.pc) {
-      this.fail(this.generation, reason)
+  // True when there was a call to end.
+  endFor(reason: 'dictation'): boolean {
+    if (!this.pc) {
+      return false
     }
+    this.fail(this.generation, reason)
+    return true
   }
 
   // Play a message again (the last one without an id): Jarvis says it after whatever is playing, or
@@ -175,9 +179,9 @@ export class JarvisCall {
           data: { version: '1.0.0', about: { library: 'orca-mobile' } }
         })
       )
-      if (this.viewing) {
-        this.sendClientMessage('jarvis-context', { worktreeId: this.viewing })
-      }
+      openingClientMessages({ viewing: this.viewing, holding: this.snapshot.holding }).forEach(
+        ([type, data]) => this.sendClientMessage(type, data)
+      )
       // The server treats a call without pings for three seconds as gone.
       this.every(1000, () => {
         if (channel.readyState === 'open') {

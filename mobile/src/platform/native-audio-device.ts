@@ -37,7 +37,7 @@ export const nativeAudioDeviceEngine: NativeAudioEngine = {
   },
   open: async (sampleRate) => {
     // A live Jarvis call shares the audio session; it ends before dictation reconfigures it.
-    announceDictationStarting()
+    await announceDictationStarting()
     return {
       opened: sampleRate === NATIVE_AUDIO_DEVICE_SAMPLE_RATE && (await initialize()),
       sampleRate: NATIVE_AUDIO_DEVICE_SAMPLE_RATE

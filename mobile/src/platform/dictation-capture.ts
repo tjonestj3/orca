@@ -6,6 +6,7 @@ import {
   toggleRecording
 } from '@orca/expo-two-way-audio'
 import { bridgeAudioInterruptionEndsCapture } from '../mobile-web-shell/bridge/bridge-audio-verbs'
+import { announceDictationStarting } from './microphone-handoff'
 import { nativeMicrophoneScreenLock } from './native-audio-device'
 import type { DictationCapture } from './dictation-capture-contract'
 
@@ -27,6 +28,8 @@ const nativeDictationCapture: DictationCapture = {
     if (!permission.granted) {
       return { ok: false, reason: 'permission-denied' }
     }
+    // A live Jarvis call shares the audio session; it ends before dictation reconfigures it.
+    await announceDictationStarting()
     if (!(await initialize())) {
       return { ok: false, reason: 'unavailable' }
     }
