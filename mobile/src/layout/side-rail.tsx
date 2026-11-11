@@ -17,41 +17,7 @@ import {
   sideRailStripAboveKeyboard,
   type SideRailStrip
 } from './side-rail-strip'
-
-/** One screen's claim on the strip; each screen holds its own. */
-type SideRailOwner = symbol
-
-type RailContent = { owner: SideRailOwner; node: ReactNode }
-
-function createRailStore() {
-  let content: RailContent | null = null
-  const listeners = new Set<() => void>()
-  const notify = () => {
-    for (const listener of listeners) {
-      listener()
-    }
-  }
-  return {
-    read: () => content,
-    subscribe: (listener: () => void) => {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
-      }
-    },
-    show: (owner: SideRailOwner, node: ReactNode) => {
-      content = { owner, node }
-      notify()
-    },
-    // Only the screen that showed it takes it down, so a screen leaving never hides its successor's.
-    hide: (owner: SideRailOwner) => {
-      if (content?.owner === owner) {
-        content = null
-        notify()
-      }
-    }
-  }
-}
+import { createRailStore } from './side-rail-store'
 
 type RailStore = ReturnType<typeof createRailStore>
 
@@ -101,8 +67,12 @@ function SideRailOutlet() {
     context?.store.subscribe ?? (() => () => undefined),
     () => context?.store.read() ?? null
   )
+  const pinned = useSyncExternalStore(
+    context?.store.subscribe ?? (() => () => undefined),
+    () => context?.store.readPinned() ?? null
+  )
   const strip = context?.strip
-  if (!strip || !content) {
+  if (!strip || (!content && !pinned)) {
     return null
   }
   return (
@@ -113,7 +83,8 @@ function SideRailOutlet() {
         strip.side === 'right' ? { right: 0 } : { left: 0 }
       ]}
     >
-      {content.node}
+      {pinned}
+      {content?.node}
     </View>
   )
 }
@@ -144,3 +115,15 @@ export function useSideRailContent(node: ReactNode | null): void {
 const styles = StyleSheet.create({
   outlet: { position: 'absolute' }
 })
+
+/** Keeps `node` at the top of the side strip on every screen, above the screen's own; null removes it. */
+export function useSideRailPinned(node: ReactNode | null): void {
+  const store = useContext(SideRailContext)?.store
+  useEffect(() => {
+    if (!store) {
+      return
+    }
+    store.pin(node)
+    return () => store.pin(null)
+  }, [store, node])
+}
