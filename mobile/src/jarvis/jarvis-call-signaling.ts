@@ -1,4 +1,5 @@
 import type { RTCPeerConnection } from 'react-native-webrtc'
+import type { JarvisOpening } from './jarvis-call-types'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 // Connecting a Jarvis call: the HTTP offer/answer exchange and waiting for ICE candidates.
@@ -34,7 +35,7 @@ export async function postOffer(
   offer: {
     sdp?: string
     type?: string | null
-    request_data: { voice: JarvisVoice; ask?: string }
+    request_data: { voice: JarvisVoice } & JarvisOpening
   }
 ): Promise<{ sdp: string; type: 'answer' }> {
   const abort = new AbortController()

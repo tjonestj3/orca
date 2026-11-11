@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AppState, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, Mic, PhoneOff } from 'lucide-react-native'
+import { ChevronLeft, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -12,8 +12,10 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import { JarvisCall, type JarvisCallSnapshot } from './jarvis-call'
-import { jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import { JarvisCall } from './jarvis-call'
+import type { JarvisCallSnapshot } from './jarvis-call-types'
+import { jarvisHistoryUrl, jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import { useJarvisHistory } from './jarvis-history'
 import { JarvisOrb } from './JarvisOrb'
 import { loadJarvisVoice, saveJarvisVoice, type JarvisVoice } from './jarvis-voice-preference'
 import { useJarvisWorktrees } from './jarvis-worktrees'
@@ -66,6 +68,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const { worktrees, reachable } = useJarvisWorktrees(
     host ? jarvisWorktreesUrl(host.endpoint) : null
   )
+  const messages = useJarvisHistory(host ? jarvisHistoryUrl(host.endpoint) : null, state.messages)
 
   useEffect(() => {
     void loadJarvisVoice().then(setVoice)
@@ -91,6 +94,12 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const ask = (text: string): void => {
     if (offerUrl) {
       call.ask(text, offerUrl, voice)
+    }
+  }
+  // Jarvis says it again after whatever is playing; with no call, a call opens with it.
+  const replay = (id?: number): void => {
+    if (offerUrl) {
+      call.replay(id, offerUrl, voice)
     }
   }
   const chooseVoice = (next: JarvisVoice): void => {
@@ -162,6 +171,8 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         enabled={offerUrl != null}
         onAsk={ask}
         onOpen={openInOrca}
+        messages={messages}
+        onReplay={replay}
       />
       <View style={styles.controls}>
         <View style={styles.sideControl} />
@@ -184,7 +195,19 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             <Mic size={28} color={colors.onAccent} />
           )}
         </Pressable>
-        <View style={styles.sideControl} />
+        <View style={styles.sideControl}>
+          {messages.length > 0 ? (
+            <Pressable
+              onPress={() => replay()}
+              disabled={!offerUrl}
+              style={({ pressed }) => [styles.smallButton, pressed && pressedStyle]}
+              accessibilityRole="button"
+              accessibilityLabel={t('jarvis.screen.playLast', 'Play the last message again')}
+            >
+              <RotateCcw size={20} color={colors.textPrimary} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
       <MobileSegmentedControl<JarvisVoice>
         style={styles.voices}
@@ -232,6 +255,14 @@ const styles = themedStyleSheet(() => ({
     paddingVertical: spacing.md
   },
   sideControl: { width: 48, alignItems: 'center' },
+  smallButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgRaised
+  },
   talkButton: {
     width: 64,
     height: 64,

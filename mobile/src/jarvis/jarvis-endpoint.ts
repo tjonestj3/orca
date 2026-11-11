@@ -24,3 +24,8 @@ export function jarvisWorktreesUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)
   return base && `${base}/api/jarvis/worktrees`
 }
+
+export function jarvisHistoryUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/history`
+}

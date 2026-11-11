@@ -20,7 +20,11 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 2. `feat(mobile): Jarvis worktree cards and list` — cards for the worktrees in the conversation open
    them in Orca; the list asks Jarvis for an update on tap, or to talk about it / message its agent / open
    it on touch and hold.
-3. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+3. `feat(mobile): play Jarvis's messages again` — a play-last button beside the talk button and a
+   Messages tab listing what Jarvis said (its answers and the agent updates it read out); a tap says
+   it again, queued behind anything playing, or opens a call that starts with it. Needs the Jarvis
+   server's `/api/jarvis/history` and `jarvis-replay` (the `voice-log-review` brain PR).
+4. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

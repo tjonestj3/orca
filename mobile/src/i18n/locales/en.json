@@ -4995,7 +4995,13 @@
       "listLoading": "Loading…",
       "noWorktrees": "Nothing active right now.",
       "hearUpdate": "Hear the latest on {{name}}",
-      "rowHint": "Touch and hold to talk about it, send it a message or open it"
+      "rowHint": "Touch and hold to talk about it, send it a message or open it",
+      "messages": "Messages",
+      "noMessages": "What Jarvis says shows up here to play again.",
+      "playAgain": "Play again: {{text}}",
+      "agentUpdate": "Agent update",
+      "jarvisReply": "Jarvis",
+      "playLast": "Play the last message again"
     },
     "worktree": {
       "needsYou": "Needs you",

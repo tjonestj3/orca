@@ -5,41 +5,23 @@ import {
   requestMicrophonePermissionsAsync
 } from '@orca/expo-two-way-audio'
 import { nativeMicrophoneScreenLock } from '../platform/native-audio-device'
-import {
-  IDLE_JARVIS_CALL,
-  reduceJarvisMessage,
-  RTVI_LABEL,
-  type JarvisCallState
-} from './jarvis-call-state'
+import { reduceJarvisMessage, RTVI_LABEL } from './jarvis-call-state'
 import { audioLevelsFromStats, iceGathered, postOffer } from './jarvis-call-signaling'
+import {
+  IDLE_CHECK_MS,
+  IDLE_SNAPSHOT,
+  JARVIS_IDLE_HANG_UP_MS,
+  QUIET,
+  type JarvisCallError,
+  type JarvisCallSnapshot,
+  type JarvisLevels,
+  type JarvisOpening
+} from './jarvis-call-types'
 import { micShouldBeOpen } from './jarvis-mic-gate'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
 
-export type JarvisCallError = 'microphone' | 'unreachable' | 'dropped' | 'idle' | 'dictation'
-
-export type JarvisCallSnapshot = JarvisCallState & {
-  // Hands-free listens all the time; otherwise only while a talk control is held.
-  readonly handsFree: boolean
-  readonly holding: boolean
-  readonly error: JarvisCallError | null
-}
-
-// A forgotten call hangs up after this long with neither side speaking.
-export const JARVIS_IDLE_HANG_UP_MS = 10 * 60 * 1000
-const IDLE_CHECK_MS = 15_000
-
-// 0..1, roughly how loud each side sounds; drives the orb.
-export type JarvisLevels = { readonly user: number; readonly bot: number }
-
-const IDLE_SNAPSHOT: JarvisCallSnapshot = {
-  ...IDLE_JARVIS_CALL,
-  handsFree: false,
-  holding: false,
-  error: null
-}
-const QUIET: JarvisLevels = { user: 0, bot: 0 }
 const LEVEL_POLL_MS = 100
 
 // One voice call to the Jarvis server on the paired desktop: WebRTC audio both ways plus a data channel of RTVI events.
@@ -74,8 +56,8 @@ export class JarvisCall {
 
   // A request from a tap (a worktree's update, "talk about this"): sent into a live call, or opens one with it.
   ask(text: string, offerUrl: string, voice: JarvisVoice): void {
-    if (!this.sendToJarvis('jarvis-ask', { text })) {
-      void this.start(offerUrl, voice, text)
+    if (!this.sendClientMessage('jarvis-ask', { text })) {
+      void this.start(offerUrl, voice, { ask: text })
     }
   }
 
@@ -88,7 +70,7 @@ export class JarvisCall {
       return
     }
     this.applyMic()
-    this.sendToJarvis('jarvis-ptt', { state: 'down' })
+    this.sendClientMessage('jarvis-ptt', { state: 'down' })
   }
 
   // Letting go ends the person's turn at once rather than waiting for silence.
@@ -99,7 +81,7 @@ export class JarvisCall {
     this.set({ ...this.snapshot, holding: false })
     this.applyMic()
     if (this.connected) {
-      this.sendToJarvis('jarvis-ptt', { state: 'up' })
+      this.sendClientMessage('jarvis-ptt', { state: 'up' })
     }
   }
 
@@ -120,7 +102,7 @@ export class JarvisCall {
       return
     }
     this.viewing = worktreeId
-    this.sendToJarvis('jarvis-context', { worktreeId })
+    this.sendClientMessage('jarvis-context', { worktreeId })
   }
 
   endFor(reason: 'dictation'): void {
@@ -129,7 +111,31 @@ export class JarvisCall {
     }
   }
 
-  async start(offerUrl: string, voice: JarvisVoice, ask?: string): Promise<void> {
+  // Play a message again (the last one without an id): Jarvis says it after whatever is playing, or
+  // opens a call that starts with it.
+  replay(id: number | undefined, offerUrl: string, voice: JarvisVoice): void {
+    if (!this.sendClientMessage('jarvis-replay', { id: id ?? null })) {
+      void this.start(offerUrl, voice, { replay: id ?? 'last' })
+    }
+  }
+
+  private sendClientMessage(t: string, d: object): boolean {
+    const channel = this.channel
+    if (channel?.readyState !== 'open') {
+      return false
+    }
+    channel.send(
+      JSON.stringify({
+        label: RTVI_LABEL,
+        type: 'client-message',
+        id: `orca-${Date.now()}`,
+        data: { t, d }
+      })
+    )
+    return true
+  }
+
+  async start(offerUrl: string, voice: JarvisVoice, opening?: JarvisOpening): Promise<void> {
     this.teardown()
     const generation = ++this.generation
     this.set({ ...this.idleKeepingChoices(), phase: 'connecting' })
@@ -170,7 +176,7 @@ export class JarvisCall {
         })
       )
       if (this.viewing) {
-        this.sendToJarvis('jarvis-context', { worktreeId: this.viewing })
+        this.sendClientMessage('jarvis-context', { worktreeId: this.viewing })
       }
       // The server treats a call without pings for three seconds as gone.
       this.every(1000, () => {
@@ -229,7 +235,7 @@ export class JarvisCall {
       const answer = await postOffer(offerUrl, {
         sdp: pc.localDescription?.sdp,
         type: pc.localDescription?.type,
-        request_data: ask ? { voice, ask } : { voice }
+        request_data: { voice, ...opening }
       })
       if (generation !== this.generation) {
         return
@@ -260,23 +266,6 @@ export class JarvisCall {
     this.mic?.getAudioTracks().forEach((track) => {
       track.enabled = open
     })
-  }
-
-  // An RTVI client message to the Jarvis server; false when the call's channel isn't open.
-  private sendToJarvis(type: string, data: Record<string, unknown>): boolean {
-    const channel = this.channel
-    if (channel?.readyState !== 'open') {
-      return false
-    }
-    channel.send(
-      JSON.stringify({
-        label: RTVI_LABEL,
-        type: 'client-message',
-        id: `orca-${Date.now()}`,
-        data: { t: type, d: data }
-      })
-    )
-    return true
   }
 
   private fail(generation: number, error: JarvisCallError): void {

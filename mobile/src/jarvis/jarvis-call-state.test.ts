@@ -28,7 +28,8 @@ describe('reduceJarvisMessage', () => {
       composing: false,
       heard: 'Anything waiting on me?',
       said: 'Yes, one thing. Audio polish needs you.',
-      cards: []
+      cards: [],
+      messages: []
     })
   })
 
@@ -46,7 +47,14 @@ describe('reduceJarvisMessage', () => {
       { label: 'something-else', type: 'bot-started-speaking' },
       'ping'
     )
-    expect(state).toEqual({ phase: 'hearing', composing: false, heard: '', said: '', cards: [] })
+    expect(state).toEqual({
+      phase: 'hearing',
+      composing: false,
+      heard: '',
+      said: '',
+      cards: [],
+      messages: []
+    })
   })
 })
 
@@ -79,5 +87,20 @@ describe('worktree cards', () => {
       rtvi('server-message', { type: 'jarvis-worktree', worktree: { name: 'x' } })
     )
     expect(state.cards).toEqual([])
+  })
+
+  it('keeps what Jarvis said in the call, once per message, to play again', () => {
+    const said = (id: number, kind: string, text: string) =>
+      rtvi('server-message', { type: 'jarvis-said', message: { id, kind, text, at: 5 } })
+    const state = run(
+      said(1, 'reply', 'Sending it.'),
+      said(2, 'update', 'jarvis-brain: the design is done.'),
+      said(2, 'update', 'jarvis-brain: the design is done.'),
+      rtvi('server-message', { type: 'jarvis-said', message: { id: 3, text: '  ' } })
+    )
+    expect(state.messages).toEqual([
+      { id: 1, kind: 'reply', text: 'Sending it.', at: 5 },
+      { id: 2, kind: 'update', text: 'jarvis-brain: the design is done.', at: 5 }
+    ])
   })
 })
