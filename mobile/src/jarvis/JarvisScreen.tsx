@@ -1,23 +1,24 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { AppState, Pressable, Text, useWindowDimensions, View } from 'react-native'
+import { useSyncExternalStore } from 'react'
+import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
+import { ChevronLeft, Ear, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
+import { MobileSwitch } from '../components/MobileSwitch'
 import { useHostProfile } from '../host-catalog/use-host-profile'
 import { leaveHostRoute } from '../host-route-exit'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import { JarvisCall } from './jarvis-call'
 import type { JarvisCallSnapshot } from './jarvis-call-types'
-import { jarvisHistoryUrl, jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import { useJarvis } from './jarvis-context'
+import { jarvisHistoryUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
 import { JarvisOrb } from './JarvisOrb'
-import { loadJarvisVoice, saveJarvisVoice, type JarvisVoice } from './jarvis-voice-preference'
+import type { JarvisVoice } from './jarvis-voice-preference'
 import { useJarvisWorktrees } from './jarvis-worktrees'
 import { JarvisWorktreePanel } from './JarvisWorktreePanel'
 
@@ -34,7 +35,13 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     return t('jarvis.screen.unreachable', "Couldn't reach Jarvis on this computer. Is it running?")
   }
   if (state.error === 'dropped') {
-    return t('jarvis.screen.dropped', 'The call dropped. Tap to talk again.')
+    return t('jarvis.screen.dropped', 'The call dropped. Hold to talk again.')
+  }
+  if (state.error === 'idle') {
+    return t('jarvis.screen.idleHungUp', 'Hung up after 10 quiet minutes.')
+  }
+  if (state.error === 'dictation') {
+    return t('jarvis.screen.dictationHungUp', 'Jarvis hung up so you could dictate.')
   }
   switch (state.phase) {
     case 'connecting':
@@ -48,7 +55,9 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     case 'speaking':
       return t('jarvis.screen.speaking', 'Speaking')
     default:
-      return t('jarvis.screen.tapToTalk', 'Tap to talk')
+      return state.handsFree
+        ? t('jarvis.screen.tapToStart', 'Tap to start hands-free')
+        : t('jarvis.screen.holdToTalk', 'Hold to talk')
   }
 }
 
@@ -60,37 +69,15 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const insets = useSafeAreaInsets()
   const { width, height } = useWindowDimensions()
   const host = useHostProfile(hostId)
-  const callRef = useRef<JarvisCall | null>(null)
-  callRef.current ??= new JarvisCall()
-  const call = callRef.current
+  // The app-wide call: leaving this screen or the app keeps it going.
+  const { call, offerUrl, voice, setVoice, handsFree, setHandsFree } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
-  const [voice, setVoice] = useState<JarvisVoice>('male')
   const { worktrees, reachable } = useJarvisWorktrees(
     host ? jarvisWorktreesUrl(host.endpoint) : null
   )
   const messages = useJarvisHistory(host ? jarvisHistoryUrl(host.endpoint) : null, state.messages)
 
-  useEffect(() => {
-    void loadJarvisVoice().then(setVoice)
-  }, [])
-  // Leaving the screen ends the call; so does leaving the app, which iOS would suspend mid-call anyway.
-  useEffect(() => () => call.hangUp(), [call])
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'background') {
-        call.hangUp()
-      }
-    })
-    return () => subscription.remove()
-  }, [call])
-
-  const offerUrl = host ? jarvisOfferUrl(host.endpoint) : null
   const live = state.phase !== 'idle' && state.phase !== 'error'
-  const start = (withVoice: JarvisVoice): void => {
-    if (offerUrl) {
-      void call.start(offerUrl, withVoice)
-    }
-  }
   const ask = (text: string): void => {
     if (offerUrl) {
       call.ask(text, offerUrl, voice)
@@ -100,14 +87,6 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const replay = (id?: number): void => {
     if (offerUrl) {
       call.replay(id, offerUrl, voice)
-    }
-  }
-  const chooseVoice = (next: JarvisVoice): void => {
-    setVoice(next)
-    void saveJarvisVoice(next)
-    // The desktop picks the voice when the call starts, so switching mid-call reconnects.
-    if (live) {
-      start(next)
     }
   }
   // Pushed over this screen, so Back returns here and the call carries on meanwhile.
@@ -175,22 +154,36 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         onReplay={replay}
       />
       <View style={styles.controls}>
-        <View style={styles.sideControl} />
+        <View style={styles.sideControl}>
+          {live ? (
+            <Pressable
+              onPress={() => call.hangUp()}
+              style={({ pressed }) => [
+                styles.smallButton,
+                styles.hangUpButton,
+                pressed && pressedStyle
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('jarvis.screen.hangUp', 'Hang up')}
+            >
+              <PhoneOff size={20} color={colors.onAccent} />
+            </Pressable>
+          ) : null}
+        </View>
         <Pressable
-          onPress={() => (live ? call.hangUp() : start(voice))}
-          disabled={!live && !offerUrl}
+          onPressIn={() => offerUrl && call.pressTalk(offerUrl, voice)}
+          onPressOut={() => call.releaseTalk()}
+          disabled={!offerUrl}
           style={({ pressed }) => [
             styles.talkButton,
-            live && styles.hangUpButton,
+            (state.holding || (handsFree && live)) && styles.talkButtonOpen,
             pressed && pressedStyle
           ]}
           accessibilityRole="button"
-          accessibilityLabel={
-            live ? t('jarvis.screen.hangUp', 'Hang up') : t('jarvis.screen.talk', 'Talk to Jarvis')
-          }
+          accessibilityLabel={t('jarvis.screen.talk', 'Hold to talk to Jarvis')}
         >
-          {live ? (
-            <PhoneOff size={28} color={colors.onAccent} />
+          {handsFree && live ? (
+            <Ear size={28} color={colors.onAccent} />
           ) : (
             <Mic size={28} color={colors.onAccent} />
           )}
@@ -209,6 +202,17 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           ) : null}
         </View>
       </View>
+      <View style={styles.handsFreeRow}>
+        <Text style={styles.handsFreeLabel}>{t('jarvis.screen.handsFree', 'Hands-free')}</Text>
+        <MobileSwitch
+          value={handsFree}
+          onValueChange={setHandsFree}
+          accessibilityLabel={t(
+            'jarvis.screen.handsFreeSwitch',
+            'Hands-free: Jarvis listens without holding'
+          )}
+        />
+      </View>
       <MobileSegmentedControl<JarvisVoice>
         style={styles.voices}
         segments={[
@@ -216,7 +220,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           { value: 'female', label: t('jarvis.screen.female', 'Female') }
         ]}
         selected={voice}
-        onSelect={chooseVoice}
+        onSelect={setVoice}
         testIDPrefix="jarvis-voice"
       />
     </View>
@@ -271,6 +275,15 @@ const styles = themedStyleSheet(() => ({
     justifyContent: 'center',
     backgroundColor: colors.accentBlue
   },
+  talkButtonOpen: { backgroundColor: colors.statusGreen },
   hangUpButton: { backgroundColor: colors.statusRed },
+  handsFreeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    paddingBottom: spacing.sm
+  },
+  handsFreeLabel: { color: colors.textSecondary, fontSize: typography.bodySize },
   voices: { alignSelf: 'center', marginHorizontal: spacing.xl }
 }))
