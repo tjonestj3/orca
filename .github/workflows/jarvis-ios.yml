@@ -7,8 +7,6 @@ on:
   push:
     branches:
       - jarvis-voice
-    paths-ignore:
-      - 'JARVIS_BUILD.md'
   workflow_dispatch:
 
 permissions:
