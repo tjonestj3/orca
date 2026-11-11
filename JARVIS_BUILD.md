@@ -24,7 +24,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    Messages tab listing what Jarvis said (its answers and the agent updates it read out); a tap says
    it again, queued behind anything playing, or opens a call that starts with it. Needs the Jarvis
    server's `/api/jarvis/history` and `jarvis-replay` (the `voice-log-review` brain PR).
-4. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+4. `feat(mobile): Jarvis everywhere` — one app-wide call (`JarvisProvider`), hold-to-talk bubble on every
+   screen (rail orb on the folded iPhone Duo), hands-free switch, background audio (`UIBackgroundModes:
+   audio`), "what I'm looking at" context, floating-workspace cards. Needs the `jarvis-everywhere` brain.
+5. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
