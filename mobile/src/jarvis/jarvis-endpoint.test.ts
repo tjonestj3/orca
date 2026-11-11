@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jarvisOfferUrl } from './jarvis-endpoint'
+import { jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 
 describe('jarvisOfferUrl', () => {
   it("uses the paired host's own address on Jarvis's port", () => {
@@ -12,7 +12,14 @@ describe('jarvisOfferUrl', () => {
     )
   })
 
+  it('lists worktrees from the same server', () => {
+    expect(jarvisWorktreesUrl('ws://100.126.129.22:6768')).toBe(
+      'http://100.126.129.22:7860/api/jarvis/worktrees'
+    )
+  })
+
   it('has no address for an endpoint it cannot parse', () => {
     expect(jarvisOfferUrl('not an endpoint')).toBeNull()
+    expect(jarvisWorktreesUrl('not an endpoint')).toBeNull()
   })
 })

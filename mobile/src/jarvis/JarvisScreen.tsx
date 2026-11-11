@@ -13,9 +13,11 @@ import { colors, pressedStyle, spacing, typography } from '../theme/mobile-theme
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { JarvisCall, type JarvisCallSnapshot } from './jarvis-call'
-import { jarvisOfferUrl } from './jarvis-endpoint'
+import { jarvisOfferUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { JarvisOrb } from './JarvisOrb'
 import { loadJarvisVoice, saveJarvisVoice, type JarvisVoice } from './jarvis-voice-preference'
+import { useJarvisWorktrees } from './jarvis-worktrees'
+import { JarvisWorktreePanel } from './JarvisWorktreePanel'
 
 type Translate = ReturnType<typeof useMobileTranslation>
 
@@ -63,6 +65,9 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const call = callRef.current
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const [voice, setVoice] = useState<JarvisVoice>('male')
+  const { worktrees, reachable } = useJarvisWorktrees(
+    host ? jarvisWorktreesUrl(host.endpoint) : null
+  )
 
   useEffect(() => {
     void loadJarvisVoice().then(setVoice)
@@ -85,6 +90,11 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
       void call.start(offerUrl, withVoice)
     }
   }
+  const ask = (text: string): void => {
+    if (offerUrl) {
+      call.ask(text, offerUrl, voice)
+    }
+  }
   const chooseVoice = (next: JarvisVoice): void => {
     setVoice(next)
     void saveJarvisVoice(next)
@@ -92,6 +102,10 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
     if (live) {
       start(next)
     }
+  }
+  // Pushed over this screen, so Back returns here and the call carries on meanwhile.
+  const openInOrca = (worktreeId: string): void => {
+    router.push({ pathname: '/h/[hostId]/session/[worktreeId]', params: { hostId, worktreeId } })
   }
   const back = (): void => {
     if (router.canGoBack()) {
@@ -101,13 +115,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
     }
   }
 
-  const orbSize = Math.min(width - spacing.xl * 2, height * 0.42, 360)
+  const orbSize = Math.min(width * 0.5, height * 0.24, 220)
 
   return (
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.lg }
+        { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.md }
       ]}
     >
       <NavBar
@@ -133,16 +147,24 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
       </View>
       <View style={styles.captions} accessibilityLiveRegion="polite">
         {state.heard ? (
-          <Text style={styles.heard} numberOfLines={2}>
+          <Text style={styles.heard} numberOfLines={1}>
             {t('jarvis.screen.youSaid', 'You: {{text}}', { text: state.heard })}
           </Text>
         ) : null}
         {state.said ? (
-          <Text style={styles.said} numberOfLines={4}>
+          <Text style={styles.said} numberOfLines={3}>
             {state.said}
           </Text>
         ) : null}
       </View>
+      <JarvisWorktreePanel
+        cards={state.cards}
+        worktrees={worktrees}
+        reachable={reachable}
+        enabled={offerUrl != null}
+        onAsk={ask}
+        onOpen={openInOrca}
+      />
       <View style={styles.controls}>
         <View style={styles.sideControl}>
           {live ? (
@@ -206,14 +228,20 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
 
 const styles = themedStyleSheet(() => ({
   container: { flex: 1, backgroundColor: colors.bgBase },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
+  stage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.sm
+  },
   status: { color: colors.textSecondary, fontSize: typography.bodySize, letterSpacing: 0.3 },
   statusError: { color: colors.statusRed, textAlign: 'center', paddingHorizontal: spacing.xl },
   captions: {
-    minHeight: 84,
+    minHeight: 56,
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
     gap: spacing.xs,
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-start'
   },
   heard: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' },
   said: {
@@ -227,7 +255,7 @@ const styles = themedStyleSheet(() => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xl,
-    paddingVertical: spacing.lg
+    paddingVertical: spacing.md
   },
   sideControl: { width: 48, alignItems: 'center' },
   smallButton: {
@@ -240,9 +268,9 @@ const styles = themedStyleSheet(() => ({
   },
   mutedButton: { borderWidth: 1, borderColor: colors.statusRed },
   talkButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.accentBlue

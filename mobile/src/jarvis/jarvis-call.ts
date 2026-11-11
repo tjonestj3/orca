@@ -13,6 +13,8 @@ import {
 } from './jarvis-call-state'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
+type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
+
 export type JarvisCallError = 'microphone' | 'unreachable' | 'dropped'
 
 export type JarvisCallSnapshot = JarvisCallState & {
@@ -37,6 +39,7 @@ export class JarvisCall {
   private readonly levelListeners = new Set<() => void>()
   private pc: RTCPeerConnection | null = null
   private mic: MediaStream | null = null
+  private channel: DataChannel | null = null
   private timers: ReturnType<typeof setInterval>[] = []
   // Bumped on every start and hang-up so late async steps of an abandoned call do nothing.
   private generation = 0
@@ -55,7 +58,24 @@ export class JarvisCall {
 
   readonly getLevels = (): JarvisLevels => this.levels
 
-  async start(offerUrl: string, voice: JarvisVoice): Promise<void> {
+  // A request from a tap (a worktree's update, "talk about this"): sent into a live call, or opens one with it.
+  ask(text: string, offerUrl: string, voice: JarvisVoice): void {
+    const channel = this.channel
+    if (channel?.readyState === 'open') {
+      channel.send(
+        JSON.stringify({
+          label: RTVI_LABEL,
+          type: 'client-message',
+          id: `orca-${Date.now()}`,
+          data: { t: 'jarvis-ask', d: { text } }
+        })
+      )
+      return
+    }
+    void this.start(offerUrl, voice, text)
+  }
+
+  async start(offerUrl: string, voice: JarvisVoice, ask?: string): Promise<void> {
     this.teardown()
     const generation = ++this.generation
     this.set({ ...IDLE_SNAPSHOT, phase: 'connecting', muted: this.snapshot.muted })
@@ -85,6 +105,7 @@ export class JarvisCall {
     })
 
     const channel = pc.createDataChannel('jarvis', { ordered: true })
+    this.channel = channel
     channel.addEventListener('open', () => {
       channel.send(
         JSON.stringify({
@@ -136,7 +157,7 @@ export class JarvisCall {
       const answer = await postOffer(offerUrl, {
         sdp: pc.localDescription?.sdp,
         type: pc.localDescription?.type,
-        request_data: { voice }
+        request_data: ask ? { voice, ask } : { voice }
       })
       if (generation !== this.generation) {
         return
@@ -175,6 +196,7 @@ export class JarvisCall {
     const { pc, mic } = this
     this.pc = null
     this.mic = null
+    this.channel = null
     if (pc) {
       pc.close()
       if (Platform.OS === 'ios') {
@@ -257,7 +279,11 @@ function iceGathered(pc: RTCPeerConnection): Promise<void> {
 
 async function postOffer(
   url: string,
-  offer: { sdp?: string; type?: string | null; request_data: { voice: JarvisVoice } }
+  offer: {
+    sdp?: string
+    type?: string | null
+    request_data: { voice: JarvisVoice; ask?: string }
+  }
 ): Promise<{ sdp: string; type: 'answer' }> {
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), OFFER_TIMEOUT_MS)

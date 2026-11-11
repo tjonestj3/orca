@@ -8,13 +8,26 @@ export type JarvisPhase =
   | 'speaking'
   | 'error'
 
+// A worktree the conversation is about, offered as a card that opens it in Orca.
+export type JarvisWorktreeCard = {
+  readonly id: string
+  readonly name: string
+  readonly repo: string
+  readonly state: string
+  readonly isNew: boolean
+}
+
 export type JarvisCallState = {
   readonly phase: JarvisPhase
   // Jarvis is still composing: between sentences it stays "thinking" rather than "listening".
   readonly composing: boolean
   readonly heard: string
   readonly said: string
+  // Newest first, at most MAX_CARDS.
+  readonly cards: readonly JarvisWorktreeCard[]
 }
+
+const MAX_CARDS = 3
 
 // Marks Pipecat's RTVI protocol messages on the data channel; never shown.
 export const RTVI_LABEL = 'rtvi-ai'
@@ -23,10 +36,35 @@ export const IDLE_JARVIS_CALL: JarvisCallState = {
   phase: 'idle',
   composing: false,
   heard: '',
-  said: ''
+  said: '',
+  cards: []
 }
 
-type RtviMessage = { label?: unknown; type?: unknown; data?: { text?: unknown; final?: unknown } }
+type RtviMessage = {
+  label?: unknown
+  type?: unknown
+  data?: { text?: unknown; final?: unknown; type?: unknown; new?: unknown; worktree?: unknown }
+}
+
+function readCard(data: RtviMessage['data']): JarvisWorktreeCard | null {
+  const worktree = data?.worktree as Record<string, unknown> | undefined
+  if (
+    data?.type !== 'jarvis-worktree' ||
+    !worktree ||
+    typeof worktree.id !== 'string' ||
+    !worktree.id
+  ) {
+    return null
+  }
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '')
+  return {
+    id: worktree.id,
+    name: text(worktree.name) || worktree.id,
+    repo: text(worktree.repo),
+    state: text(worktree.state),
+    isNew: data.new === true
+  }
+}
 
 export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): JarvisCallState {
   const message = raw as RtviMessage
@@ -57,6 +95,15 @@ export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): Jarvi
         : state
     case 'bot-tts-text':
       return text ? { ...state, said: state.said ? `${state.said} ${text}` : text } : state
+    case 'server-message': {
+      const card = readCard(message.data)
+      return card
+        ? {
+            ...state,
+            cards: [card, ...state.cards.filter((c) => c.id !== card.id)].slice(0, MAX_CARDS)
+          }
+        : state
+    }
     default:
       return state
   }

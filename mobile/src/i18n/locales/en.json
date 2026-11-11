@@ -4987,7 +4987,24 @@
       "hangUp": "Hang up",
       "talk": "Talk to Jarvis",
       "male": "Male",
-      "female": "Female"
+      "female": "Female",
+      "openWorktree": "Open {{name}} in Orca",
+      "newWorktree": "New",
+      "worktrees": "Worktrees",
+      "listUnreachable": "Couldn't load worktrees from Jarvis.",
+      "listLoading": "Loading…",
+      "noWorktrees": "Nothing active right now.",
+      "hearUpdate": "Hear the latest on {{name}}",
+      "rowHint": "Touch and hold to talk about it, send it a message or open it"
+    },
+    "worktree": {
+      "needsYou": "Needs you",
+      "working": "Working",
+      "done": "Done",
+      "idle": "Idle",
+      "talkAbout": "Talk about this",
+      "sendMessage": "Send a message",
+      "openInOrca": "Open in Orca"
     }
   }
 }

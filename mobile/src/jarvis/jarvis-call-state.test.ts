@@ -27,7 +27,8 @@ describe('reduceJarvisMessage', () => {
       phase: 'listening',
       composing: false,
       heard: 'Anything waiting on me?',
-      said: 'Yes, one thing. Audio polish needs you.'
+      said: 'Yes, one thing. Audio polish needs you.',
+      cards: []
     })
   })
 
@@ -45,6 +46,38 @@ describe('reduceJarvisMessage', () => {
       { label: 'something-else', type: 'bot-started-speaking' },
       'ping'
     )
-    expect(state).toEqual({ phase: 'hearing', composing: false, heard: '', said: '' })
+    expect(state).toEqual({ phase: 'hearing', composing: false, heard: '', said: '', cards: [] })
+  })
+})
+
+describe('worktree cards', () => {
+  const card = (id: string, extra: object = {}) =>
+    rtvi('server-message', {
+      type: 'jarvis-worktree',
+      worktree: { id, name: id.split('::')[1], repo: 'spell-duel', state: 'working' },
+      ...extra
+    })
+
+  it('keeps the three most recent, newest first, without repeats', () => {
+    const state = run(
+      card('r::a'),
+      card('r::b'),
+      card('r::a'),
+      card('r::c'),
+      card('r::d', { new: true })
+    )
+    expect(state.cards.map((c) => [c.id, c.isNew])).toEqual([
+      ['r::d', true],
+      ['r::c', false],
+      ['r::a', false]
+    ])
+  })
+
+  it('ignores other server messages and cards without an id', () => {
+    const state = run(
+      rtvi('server-message', { type: 'something-else' }),
+      rtvi('server-message', { type: 'jarvis-worktree', worktree: { name: 'x' } })
+    )
+    expect(state.cards).toEqual([])
   })
 })
