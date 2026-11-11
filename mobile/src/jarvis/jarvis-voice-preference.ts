@@ -16,3 +16,17 @@ export async function loadJarvisVoice(): Promise<JarvisVoice> {
 export async function saveJarvisVoice(voice: JarvisVoice): Promise<void> {
   await AsyncStorage.setItem(JARVIS_VOICE_KEY, voice)
 }
+
+const JARVIS_HANDS_FREE_KEY = 'orca:jarvisHandsFree'
+
+export async function loadJarvisHandsFree(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(JARVIS_HANDS_FREE_KEY)) === 'on'
+  } catch {
+    return false
+  }
+}
+
+export async function saveJarvisHandsFree(on: boolean): Promise<void> {
+  await AsyncStorage.setItem(JARVIS_HANDS_FREE_KEY, on ? 'on' : 'off')
+}

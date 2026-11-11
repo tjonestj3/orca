@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AppState, Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, Mic, MicOff, PhoneOff } from 'lucide-react-native'
+import { ChevronLeft, Mic, PhoneOff } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -38,9 +38,7 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
     case 'listening':
-      return state.muted
-        ? t('jarvis.screen.muted', 'Muted')
-        : t('jarvis.screen.listening', 'Listening')
+      return t('jarvis.screen.listening', 'Listening')
     case 'hearing':
       return t('jarvis.screen.hearing', 'Hearing you')
     case 'thinking':
@@ -166,31 +164,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         onOpen={openInOrca}
       />
       <View style={styles.controls}>
-        <View style={styles.sideControl}>
-          {live ? (
-            <Pressable
-              onPress={() => call.setMuted(!state.muted)}
-              style={({ pressed }) => [
-                styles.smallButton,
-                state.muted && styles.mutedButton,
-                pressed && pressedStyle
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: state.muted }}
-              accessibilityLabel={
-                state.muted
-                  ? t('jarvis.screen.unmute', 'Unmute microphone')
-                  : t('jarvis.screen.mute', 'Mute microphone')
-              }
-            >
-              {state.muted ? (
-                <MicOff size={20} color={colors.statusRed} />
-              ) : (
-                <Mic size={20} color={colors.textPrimary} />
-              )}
-            </Pressable>
-          ) : null}
-        </View>
+        <View style={styles.sideControl} />
         <Pressable
           onPress={() => (live ? call.hangUp() : start(voice))}
           disabled={!live && !offerUrl}
@@ -258,15 +232,6 @@ const styles = themedStyleSheet(() => ({
     paddingVertical: spacing.md
   },
   sideControl: { width: 48, alignItems: 'center' },
-  smallButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bgRaised
-  },
-  mutedButton: { borderWidth: 1, borderColor: colors.statusRed },
   talkButton: {
     width: 64,
     height: 64,
