@@ -23,6 +23,7 @@
     "start:emulator": "node scripts/start-emulator.mjs"
   },
   "dependencies": {
+    "@config-plugins/react-native-webrtc": "14.0.0",
     "@formatjs/intl-pluralrules": "6.3.16",
     "@noble/hashes": "1.8.0",
     "@orca/expo-two-way-audio": "file:./packages/expo-two-way-audio",
@@ -75,6 +76,7 @@
     "react-native-screens": "^4.24.0",
     "react-native-svg": "^15.15.5",
     "react-native-web": "^0.21.3",
+    "react-native-webrtc": "155.0.1",
     "react-native-webview": "13.16.2",
     "react-native-worklets": "^0.8.3",
     "remend": "1.4.0",

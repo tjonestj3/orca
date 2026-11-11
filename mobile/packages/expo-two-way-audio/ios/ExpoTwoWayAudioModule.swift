@@ -10,6 +10,7 @@ public class ExpoTwoWayAudioModule: Module {
     private var audioEngine: AudioEngine?
     // OnDeviceSpeechController on iOS 26 and later; nil before, where every speech function answers unsupported.
     private var speech: AnyObject?
+    private let callSpeaker = CallSpeakerRoute()
     public func definition() -> ModuleDefinition {
         Name("ExpoTwoWayAudio")
 
@@ -100,6 +101,14 @@ public class ExpoTwoWayAudioModule: Module {
                 }
             } else {
                 print("This code only runs on iOS 14 and lower")
+            }
+        }
+
+        Function("preferSpeakerForCallIOS") { (on: Bool) in
+            if on {
+                self.callSpeaker.start()
+            } else {
+                self.callSpeaker.stop()
             }
         }
 

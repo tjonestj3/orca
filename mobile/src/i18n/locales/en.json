@@ -687,7 +687,8 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "networkDiagnostics": "Network diagnostics",
-      "editHost": "Edit host"
+      "editHost": "Edit host",
+      "talkToJarvis": "Talk to Jarvis"
     },
     "hostPendingCreationRow": {
       "creatingWorkspace": "Creating workspace…"
@@ -845,7 +846,8 @@
       "changes": "Changes",
       "pullRequest": "Pull Request",
       "workspace": "Workspace",
-      "automations": "Automations"
+      "automations": "Automations",
+      "jarvis": "Jarvis"
     }
   },
   "notifications": {
@@ -4964,6 +4966,28 @@
     "activity": {
       "needsWindow": "Couldn’t update. Open Orca on {{desktop}}.",
       "failed": "Couldn’t update the agent list."
+    }
+  },
+  "jarvis": {
+    "screen": {
+      "microphoneBlocked": "Jarvis needs the microphone. Allow it for Orca in Settings.",
+      "unreachable": "Couldn't reach Jarvis on this computer. Is it running?",
+      "dropped": "The call dropped. Tap to talk again.",
+      "connecting": "Connecting…",
+      "muted": "Muted",
+      "listening": "Listening",
+      "hearing": "Hearing you",
+      "thinking": "Thinking",
+      "speaking": "Speaking",
+      "tapToTalk": "Tap to talk",
+      "title": "Jarvis",
+      "youSaid": "You: {{text}}",
+      "unmute": "Unmute microphone",
+      "mute": "Mute microphone",
+      "hangUp": "Hang up",
+      "talk": "Talk to Jarvis",
+      "male": "Male",
+      "female": "Female"
     }
   }
 }

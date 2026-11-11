@@ -1,4 +1,4 @@
-import { Activity, Edit3, PowerOff, RefreshCw } from 'lucide-react-native'
+import { Activity, AudioLines, Edit3, PowerOff, RefreshCw } from 'lucide-react-native'
 import type { ActionSheetAction } from './components/ActionSheetModal'
 import type { ConnectionState } from './transport/connection/connection-state'
 import type { HostProfile } from './host-catalog/host-profile'
@@ -15,6 +15,7 @@ export function getHostListActionSheetActions(args: {
   onDiagnostics: (hostId: string) => void
   onEdit: (hostId: string) => void
   onRemove: (host: HostProfile) => void
+  onJarvis: (hostId: string) => void
 }): ActionSheetAction[] {
   const { host } = args
   if (!host) {
@@ -27,6 +28,13 @@ export function getHostListActionSheetActions(args: {
     args.state === 'reconnecting'
 
   return [
+    {
+      id: 'jarvis',
+      label: translate('hostScreen.hostListActionSheetActions.talkToJarvis', 'Talk to Jarvis'),
+      icon: AudioLines,
+      closeBeforePress: true,
+      onPress: () => args.onJarvis(host.id)
+    },
     {
       id: 'connect',
       label:

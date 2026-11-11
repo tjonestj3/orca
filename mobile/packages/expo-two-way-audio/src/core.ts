@@ -40,3 +40,8 @@ export function getMicrophoneModeIOS() {
 export function setMicrophoneModeIOS() {
   return ExpoTwoWayAudioModule.setMicrophoneModeIOS()
 }
+
+// iOS only: a voice call plays on the loudspeaker rather than the earpiece unless headphones, Bluetooth or CarPlay are connected.
+export function preferSpeakerForCallIOS(on: boolean): void {
+  ExpoTwoWayAudioModule.preferSpeakerForCallIOS(on)
+}

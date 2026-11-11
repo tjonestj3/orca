@@ -275,7 +275,9 @@ export function MobileHomeScreen() {
             onDiagnostics: (hostId) =>
               data.router.push({ pathname: '/connection-log', params: { hostId } }),
             onEdit: openMobileHostEdit,
-            onRemove: (host) => setConfirmRemove(host)
+            onRemove: (host) => setConfirmRemove(host),
+            onJarvis: (hostId) =>
+              data.router.push({ pathname: '/h/[hostId]/jarvis', params: { hostId } })
           })}
           onClose={() => setActionTarget(null)}
         />

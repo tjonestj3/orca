@@ -15,6 +15,7 @@ type ExpoTwoWayAudioWebModule = {
   requestMicrophonePermissionsAsync: () => Promise<PermissionResponse>
   getMicrophoneModeIOS: () => null
   setMicrophoneModeIOS: () => void
+  preferSpeakerForCallIOS: (on: boolean) => void
   addListener: (eventName: string, handler: (ev: unknown) => void) => EventSubscription
 }
 
@@ -38,6 +39,7 @@ const ExpoTwoWayAudioModule: ExpoTwoWayAudioWebModule = {
   getMicrophonePermissionsAsync: async () => deniedMicrophonePermission,
   requestMicrophonePermissionsAsync: async () => deniedMicrophonePermission,
   getMicrophoneModeIOS: () => null,
+  preferSpeakerForCallIOS: noop,
   setMicrophoneModeIOS: noop,
   addListener: () => ({ remove: noop })
 }

@@ -33,7 +33,7 @@
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "NSLocalNetworkUsageDescription": "Orca connects to the desktop app on your LAN.",
-        "NSMicrophoneUsageDescription": "Allow Orca to use your microphone for voice dictation, transcribed on this phone or on your paired computer.",
+        "NSMicrophoneUsageDescription": "Allow Orca to use your microphone for voice dictation, transcribed on this phone or on your paired computer, and for talking to Jarvis.",
         "NSPhotoLibraryUsageDescription": "Allow Orca to attach photos from your library to a terminal session on your paired desktop.",
         "NSPhotoLibraryAddUsageDescription": "Allow Orca to save images from your sessions to Photos.",
         "NSAppTransportSecurity": {
@@ -95,6 +95,7 @@
     },
     "plugins": [
       "expo-router",
+      "@config-plugins/react-native-webrtc",
       [
         "expo-localization",
         {
