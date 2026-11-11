@@ -27,7 +27,11 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 4. `feat(mobile): Jarvis everywhere` — one app-wide call (`JarvisProvider`), hold-to-talk bubble on every
    screen (rail orb on the folded iPhone Duo), hands-free switch, background audio (`UIBackgroundModes:
    audio`), "what I'm looking at" context, floating-workspace cards. Needs the `jarvis-everywhere` brain.
-5. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+5. `feat(jarvis): the conversation as a chat transcript` — the Messages tab becomes Conversation (chat
+   bubbles, both sides, full text; tap Jarvis's lines to replay, hold to copy), also full screen from the
+   captions or the nav bar. Plus fixes: a tap on the bubble no longer starts a call, chat dictation ends a
+   live call first, and the reachability check uses `/api/jarvis/ping`. Needs the matching brain.
+6. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
