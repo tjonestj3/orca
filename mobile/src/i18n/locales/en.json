@@ -688,7 +688,7 @@
       "disconnect": "Disconnect",
       "networkDiagnostics": "Network diagnostics",
       "editHost": "Edit host",
-      "talkToJarvis": "Talk to Jarvis"
+      "talkToJarvis": "Talk to Xeno"
     },
     "hostPendingCreationRow": {
       "creatingWorkspace": "Creating workspace…"
@@ -847,7 +847,7 @@
       "pullRequest": "Pull Request",
       "workspace": "Workspace",
       "automations": "Automations",
-      "jarvis": "Jarvis",
+      "jarvis": "Xeno",
       "jarvisTranscript": "Conversation"
     }
   },
@@ -4971,37 +4971,41 @@
   },
   "jarvis": {
     "screen": {
-      "microphoneBlocked": "Jarvis needs the microphone. Allow it for Orca in Settings.",
-      "unreachable": "Couldn't reach Jarvis on this computer. Is it running?",
+      "microphoneBlocked": "Xeno needs the microphone. Allow it for Xeno in Settings.",
+      "unreachable": "Couldn't reach Xeno on this computer. Is it running?",
       "dropped": "The call dropped. Hold to talk again.",
       "connecting": "Connecting…",
       "listening": "Listening",
       "hearing": "Hearing you",
       "thinking": "Thinking",
       "speaking": "Speaking",
-      "title": "Jarvis",
+      "title": "Xeno",
       "youSaid": "You: {{text}}",
       "hangUp": "Hang up",
-      "talk": "Hold to talk to Jarvis",
+      "talk": "Hold to talk to Xeno",
       "male": "Male",
       "female": "Female",
       "openWorktree": "Open {{name}} in Orca",
       "newWorktree": "New",
       "worktrees": "Worktrees",
-      "listUnreachable": "Couldn't load worktrees from Jarvis.",
+      "listUnreachable": "Couldn't load worktrees from Xeno.",
       "listLoading": "Loading…",
       "noWorktrees": "Nothing active right now.",
       "hearUpdate": "Hear the latest on {{name}}",
       "rowHint": "Touch and hold to talk about it, send it a message or open it",
       "playLast": "Play the last message again",
       "idleHungUp": "Hung up after 10 quiet minutes.",
-      "dictationHungUp": "Jarvis hung up so you could dictate.",
+      "dictationHungUp": "Xeno hung up so you could dictate.",
       "tapToStart": "Tap to start hands-free",
       "holdToTalk": "Hold to talk",
       "handsFree": "Hands-free",
-      "handsFreeSwitch": "Hands-free: Jarvis listens without holding",
+      "handsFreeSwitch": "Hands-free: Xeno listens without holding",
       "openTranscript": "See the whole conversation",
-      "conversation": "Conversation"
+      "conversation": "Conversation",
+      "woke": "Picked that up",
+      "listeningForName": "Say “Hey Xeno” to talk",
+      "wake": "Hey Xeno",
+      "wakeSwitch": "Hey Xeno: the mic stays on and Xeno answers when you say its name"
     },
     "worktree": {
       "needsYou": "Needs you",
@@ -5013,15 +5017,16 @@
       "openInOrca": "Open in Orca"
     },
     "bubble": {
-      "holdToTalk": "Jarvis. Hold to talk, tap to open.",
-      "hangUp": "Hang up Jarvis",
-      "handsFree": "Hands-free is on"
+      "holdToTalk": "Xeno. Hold to talk, tap to open.",
+      "hangUp": "Hang up Xeno",
+      "handsFree": "Hands-free is on",
+      "wake": "Hey Xeno is on"
     },
     "transcript": {
-      "empty": "Your conversation with Jarvis shows up here.",
+      "empty": "Your conversation with Xeno shows up here.",
       "agentUpdate": "Agent update",
       "you": "You",
-      "jarvis": "Jarvis",
+      "jarvis": "Xeno",
       "playHint": "Plays it again. Touch and hold to copy.",
       "copyHint": "Touch and hold to copy.",
       "copied": "Copied",

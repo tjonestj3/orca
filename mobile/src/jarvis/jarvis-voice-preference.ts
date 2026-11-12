@@ -30,3 +30,17 @@ export async function loadJarvisHandsFree(): Promise<boolean> {
 export async function saveJarvisHandsFree(on: boolean): Promise<void> {
   await AsyncStorage.setItem(JARVIS_HANDS_FREE_KEY, on ? 'on' : 'off')
 }
+
+const JARVIS_WAKE_KEY = 'orca:jarvisWake'
+
+export async function loadJarvisWake(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(JARVIS_WAKE_KEY)) === 'on'
+  } catch {
+    return false
+  }
+}
+
+export async function saveJarvisWake(on: boolean): Promise<void> {
+  await AsyncStorage.setItem(JARVIS_WAKE_KEY, on ? 'on' : 'off')
+}

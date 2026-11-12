@@ -21,8 +21,10 @@ import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { viewingTarget } from './jarvis-viewing'
 import {
   loadJarvisHandsFree,
+  loadJarvisWake,
   loadJarvisVoice,
   saveJarvisHandsFree,
+  saveJarvisWake,
   saveJarvisVoice,
   type JarvisVoice
 } from './jarvis-voice-preference'
@@ -74,6 +76,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [hostId, setHostId] = useState<string | null>(null)
   const [voice, setVoiceState] = useState<JarvisVoice>('male')
   const [handsFree, setHandsFreeState] = useState(false)
+  const [wake, setWakeState] = useState(false)
   const host = useHostProfile(hostId ?? '')
   const offerUrl = host ? jarvisOfferUrl(host.endpoint) : null
   const reachable = useReachable(host ? jarvisPingUrl(host.endpoint) : null)
@@ -84,6 +87,10 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     void loadJarvisHandsFree().then((on) => {
       setHandsFreeState(on)
       call.setHandsFree(on)
+    })
+    void loadJarvisWake().then((on) => {
+      setWakeState(on)
+      call.setWake(on)
     })
   }, [call])
   useEffect(() => call.setViewing(viewingTarget(pathname, hostId)), [call, pathname, hostId])
@@ -109,6 +116,14 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     },
     [call]
   )
+  const setWake = useCallback(
+    (on: boolean) => {
+      setWakeState(on)
+      call.setWake(on)
+      void saveJarvisWake(on)
+    },
+    [call]
+  )
   const adoptHost = useCallback((next: string) => {
     setHostId(next)
     void rememberJarvisHost(next)
@@ -129,6 +144,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setVoice,
       handsFree,
       setHandsFree,
+      wake,
+      setWake,
       adoptHost,
       openJarvisScreen
     }),
@@ -141,6 +158,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setVoice,
       handsFree,
       setHandsFree,
+      wake,
+      setWake,
       adoptHost,
       openJarvisScreen
     ]

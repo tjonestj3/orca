@@ -12,6 +12,8 @@ export type JarvisContextValue = {
   readonly setVoice: (voice: JarvisVoice) => void
   readonly handsFree: boolean
   readonly setHandsFree: (on: boolean) => void
+  readonly wake: boolean
+  readonly setWake: (on: boolean) => void
   readonly adoptHost: (hostId: string) => void
   readonly openJarvisScreen: () => void
 }

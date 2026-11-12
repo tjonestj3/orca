@@ -135,7 +135,7 @@ export function JarvisWorktreePanel({
           {worktrees.length === 0 ? (
             <Text style={styles.empty}>
               {reachable === false
-                ? t('jarvis.screen.listUnreachable', "Couldn't load worktrees from Jarvis.")
+                ? t('jarvis.screen.listUnreachable', "Couldn't load worktrees from Xeno.")
                 : reachable === null
                   ? t('jarvis.screen.listLoading', 'Loading…')
                   : t('jarvis.screen.noWorktrees', 'Nothing active right now.')}

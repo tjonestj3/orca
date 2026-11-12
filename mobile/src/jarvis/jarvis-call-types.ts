@@ -9,6 +9,8 @@ export type JarvisOpening = { readonly ask?: string; readonly replay?: number | 
 export type JarvisCallSnapshot = JarvisCallState & {
   // Hands-free listens all the time; otherwise only while a talk control is held.
   readonly handsFree: boolean
+  // "Hey Xeno": the mic stays open and Xeno answers when it hears its name.
+  readonly wake: boolean
   readonly holding: boolean
   readonly error: JarvisCallError | null
 }
@@ -23,6 +25,7 @@ export type JarvisLevels = { readonly user: number; readonly bot: number }
 export const IDLE_SNAPSHOT: JarvisCallSnapshot = {
   ...IDLE_JARVIS_CALL,
   handsFree: false,
+  wake: false,
   holding: false,
   error: null
 }

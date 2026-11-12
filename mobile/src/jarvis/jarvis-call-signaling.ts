@@ -1,4 +1,5 @@
 import type { RTCPeerConnection } from 'react-native-webrtc'
+import { RTVI_LABEL } from './jarvis-call-state'
 import type { JarvisOpening } from './jarvis-call-types'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
@@ -76,4 +77,27 @@ export function audioLevelsFromStats(report: Map<string, AudioStat>): {
     }
   })
   return { user, bot }
+}
+
+// A data channel message as JSON; null for anything else (the server's pings, binary frames).
+export function parseChannelData(data: unknown): unknown {
+  if (typeof data !== 'string') {
+    return null
+  }
+  try {
+    const message: unknown = JSON.parse(data)
+    return message
+  } catch {
+    return null
+  }
+}
+
+// RTVI's hello, sent once the data channel opens.
+export function clientReadyMessage(): string {
+  return JSON.stringify({
+    label: RTVI_LABEL,
+    type: 'client-ready',
+    id: `orca-${Date.now()}`,
+    data: { version: '1.0.0', about: { library: 'orca-mobile' } }
+  })
 }

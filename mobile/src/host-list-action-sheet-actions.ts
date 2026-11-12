@@ -30,7 +30,7 @@ export function getHostListActionSheetActions(args: {
   return [
     {
       id: 'jarvis',
-      label: translate('hostScreen.hostListActionSheetActions.talkToJarvis', 'Talk to Jarvis'),
+      label: translate('hostScreen.hostListActionSheetActions.talkToJarvis', 'Talk to Xeno'),
       icon: AudioLines,
       closeBeforePress: true,
       onPress: () => args.onJarvis(host.id)

@@ -6,7 +6,13 @@ import {
 } from '@orca/expo-two-way-audio'
 import { nativeMicrophoneScreenLock } from '../platform/native-audio-device'
 import { reduceJarvisMessage, RTVI_LABEL } from './jarvis-call-state'
-import { audioLevelsFromStats, iceGathered, postOffer } from './jarvis-call-signaling'
+import {
+  audioLevelsFromStats,
+  iceGathered,
+  clientReadyMessage,
+  parseChannelData,
+  postOffer
+} from './jarvis-call-signaling'
 import {
   IDLE_CHECK_MS,
   IDLE_SNAPSHOT,
@@ -92,6 +98,12 @@ export class JarvisCall {
     this.sendClientMessage('jarvis-ptt', { state: 'cancel' })
   }
 
+  setWake(on: boolean): void {
+    this.set({ ...this.snapshot, wake: on })
+    this.applyMic()
+    this.sendClientMessage('jarvis-wake', { on })
+  }
+
   setHandsFree(on: boolean): void {
     this.set({ ...this.snapshot, handsFree: on })
     this.applyMic()
@@ -171,17 +183,12 @@ export class JarvisCall {
     const channel = pc.createDataChannel('jarvis', { ordered: true })
     this.channel = channel
     channel.addEventListener('open', () => {
-      channel.send(
-        JSON.stringify({
-          label: RTVI_LABEL,
-          type: 'client-ready',
-          id: `orca-${Date.now()}`,
-          data: { version: '1.0.0', about: { library: 'orca-mobile' } }
-        })
-      )
-      openingClientMessages({ viewing: this.viewing, holding: this.snapshot.holding }).forEach(
-        ([type, data]) => this.sendClientMessage(type, data)
-      )
+      channel.send(clientReadyMessage())
+      openingClientMessages({
+        viewing: this.viewing,
+        holding: this.snapshot.holding,
+        wake: this.snapshot.wake
+      }).forEach(([type, data]) => this.sendClientMessage(type, data))
       // The server treats a call without pings for three seconds as gone.
       this.every(1000, () => {
         if (channel.readyState === 'open') {
@@ -190,16 +197,13 @@ export class JarvisCall {
       })
     })
     channel.addEventListener('message', (event) => {
-      if (generation !== this.generation || typeof event.data !== 'string') {
+      const message = generation === this.generation ? parseChannelData(event.data) : null
+      if (message === null) {
         return
       }
-      let message: unknown
-      try {
-        message = JSON.parse(event.data)
-      } catch {
-        return
-      }
-      const next = reduceJarvisMessage(this.snapshot, message)
+      const next = reduceJarvisMessage(this.snapshot, message, {
+        waitingForName: this.snapshot.wake && !this.snapshot.holding
+      })
       if (
         next.phase !== this.snapshot.phase &&
         (next.phase === 'hearing' || next.phase === 'speaking')
@@ -257,12 +261,12 @@ export class JarvisCall {
   }
 
   private idleKeepingChoices(): JarvisCallSnapshot {
-    return { ...IDLE_SNAPSHOT, handsFree: this.snapshot.handsFree, holding: this.snapshot.holding }
+    const { handsFree, wake, holding } = this.snapshot
+    return { ...IDLE_SNAPSHOT, handsFree, wake, holding }
   }
 
   private micOpen(): boolean {
-    const { handsFree, holding } = this.snapshot
-    return micShouldBeOpen({ handsFree, holding, connected: this.connected })
+    return micShouldBeOpen({ ...this.snapshot, connected: this.connected })
   }
 
   private applyMic(): void {

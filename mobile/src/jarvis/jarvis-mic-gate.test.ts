@@ -3,26 +3,50 @@ import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 
 describe('micShouldBeOpen', () => {
   it('keeps the mic shut until the call is connected', () => {
-    expect(micShouldBeOpen({ handsFree: true, holding: true, connected: false })).toBe(false)
-    expect(micShouldBeOpen({ handsFree: false, holding: true, connected: false })).toBe(false)
+    expect(micShouldBeOpen({ handsFree: true, wake: false, holding: true, connected: false })).toBe(
+      false
+    )
+    expect(micShouldBeOpen({ handsFree: false, wake: true, holding: true, connected: false })).toBe(
+      false
+    )
   })
 
   it('opens it in hands-free mode or while the talk control is held', () => {
-    expect(micShouldBeOpen({ handsFree: true, holding: false, connected: true })).toBe(true)
-    expect(micShouldBeOpen({ handsFree: false, holding: true, connected: true })).toBe(true)
+    expect(micShouldBeOpen({ handsFree: true, wake: false, holding: false, connected: true })).toBe(
+      true
+    )
+    expect(micShouldBeOpen({ handsFree: false, wake: false, holding: true, connected: true })).toBe(
+      true
+    )
+  })
+
+  it('keeps it open for "Hey Xeno", which listens for its name', () => {
+    expect(micShouldBeOpen({ handsFree: false, wake: true, holding: false, connected: true })).toBe(
+      true
+    )
   })
 
   it('shuts it once the talk control is let go, unless hands-free', () => {
-    expect(micShouldBeOpen({ handsFree: false, holding: false, connected: true })).toBe(false)
+    expect(
+      micShouldBeOpen({ handsFree: false, wake: false, holding: false, connected: true })
+    ).toBe(false)
   })
 })
 
 describe('openingClientMessages', () => {
   it('tells Jarvis what is on screen and that the talk button is already held', () => {
-    expect(openingClientMessages({ viewing: 'repo::/w/a', holding: true })).toEqual([
+    expect(openingClientMessages({ viewing: 'repo::/w/a', holding: true, wake: false })).toEqual([
       ['jarvis-context', { worktreeId: 'repo::/w/a' }],
       ['jarvis-ptt', { state: 'down' }]
     ])
-    expect(openingClientMessages({ viewing: null, holding: false })).toEqual([])
+    expect(openingClientMessages({ viewing: null, holding: false, wake: false })).toEqual([])
+  })
+})
+
+describe('openingClientMessages with "Hey Xeno"', () => {
+  it('tells Xeno to wait for its name', () => {
+    expect(openingClientMessages({ viewing: null, holding: false, wake: true })).toEqual([
+      ['jarvis-wake', { on: true }]
+    ])
   })
 })

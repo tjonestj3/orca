@@ -13,7 +13,7 @@ import { useJarvis } from './jarvis-context'
 export function JarvisTalkControl({ size }: { readonly size: number }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
-  const { call, offerUrl, voice, handsFree, openJarvisScreen } = useJarvis()
+  const { call, offerUrl, voice, handsFree, wake, openJarvisScreen } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = state.phase !== 'idle' && state.phase !== 'error'
   // Read at press time, so the press keeps the latest call details without being rebuilt mid-hold.
@@ -42,12 +42,13 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
         onPressOut={press.pressOut}
         style={({ pressed }) => [styles.orb, { borderRadius: size / 2 }, pressed && pressedStyle]}
         accessibilityRole="button"
-        accessibilityLabel={t('jarvis.bubble.holdToTalk', 'Jarvis. Hold to talk, tap to open.')}
+        accessibilityLabel={t('jarvis.bubble.holdToTalk', 'Xeno. Hold to talk, tap to open.')}
       >
         <JarvisOrb
           call={call}
           phase={state.holding && live ? 'hearing' : state.phase}
           size={size}
+          woke={state.woke}
         />
       </Pressable>
       {live ? (
@@ -56,16 +57,20 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
           hitSlop={8}
           style={({ pressed }) => [styles.badge, styles.hangUp, pressed && pressedStyle]}
           accessibilityRole="button"
-          accessibilityLabel={t('jarvis.bubble.hangUp', 'Hang up Jarvis')}
+          accessibilityLabel={t('jarvis.bubble.hangUp', 'Hang up Xeno')}
         >
           <X size={11} color={colors.onAccent} />
         </Pressable>
       ) : null}
-      {handsFree ? (
+      {handsFree || wake ? (
         <View
           style={[styles.badge, styles.handsFree]}
           accessible
-          accessibilityLabel={t('jarvis.bubble.handsFree', 'Hands-free is on')}
+          accessibilityLabel={
+            wake
+              ? t('jarvis.bubble.wake', 'Hey Xeno is on')
+              : t('jarvis.bubble.handsFree', 'Hands-free is on')
+          }
         >
           <Ear size={11} color={colors.onAccent} />
         </View>

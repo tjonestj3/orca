@@ -29,11 +29,11 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
   if (state.error === 'microphone') {
     return t(
       'jarvis.screen.microphoneBlocked',
-      'Jarvis needs the microphone. Allow it for Orca in Settings.'
+      'Xeno needs the microphone. Allow it for Xeno in Settings.'
     )
   }
   if (state.error === 'unreachable') {
-    return t('jarvis.screen.unreachable', "Couldn't reach Jarvis on this computer. Is it running?")
+    return t('jarvis.screen.unreachable', "Couldn't reach Xeno on this computer. Is it running?")
   }
   if (state.error === 'dropped') {
     return t('jarvis.screen.dropped', 'The call dropped. Hold to talk again.')
@@ -42,13 +42,18 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     return t('jarvis.screen.idleHungUp', 'Hung up after 10 quiet minutes.')
   }
   if (state.error === 'dictation') {
-    return t('jarvis.screen.dictationHungUp', 'Jarvis hung up so you could dictate.')
+    return t('jarvis.screen.dictationHungUp', 'Xeno hung up so you could dictate.')
+  }
+  if (state.woke) {
+    return t('jarvis.screen.woke', 'Picked that up')
   }
   switch (state.phase) {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
     case 'listening':
-      return t('jarvis.screen.listening', 'Listening')
+      return state.wake
+        ? t('jarvis.screen.listeningForName', 'Say “Hey Xeno” to talk')
+        : t('jarvis.screen.listening', 'Listening')
     case 'hearing':
       return t('jarvis.screen.hearing', 'Hearing you')
     case 'thinking':
@@ -56,7 +61,7 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     case 'speaking':
       return t('jarvis.screen.speaking', 'Speaking')
     default:
-      return state.handsFree
+      return state.handsFree || state.wake
         ? t('jarvis.screen.tapToStart', 'Tap to start hands-free')
         : t('jarvis.screen.holdToTalk', 'Hold to talk')
   }
@@ -71,7 +76,8 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const { width, height } = useWindowDimensions()
   const host = useHostProfile(hostId)
   // The app-wide call: leaving this screen or the app keeps it going.
-  const { call, offerUrl, voice, setVoice, handsFree, setHandsFree } = useJarvis()
+  const { call, offerUrl, voice, setVoice, handsFree, setHandsFree, wake, setWake } = useJarvis()
+  const openMic = handsFree || wake
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const { worktrees, reachable } = useJarvisWorktrees(
     host ? jarvisWorktreesUrl(host.endpoint) : null
@@ -123,7 +129,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             accessibilityLabel={t('common.back', 'Back')}
           />
         }
-        title={t('jarvis.screen.title', 'Jarvis')}
+        title={t('jarvis.screen.title', 'Xeno')}
         subtitle={host?.name}
         trailing={
           <NavBarButton
@@ -134,7 +140,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         }
       />
       <View style={styles.stage}>
-        <JarvisOrb call={call} phase={state.phase} size={orbSize} />
+        <JarvisOrb call={call} phase={state.phase} size={orbSize} woke={state.woke} />
         <Text
           style={[styles.status, state.error ? styles.statusError : null]}
           accessibilityRole="text"
@@ -197,13 +203,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           disabled={!offerUrl}
           style={({ pressed }) => [
             styles.talkButton,
-            (state.holding || (handsFree && live)) && styles.talkButtonOpen,
+            (state.holding || (openMic && live)) && styles.talkButtonOpen,
             pressed && pressedStyle
           ]}
           accessibilityRole="button"
-          accessibilityLabel={t('jarvis.screen.talk', 'Hold to talk to Jarvis')}
+          accessibilityLabel={t('jarvis.screen.talk', 'Hold to talk to Xeno')}
         >
-          {handsFree && live ? (
+          {openMic && live ? (
             <Ear size={28} color={colors.onAccent} />
           ) : (
             <Mic size={28} color={colors.onAccent} />
@@ -231,7 +237,18 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             onValueChange={setHandsFree}
             accessibilityLabel={t(
               'jarvis.screen.handsFreeSwitch',
-              'Hands-free: Jarvis listens without holding'
+              'Hands-free: Xeno listens without holding'
+            )}
+          />
+        </View>
+        <View style={styles.handsFree}>
+          <Text style={styles.handsFreeLabel}>{t('jarvis.screen.wake', 'Hey Xeno')}</Text>
+          <MobileSwitch
+            value={wake}
+            onValueChange={setWake}
+            accessibilityLabel={t(
+              'jarvis.screen.wakeSwitch',
+              'Hey Xeno: the mic stays on and Xeno answers when you say its name'
             )}
           />
         </View>
@@ -298,11 +315,14 @@ const styles = themedStyleSheet(() => ({
   },
   talkButtonOpen: { backgroundColor: colors.statusGreen },
   hangUpButton: { backgroundColor: colors.statusRed },
+  // Wraps on a narrow screen: the two switches first, the voice below.
   settingsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.lg,
+    columnGap: spacing.lg,
+    rowGap: spacing.sm,
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg
   },

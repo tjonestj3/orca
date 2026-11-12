@@ -29,7 +29,8 @@ describe('reduceJarvisMessage', () => {
       heard: 'Anything waiting on me?',
       said: 'Yes, one thing. Audio polish needs you.',
       cards: [],
-      messages: []
+      messages: [],
+      woke: false
     })
   })
 
@@ -53,7 +54,8 @@ describe('reduceJarvisMessage', () => {
       heard: '',
       said: '',
       cards: [],
-      messages: []
+      messages: [],
+      woke: false
     })
   })
 })
@@ -102,5 +104,29 @@ describe('worktree cards', () => {
       { id: 1, kind: 'reply', text: 'Sending it.', at: 5 },
       { id: 2, kind: 'update', text: 'jarvis-brain: the design is done.', at: 5 }
     ])
+  })
+})
+
+describe('"Hey Xeno"', () => {
+  const waiting = (...messages: unknown[]): JarvisCallState =>
+    messages.reduce<JarvisCallState>(
+      (state, message) => reduceJarvisMessage(state, message, { waitingForName: true }),
+      { ...IDLE_JARVIS_CALL, phase: 'listening' }
+    )
+
+  it('stays calm while people talk, since Xeno only answers its name', () => {
+    const state = waiting(rtvi('user-started-speaking'), rtvi('user-stopped-speaking'))
+    expect(state.phase).toBe('listening')
+    expect(state.woke).toBe(false)
+  })
+
+  it('shows Xeno picked it up, until Xeno starts to answer', () => {
+    const woke = waiting(
+      rtvi('user-started-speaking'),
+      rtvi('user-stopped-speaking'),
+      rtvi('server-message', { type: 'jarvis-woke' })
+    )
+    expect(woke).toMatchObject({ phase: 'thinking', woke: true })
+    expect(reduceJarvisMessage(woke, rtvi('bot-started-speaking')).woke).toBe(false)
   })
 })

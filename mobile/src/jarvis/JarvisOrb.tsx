@@ -7,7 +7,13 @@ import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisCall } from './jarvis-call'
 import type { JarvisPhase } from './jarvis-call-state'
 
-type Props = { readonly call: JarvisCall; readonly phase: JarvisPhase; readonly size: number }
+type Props = {
+  readonly call: JarvisCall
+  readonly phase: JarvisPhase
+  readonly size: number
+  // "Hey Xeno" picked up a turn: its own colour, apart from holding the button.
+  readonly woke?: boolean
+}
 
 function phaseColor(phase: JarvisPhase): string {
   switch (phase) {
@@ -56,7 +62,7 @@ const turn = (spin: Animated.Value, reverse = false) => ({
 })
 
 // Jarvis as an orb: rings that turn, an amber sweep while thinking, a core that swells with whoever is talking.
-export function JarvisOrb({ call, phase, size }: Props) {
+export function JarvisOrb({ call, phase, size, woke = false }: Props) {
   useMobileColorScheme()
   const still = useReducedMotionEnabled() !== false
   const levels = useSyncExternalStore(call.subscribeLevels, call.getLevels)
@@ -73,7 +79,7 @@ export function JarvisOrb({ call, phase, size }: Props) {
     }).start()
   }, [level, still, swell])
 
-  const color = phaseColor(phase)
+  const color = woke ? colors.statusPurple : phaseColor(phase)
   const resting = phase === 'idle' || phase === 'error'
   const c = size / 2
   const ring = (fraction: number) => size * fraction

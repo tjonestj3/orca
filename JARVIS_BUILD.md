@@ -31,7 +31,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    bubbles, both sides, full text; tap Jarvis's lines to replay, hold to copy), also full screen from the
    captions or the nav bar. Plus fixes: a tap on the bubble no longer starts a call, chat dictation ends a
    live call first, and the reachability check uses `/api/jarvis/ping`. Needs the matching brain.
-6. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+6. `feat(jarvis): Hey Xeno` — the assistant is called Xeno in the app; a "Hey Xeno" switch beside Hands-free
+   keeps the mic on but Xeno answers only when named (the brain's wake mode), and the orb turns purple when it
+   picks a turn up. On the folded Duo, Xeno is the first of a worktree's shortcut keys instead of covering them.
+7. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

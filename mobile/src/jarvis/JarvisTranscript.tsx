@@ -42,7 +42,7 @@ export function JarvisTranscript({ messages, hearing, enabled, onReplay }: Props
   if (entries.length === 0) {
     return (
       <Text style={styles.empty}>
-        {t('jarvis.transcript.empty', 'Your conversation with Jarvis shows up here.')}
+        {t('jarvis.transcript.empty', 'Your conversation with Xeno shows up here.')}
       </Text>
     )
   }
@@ -63,7 +63,7 @@ export function JarvisTranscript({ messages, hearing, enabled, onReplay }: Props
             ? t('jarvis.transcript.agentUpdate', 'Agent update')
             : yours
               ? t('jarvis.transcript.you', 'You')
-              : t('jarvis.transcript.jarvis', 'Jarvis')
+              : t('jarvis.transcript.jarvis', 'Xeno')
         return (
           <View key={entry.key} style={styles.entry}>
             {entry.showTime ? <Text style={styles.time}>{timeOf(entry.at)}</Text> : null}

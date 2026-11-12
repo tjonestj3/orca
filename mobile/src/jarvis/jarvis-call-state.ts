@@ -29,6 +29,8 @@ export type JarvisCallState = {
   readonly cards: readonly JarvisWorktreeCard[]
   // What Jarvis said during this call (replies and agent updates), oldest first, to play again.
   readonly messages: readonly JarvisMessage[]
+  // "Hey Xeno" picked up a turn: shown until Xeno starts to answer.
+  readonly woke: boolean
 }
 
 const MAX_CARDS = 3
@@ -43,7 +45,8 @@ export const IDLE_JARVIS_CALL: JarvisCallState = {
   heard: '',
   said: '',
   cards: [],
-  messages: []
+  messages: [],
+  woke: false
 }
 
 type RtviMessage = {
@@ -79,7 +82,13 @@ function readCard(data: RtviMessage['data']): JarvisWorktreeCard | null {
   }
 }
 
-export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): JarvisCallState {
+// With "Hey Xeno" on and the button not held, speech only counts once Xeno is addressed, so the screen waits for
+// the server's jarvis-woke rather than reacting to everyone talking.
+export function reduceJarvisMessage(
+  state: JarvisCallState,
+  raw: unknown,
+  options: { readonly waitingForName?: boolean } = {}
+): JarvisCallState {
   const message = raw as RtviMessage
   if (!message || message.label !== RTVI_LABEL) {
     return state
@@ -87,9 +96,9 @@ export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): Jarvi
   const text = typeof message.data?.text === 'string' ? message.data.text.trim() : ''
   switch (message.type) {
     case 'user-started-speaking':
-      return { ...state, phase: 'hearing', said: '' }
+      return options.waitingForName ? state : { ...state, phase: 'hearing', said: '' }
     case 'user-stopped-speaking':
-      return { ...state, phase: 'thinking' }
+      return options.waitingForName ? state : { ...state, phase: 'thinking' }
     case 'user-transcription':
       return message.data?.final === true && text ? { ...state, heard: text } : state
     case 'bot-llm-started':
@@ -101,7 +110,7 @@ export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): Jarvi
     case 'bot-llm-stopped':
       return { ...state, composing: false }
     case 'bot-started-speaking':
-      return { ...state, phase: 'speaking' }
+      return { ...state, phase: 'speaking', woke: false }
     case 'bot-stopped-speaking':
       return state.phase === 'speaking'
         ? { ...state, phase: state.composing ? 'thinking' : 'listening' }
@@ -109,6 +118,9 @@ export function reduceJarvisMessage(state: JarvisCallState, raw: unknown): Jarvi
     case 'bot-tts-text':
       return text ? { ...state, said: state.said ? `${state.said} ${text}` : text } : state
     case 'server-message': {
+      if (message.data?.type === 'jarvis-woke') {
+        return { ...state, phase: 'thinking', woke: true, said: '' }
+      }
       const said =
         message.data?.type === 'jarvis-said' ? readJarvisMessage(message.data.message) : null
       if (said) {
