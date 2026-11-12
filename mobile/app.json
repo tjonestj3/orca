@@ -119,6 +119,7 @@
       "./plugins/android-device-transfer-rules.js",
       "./plugins/ios-pod-deployment-target-floor.js",
       "./plugins/ios-scene-lifecycle.js",
+      "./plugins/ios-xeno-talk-intent.js",
       "./plugins/ios-bundle-phase-quoted-script-path.js",
       [
         "expo-splash-screen",

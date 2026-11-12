@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  actionButtonPress,
   bubblePress,
   bubbleVisible,
   classifyBubbleRelease,
@@ -112,5 +113,17 @@ describe('railOrbVisible', () => {
     expect(railOrbVisible({ hasStrip: true, hasHost: true, onJarvisScreen: true })).toBe(false)
     expect(railOrbVisible({ hasStrip: false, hasHost: true, onJarvisScreen: false })).toBe(false)
     expect(railOrbVisible({ hasStrip: true, hasHost: false, onJarvisScreen: false })).toBe(false)
+  })
+})
+
+describe('actionButtonPress', () => {
+  it('starts talking, then sends on the next press, like holding and letting go', () => {
+    expect(actionButtonPress({ holding: false, canPick: false, canTalk: true })).toBe('press')
+    expect(actionButtonPress({ holding: true, canPick: false, canTalk: true })).toBe('release')
+  })
+
+  it('asks which desktop first when several run Xeno, and does nothing with none', () => {
+    expect(actionButtonPress({ holding: false, canPick: true, canTalk: false })).toBe('pick')
+    expect(actionButtonPress({ holding: false, canPick: false, canTalk: false })).toBeNull()
   })
 })

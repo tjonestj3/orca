@@ -95,3 +95,19 @@ export function railOrbVisible(s: {
 }): boolean {
   return s.hasStrip && s.hasHost && !s.onJarvisScreen
 }
+
+// The Action Button (or "Talk to Xeno" in Shortcuts and Siri): a press starts talking, the next one sends, like
+// holding the bubble and letting go. With several desktops and none picked yet, it asks which first.
+export function actionButtonPress(s: {
+  holding: boolean
+  canPick: boolean
+  canTalk: boolean
+}): 'press' | 'release' | 'pick' | null {
+  if (s.holding) {
+    return 'release'
+  }
+  if (s.canPick) {
+    return 'pick'
+  }
+  return s.canTalk ? 'press' : null
+}

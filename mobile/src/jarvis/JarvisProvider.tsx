@@ -8,9 +8,11 @@ import {
   type ReactNode
 } from 'react'
 import { usePathname, useRouter } from 'expo-router'
+import { AppState } from 'react-native'
+import { OrcaXenoTalk } from '../../modules/orca-xeno-talk/src'
 import { useSideRailPinned, useSideRailStrip } from '../layout/side-rail'
 import { onDictationStarting } from '../platform/microphone-handoff'
-import { bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
+import { actionButtonPress, bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
 import { JarvisCall } from './jarvis-call'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
@@ -120,6 +122,51 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     void rememberJarvisHost(next)
   }, [])
   const pickHost = useMemo(() => (needsPick ? () => setPicking(true) : null), [needsPick])
+  // The Action Button, or "Talk to Xeno" in Shortcuts and Siri: a press starts talking, the next one sends.
+  const actionPress = useRef(() => {})
+  // A press that launched the app waits for the first look at which desktops run Xeno.
+  const [pendingPress, setPendingPress] = useState(false)
+  actionPress.current = () => {
+    if (!xeno.checked) {
+      setPendingPress(true)
+      return
+    }
+    const action = actionButtonPress({
+      holding: call.getSnapshot().holding,
+      canPick: needsPick,
+      canTalk: offerUrl !== null
+    })
+    if (action === 'release') {
+      call.releaseTalk()
+    } else if (action === 'pick') {
+      setPicking(true)
+    } else if (action === 'press' && offerUrl) {
+      call.pressTalk(offerUrl, voice)
+    }
+  }
+  useEffect(() => {
+    if (!OrcaXenoTalk) {
+      return
+    }
+    const take = (): void => {
+      if (OrcaXenoTalk?.takePending()) {
+        actionPress.current()
+      }
+    }
+    take() // a press that launched the app
+    const talk = OrcaXenoTalk.addListener('onTalk', () => actionPress.current())
+    const active = AppState.addEventListener('change', (state) => state === 'active' && take())
+    return () => {
+      talk.remove()
+      active.remove()
+    }
+  }, [])
+  useEffect(() => {
+    if (pendingPress && xeno.checked) {
+      setPendingPress(false)
+      actionPress.current()
+    }
+  }, [pendingPress, xeno.checked])
   const openJarvisScreen = useCallback(() => {
     if (hostId) {
       router.push({ pathname: '/h/[hostId]/jarvis', params: { hostId } })
