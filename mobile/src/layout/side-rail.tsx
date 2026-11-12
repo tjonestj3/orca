@@ -69,7 +69,7 @@ function SideRailOutlet() {
   )
   const pinned = useSyncExternalStore(
     context?.store.subscribe ?? (() => () => undefined),
-    () => context?.store.readPinned() ?? null
+    () => context?.store.readTop() ?? null
   )
   const strip = context?.strip
   if (!strip || (!content && !pinned)) {
@@ -116,7 +116,25 @@ const styles = StyleSheet.create({
   outlet: { position: 'absolute' }
 })
 
-/** Keeps `node` at the top of the side strip on every screen, above the screen's own; null removes it. */
+/** The app-wide pinned control, for a screen's controls to end with so it never takes their room. */
+export function useSideRailPinnedNode(): ReactNode | null {
+  const store = useContext(SideRailContext)?.store
+  return useSyncExternalStore(
+    store?.subscribe ?? (() => () => undefined),
+    () => store?.readPinned() ?? null
+  )
+}
+
+/** Whether a screen has its own controls in the strip right now. */
+export function useSideRailHasContent(): boolean {
+  const store = useContext(SideRailContext)?.store
+  return useSyncExternalStore(
+    store?.subscribe ?? (() => () => undefined),
+    () => store?.read() != null
+  )
+}
+
+/** Keeps `node` in the side strip on every screen: at the top, or after the screen's own controls; null removes it. */
 export function useSideRailPinned(node: ReactNode | null): void {
   const store = useContext(SideRailContext)?.store
   useEffect(() => {

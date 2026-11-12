@@ -11,6 +11,17 @@ describe('side rail store', () => {
     expect(store.read()?.node).toBe('arrow keys')
   })
 
+  it('puts the pin above the strip only while no screen has controls there, so it never takes their room', () => {
+    const store = createRailStore()
+    const screen = Symbol('screen')
+    store.pin('jarvis')
+    expect(store.readTop()).toBe('jarvis')
+    store.show(screen, 'arrow keys')
+    expect(store.readTop()).toBeNull()
+    store.hide(screen)
+    expect(store.readTop()).toBe('jarvis')
+  })
+
   it('keeps the pin when the screen leaves, and unpinning leaves the screen alone', () => {
     const store = createRailStore()
     const screen = Symbol('screen')

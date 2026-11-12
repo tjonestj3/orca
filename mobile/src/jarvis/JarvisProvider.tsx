@@ -11,7 +11,7 @@ import { usePathname, useRouter } from 'expo-router'
 import { useHostProfile } from '../host-catalog/use-host-profile'
 import { useSideRailPinned, useSideRailStrip } from '../layout/side-rail'
 import { onDictationStarting } from '../platform/microphone-handoff'
-import { bubbleVisible } from './jarvis-bubble-policy'
+import { bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
 import { JarvisCall } from './jarvis-call'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
@@ -147,21 +147,22 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   )
   // The rail draws outside this provider, so its orb carries the context with it.
   const strip = useSideRailStrip()
+  const onJarvisScreen = pathname.endsWith('/jarvis')
   const railOrb = useMemo(
     () =>
-      strip && hostId ? (
+      strip && railOrbVisible({ hasStrip: true, hasHost: Boolean(hostId), onJarvisScreen }) ? (
         <JarvisContext.Provider value={value}>
           <JarvisRailOrb stripWidth={strip.width} />
         </JarvisContext.Provider>
       ) : null,
-    [strip, hostId, value]
+    [strip, hostId, value, onJarvisScreen]
   )
   useSideRailPinned(railOrb)
   const { phase } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const showBubble = bubbleVisible({
     live: phase !== 'idle' && phase !== 'error',
     reachable,
-    onJarvisScreen: pathname.endsWith('/jarvis'),
+    onJarvisScreen,
     railAvailable: railOrb !== null
   })
   return (

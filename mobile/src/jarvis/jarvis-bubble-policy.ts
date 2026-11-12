@@ -1,3 +1,11 @@
+// The rail orb fills the side strip on its own; at the end of a worktree's shortcut keys it is key-sized.
+const RAIL_KEY_SIZE = 40
+const RAIL_ORB_INSET = 12
+
+export function railOrbSize(stripWidth: number, besideKeys: boolean): number {
+  return besideKeys ? RAIL_KEY_SIZE : stripWidth - RAIL_ORB_INSET * 2
+}
+
 // A press shorter than this opens the Jarvis screen instead of talking.
 export const TAP_MAX_MS = 250
 
@@ -77,4 +85,13 @@ export function bubblePress(actions: {
       }
     }
   }
+}
+
+// The folded Duo's rail orb: for a known computer, on every screen but the Jarvis screen, which has its own.
+export function railOrbVisible(s: {
+  hasStrip: boolean
+  hasHost: boolean
+  onJarvisScreen: boolean
+}): boolean {
+  return s.hasStrip && s.hasHost && !s.onJarvisScreen
 }

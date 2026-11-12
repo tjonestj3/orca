@@ -5,7 +5,8 @@ export type SideRailOwner = symbol
 
 type RailContent = { owner: SideRailOwner; node: ReactNode }
 
-// What the side strip shows: one screen's controls, plus an app-wide control pinned above them (Jarvis).
+// What the side strip shows: one screen's controls, plus an app-wide control (Jarvis). The pinned control
+// sits at the top only while no screen has controls there; a screen's controls end with it instead.
 export function createRailStore() {
   let content: RailContent | null = null
   let pinned: ReactNode | null = null
@@ -18,6 +19,7 @@ export function createRailStore() {
   return {
     read: () => content,
     readPinned: () => pinned,
+    readTop: () => (content ? null : pinned),
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {

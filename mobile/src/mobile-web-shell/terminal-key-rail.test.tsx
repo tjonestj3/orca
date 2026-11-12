@@ -6,10 +6,13 @@ import type { SideRailStrip } from '../layout/side-rail-strip'
 
 const outlet = vi.hoisted((): { node: ReactNode } => ({ node: null }))
 const appState = vi.hoisted(() => ({ listener: (_state: string) => {}, remove: vi.fn() }))
-const railState = vi.hoisted((): { strip: SideRailStrip | null; capable: boolean } => ({
-  strip: null,
-  capable: true
-}))
+const railState = vi.hoisted(
+  (): { strip: SideRailStrip | null; capable: boolean; pinned: ReactNode | null } => ({
+    strip: null,
+    capable: true,
+    pinned: null
+  })
+)
 vi.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',
@@ -37,6 +40,7 @@ vi.mock('../layout/side-rail', () => ({
     outlet.node = node
   },
   useSideRailDirectionPadAvailable: () => railState.capable,
+  useSideRailPinnedNode: () => railState.pinned,
   useSideRailStrip: () => railState.strip
 }))
 import { TerminalKeyRail, terminalKeyRailKeys } from './terminal-key-rail'
@@ -60,6 +64,7 @@ afterEach(() => {
   renderer = undefined
   railState.strip = null
   railState.capable = true
+  railState.pinned = null
   vi.useRealTimers()
 })
 function mount() {
@@ -78,6 +83,18 @@ function mount() {
   return { send, root, key }
 }
 const touch = (pageY: number) => ({ nativeEvent: { pageX: 20, pageY } })
+
+it("ends the keys with the strip's pinned control (Jarvis) instead of giving it the keys' room", () => {
+  function PinnedOrb() {
+    return null
+  }
+  railState.pinned = createElement(PinnedOrb)
+  const { root } = mount()
+  const scroll = root.findByType(ScrollView)
+  expect(scroll.findAllByType(PinnedOrb)).toHaveLength(1)
+  const items = scroll.props.children.flat().filter(Boolean)
+  expect(items.at(-1).type).toBe(PinnedOrb)
+})
 
 it('uses a vertical scroll view and sends a tap only on release', () => {
   const { send, root, key } = mount()

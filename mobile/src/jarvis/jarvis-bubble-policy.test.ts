@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { bubblePress, bubbleVisible, classifyBubbleRelease } from './jarvis-bubble-policy'
+import {
+  bubblePress,
+  bubbleVisible,
+  classifyBubbleRelease,
+  railOrbSize,
+  railOrbVisible
+} from './jarvis-bubble-policy'
 
 describe('classifyBubbleRelease', () => {
   it('treats a quick press as a tap and anything held as talk', () => {
@@ -90,5 +96,21 @@ describe('bubblePress', () => {
     q.unmount()
     vi.advanceTimersByTime(1000)
     expect(did).toEqual([])
+  })
+})
+
+describe('railOrbSize', () => {
+  it('fills the strip on its own, and is the size of a key at the end of the shortcut keys', () => {
+    expect(railOrbSize(84, false)).toBe(60)
+    expect(railOrbSize(84, true)).toBe(40)
+  })
+})
+
+describe('railOrbVisible', () => {
+  it('shows in the folded rail for a computer, except on the Jarvis screen, which has its own', () => {
+    expect(railOrbVisible({ hasStrip: true, hasHost: true, onJarvisScreen: false })).toBe(true)
+    expect(railOrbVisible({ hasStrip: true, hasHost: true, onJarvisScreen: true })).toBe(false)
+    expect(railOrbVisible({ hasStrip: false, hasHost: true, onJarvisScreen: false })).toBe(false)
+    expect(railOrbVisible({ hasStrip: true, hasHost: false, onJarvisScreen: false })).toBe(false)
   })
 })

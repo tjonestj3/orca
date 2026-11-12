@@ -9,7 +9,11 @@ import {
   ChevronsRight
 } from 'lucide-react-native'
 import { hasTerminalDirectionPadSpace } from '../layout/side-rail-strip'
-import { useSideRailStrip, useSideRailDirectionPadAvailable } from '../layout/side-rail'
+import {
+  useSideRailDirectionPadAvailable,
+  useSideRailPinnedNode,
+  useSideRailStrip
+} from '../layout/side-rail'
 import { TERMINAL_ACCESSORY_KEY_DEFINITIONS } from '../terminal/terminal-key-definitions'
 import {
   createTerminalAccessoryRepeatController,
@@ -98,6 +102,8 @@ export function TerminalKeyRail({
   const [repeat] = useState(() => createTerminalAccessoryRepeatController<BridgeTerminalKeyId>())
   const padRef = useRef<TerminalDirectionPadHandle | null>(null)
   const strip = useSideRailStrip()
+  // The app-wide control (Jarvis) ends the keys, so it never takes their room.
+  const pinned = useSideRailPinnedNode()
   const padAvailable = useSideRailDirectionPadAvailable()
   const pinPad = hasTerminalDirectionPadSpace(strip)
   const showPad =
@@ -329,6 +335,7 @@ export function TerminalKeyRail({
             )}
           </Pressable>
         ))}
+        {pinned}
       </ScrollView>
       {pinPad && pad}
     </View>
