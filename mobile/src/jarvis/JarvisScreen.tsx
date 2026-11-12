@@ -2,15 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Ear,
-  MessagesSquare,
-  Mic,
-  PhoneOff,
-  RotateCcw
-} from 'lucide-react-native'
+import { ChevronLeft, Ear, MessagesSquare, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -26,6 +18,7 @@ import { useJarvis } from './jarvis-context'
 import { jarvisHistoryUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
 import { JarvisOrb } from './JarvisOrb'
+import { stageOrbSize } from './jarvis-screen-layout'
 import type { JarvisVoice } from './jarvis-voice-preference'
 import { useJarvisWorktrees } from './jarvis-worktrees'
 import { JarvisWorktreePanel } from './JarvisWorktreePanel'
@@ -113,7 +106,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
     }
   }
 
-  const orbSize = Math.min(width * 0.5, height * 0.24, 220)
+  const orbSize = stageOrbSize(width, height)
 
   return (
     <View
@@ -150,30 +143,26 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           {statusLine(state, t)}
         </Text>
       </View>
-      <Pressable
-        onPress={openTranscript}
-        style={({ pressed }) => [styles.captions, pressed && pressedStyle]}
-        accessibilityRole="button"
-        accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
-        accessibilityLiveRegion="polite"
-      >
-        {state.heard ? (
-          <Text style={styles.heard} numberOfLines={1}>
-            {t('jarvis.screen.youSaid', 'You: {{text}}', { text: state.heard })}
-          </Text>
-        ) : null}
-        {state.said ? (
-          <Text style={styles.said} numberOfLines={3}>
-            {state.said}
-          </Text>
-        ) : null}
-        <View style={styles.transcriptLink}>
-          <Text style={styles.transcriptLinkText}>
-            {t('jarvis.screen.transcriptLink', 'Conversation')}
-          </Text>
-          <ChevronRight size={14} color={colors.textSecondary} />
-        </View>
-      </Pressable>
+      {state.heard || state.said ? (
+        <Pressable
+          onPress={openTranscript}
+          style={({ pressed }) => [styles.captions, pressed && pressedStyle]}
+          accessibilityRole="button"
+          accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
+          accessibilityLiveRegion="polite"
+        >
+          {state.heard ? (
+            <Text style={styles.heard} numberOfLines={1}>
+              {t('jarvis.screen.youSaid', 'You: {{text}}', { text: state.heard })}
+            </Text>
+          ) : null}
+          {state.said ? (
+            <Text style={styles.said} numberOfLines={2}>
+              {state.said}
+            </Text>
+          ) : null}
+        </Pressable>
+      ) : null}
       <JarvisWorktreePanel
         cards={state.cards}
         worktrees={worktrees}
@@ -234,27 +223,28 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           ) : null}
         </View>
       </View>
-      <View style={styles.handsFreeRow}>
-        <Text style={styles.handsFreeLabel}>{t('jarvis.screen.handsFree', 'Hands-free')}</Text>
-        <MobileSwitch
-          value={handsFree}
-          onValueChange={setHandsFree}
-          accessibilityLabel={t(
-            'jarvis.screen.handsFreeSwitch',
-            'Hands-free: Jarvis listens without holding'
-          )}
+      <View style={styles.settingsRow}>
+        <View style={styles.handsFree}>
+          <Text style={styles.handsFreeLabel}>{t('jarvis.screen.handsFree', 'Hands-free')}</Text>
+          <MobileSwitch
+            value={handsFree}
+            onValueChange={setHandsFree}
+            accessibilityLabel={t(
+              'jarvis.screen.handsFreeSwitch',
+              'Hands-free: Jarvis listens without holding'
+            )}
+          />
+        </View>
+        <MobileSegmentedControl<JarvisVoice>
+          segments={[
+            { value: 'male', label: t('jarvis.screen.male', 'Male') },
+            { value: 'female', label: t('jarvis.screen.female', 'Female') }
+          ]}
+          selected={voice}
+          onSelect={setVoice}
+          testIDPrefix="jarvis-voice"
         />
       </View>
-      <MobileSegmentedControl<JarvisVoice>
-        style={styles.voices}
-        segments={[
-          { value: 'male', label: t('jarvis.screen.male', 'Male') },
-          { value: 'female', label: t('jarvis.screen.female', 'Female') }
-        ]}
-        selected={voice}
-        onSelect={setVoice}
-        testIDPrefix="jarvis-voice"
-      />
     </View>
   )
 }
@@ -270,20 +260,11 @@ const styles = themedStyleSheet(() => ({
   status: { color: colors.textSecondary, fontSize: typography.bodySize, letterSpacing: 0.3 },
   statusError: { color: colors.statusRed, textAlign: 'center', paddingHorizontal: spacing.xl },
   captions: {
-    minHeight: 56,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
     gap: spacing.xs,
     justifyContent: 'flex-start'
   },
-  transcriptLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingTop: spacing.xs
-  },
-  transcriptLinkText: { color: colors.textSecondary, fontSize: typography.metaSize },
   heard: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' },
   said: {
     color: colors.textPrimary,
@@ -296,7 +277,7 @@ const styles = themedStyleSheet(() => ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xl,
-    paddingVertical: spacing.md
+    paddingVertical: spacing.sm
   },
   sideControl: { width: 48, alignItems: 'center' },
   smallButton: {
@@ -317,13 +298,14 @@ const styles = themedStyleSheet(() => ({
   },
   talkButtonOpen: { backgroundColor: colors.statusGreen },
   hangUpButton: { backgroundColor: colors.statusRed },
-  handsFreeRow: {
+  settingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
-    paddingBottom: spacing.sm
+    gap: spacing.lg,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.lg
   },
-  handsFreeLabel: { color: colors.textSecondary, fontSize: typography.bodySize },
-  voices: { alignSelf: 'center', marginHorizontal: spacing.xl }
+  handsFree: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  handsFreeLabel: { color: colors.textSecondary, fontSize: typography.bodySize }
 }))
