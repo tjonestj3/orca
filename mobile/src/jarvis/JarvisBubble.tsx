@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
+import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 
 const BUBBLE_SIZE = 56
@@ -16,11 +17,12 @@ export function JarvisBubble() {
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <View style={[styles.corner, { bottom, right: insets.right + spacing.lg }]}>
         <JarvisTalkControl size={BUBBLE_SIZE} />
+        <JarvisHostLabel maxWidth={BUBBLE_SIZE + spacing.xl} />
       </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  corner: { position: 'absolute' }
+  corner: { position: 'absolute', alignItems: 'center', gap: spacing.xs }
 })

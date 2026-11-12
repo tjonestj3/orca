@@ -13,7 +13,8 @@ import { useJarvis } from './jarvis-context'
 export function JarvisTalkControl({ size }: { readonly size: number }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
-  const { call, offerUrl, voice, handsFree, wake, openJarvisScreen } = useJarvis()
+  const { call, offerUrl, voice, handsFree, wake, openJarvisScreen, pickHost, hostName } =
+    useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = state.phase !== 'idle' && state.phase !== 'error'
   // Read at press time, so the press keeps the latest call details without being rebuilt mid-hold.
@@ -37,12 +38,20 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
   return (
     <View style={{ width: size, height: size }}>
       <Pressable
-        disabled={!offerUrl}
-        onPressIn={press.pressIn}
-        onPressOut={press.pressOut}
+        disabled={!offerUrl && !pickHost}
+        // Several desktops run Xeno and none was picked yet: any press asks which.
+        onPress={pickHost ?? undefined}
+        onPressIn={pickHost ? undefined : press.pressIn}
+        onPressOut={pickHost ? undefined : press.pressOut}
         style={({ pressed }) => [styles.orb, { borderRadius: size / 2 }, pressed && pressedStyle]}
         accessibilityRole="button"
-        accessibilityLabel={t('jarvis.bubble.holdToTalk', 'Xeno. Hold to talk, tap to open.')}
+        accessibilityLabel={
+          hostName
+            ? t('jarvis.bubble.holdToTalkOn', 'Xeno on {{host}}. Hold to talk, tap to open.', {
+                host: hostName
+              })
+            : t('jarvis.bubble.holdToTalk', 'Xeno. Hold to talk, tap to open.')
+        }
       >
         <JarvisOrb
           call={call}

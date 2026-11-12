@@ -5020,7 +5020,8 @@
       "holdToTalk": "Xeno. Hold to talk, tap to open.",
       "hangUp": "Hang up Xeno",
       "handsFree": "Hands-free is on",
-      "wake": "Hey Xeno is on"
+      "wake": "Hey Xeno is on",
+      "holdToTalkOn": "Xeno on {{host}}. Hold to talk, tap to open."
     },
     "transcript": {
       "empty": "Your conversation with Xeno shows up here.",
@@ -5031,6 +5032,9 @@
       "copyHint": "Touch and hold to copy.",
       "copied": "Copied",
       "title": "Conversation"
+    },
+    "picker": {
+      "title": "Talk to Xeno on…"
     }
   }
 }

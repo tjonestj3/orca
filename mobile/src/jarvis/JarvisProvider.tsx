@@ -8,7 +8,6 @@ import {
   type ReactNode
 } from 'react'
 import { usePathname, useRouter } from 'expo-router'
-import { useHostProfile } from '../host-catalog/use-host-profile'
 import { useSideRailPinned, useSideRailStrip } from '../layout/side-rail'
 import { onDictationStarting } from '../platform/microphone-handoff'
 import { bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
@@ -16,7 +15,10 @@ import { JarvisCall } from './jarvis-call'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
-import { jarvisOfferUrl, jarvisPingUrl } from './jarvis-endpoint'
+import { jarvisOfferUrl } from './jarvis-endpoint'
+import { chooseXenoHost, hostIdFromPath } from './jarvis-host-choice'
+import { JarvisHostPicker } from './JarvisHostPicker'
+import { useXenoHosts } from './use-xeno-hosts'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { viewingTarget } from './jarvis-viewing'
 import {
@@ -29,43 +31,6 @@ import {
   type JarvisVoice
 } from './jarvis-voice-preference'
 
-const REACHABLE_POLL_MS = 15_000
-const REACHABLE_TIMEOUT_MS = 4_000
-
-function useReachable(url: string | null): boolean | null {
-  const [reachable, setReachable] = useState<boolean | null>(null)
-  useEffect(() => {
-    if (!url) {
-      setReachable(null)
-      return
-    }
-    let stopped = false
-    const check = async (): Promise<void> => {
-      const abort = new AbortController()
-      const timer = setTimeout(() => abort.abort(), REACHABLE_TIMEOUT_MS)
-      try {
-        const response = await fetch(url, { signal: abort.signal })
-        if (!stopped) {
-          setReachable(response.ok)
-        }
-      } catch {
-        if (!stopped) {
-          setReachable(false)
-        }
-      } finally {
-        clearTimeout(timer)
-      }
-    }
-    void check()
-    const interval = setInterval(() => void check(), REACHABLE_POLL_MS)
-    return () => {
-      stopped = true
-      clearInterval(interval)
-    }
-  }, [url])
-  return reachable
-}
-
 // One Jarvis call for the whole app: the Jarvis screen, the bubble and the rail orb all use it.
 export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const router = useRouter()
@@ -73,16 +38,42 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const callRef = useRef<JarvisCall | null>(null)
   callRef.current ??= new JarvisCall()
   const call = callRef.current
-  const [hostId, setHostId] = useState<string | null>(null)
+  // The last desktop you were in with Xeno running, remembered; a live call's own desktop while it lasts.
+  const [lastHostId, setLastHostId] = useState<string | null>(null)
+  const [callHostId, setCallHostId] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
   const [voice, setVoiceState] = useState<JarvisVoice>('male')
   const [handsFree, setHandsFreeState] = useState(false)
   const [wake, setWakeState] = useState(false)
-  const host = useHostProfile(hostId ?? '')
+  const { phase } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const live = phase !== 'idle' && phase !== 'error'
+  const xeno = useXenoHosts()
+  const routeHostId = hostIdFromPath(pathname)
+  const { hostId, needsPick } = chooseXenoHost({
+    routeHostId,
+    lastHostId,
+    callHostId,
+    reachable: xeno.reachable
+  })
+  const host = xeno.hosts.find((profile) => profile.id === hostId) ?? null
   const offerUrl = host ? jarvisOfferUrl(host.endpoint) : null
-  const reachable = useReachable(host ? jarvisPingUrl(host.endpoint) : null)
+  const reachable = hostId && xeno.checked ? xeno.reachable.has(hostId) : null
+  // A call stays on the desktop it started on, wherever you go meanwhile.
+  const chosenRef = useRef(hostId)
+  chosenRef.current = hostId
+  useEffect(() => {
+    setCallHostId((held) => (live ? (held ?? chosenRef.current) : null))
+  }, [live])
+  // Going into a desktop with Xeno running makes it the one to use from the app's own screens.
+  useEffect(() => {
+    if (routeHostId && !live && xeno.reachable.has(routeHostId)) {
+      setLastHostId(routeHostId)
+      void rememberJarvisHost(routeHostId)
+    }
+  }, [routeHostId, live, xeno.reachable])
 
   useEffect(() => {
-    void loadJarvisHost().then(setHostId)
+    void loadJarvisHost().then(setLastHostId)
     void loadJarvisVoice().then(setVoiceState)
     void loadJarvisHandsFree().then((on) => {
       setHandsFreeState(on)
@@ -125,9 +116,10 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     [call]
   )
   const adoptHost = useCallback((next: string) => {
-    setHostId(next)
+    setLastHostId(next)
     void rememberJarvisHost(next)
   }, [])
+  const pickHost = useMemo(() => (needsPick ? () => setPicking(true) : null), [needsPick])
   const openJarvisScreen = useCallback(() => {
     if (hostId) {
       router.push({ pathname: '/h/[hostId]/jarvis', params: { hostId } })
@@ -146,6 +138,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setHandsFree,
       wake,
       setWake,
+      hostName: host?.name ?? null,
+      pickHost,
       adoptHost,
       openJarvisScreen
     }),
@@ -160,6 +154,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setHandsFree,
       wake,
       setWake,
+      host,
+      pickHost,
       adoptHost,
       openJarvisScreen
     ]
@@ -169,18 +165,22 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const onJarvisScreen = pathname.endsWith('/jarvis')
   const railOrb = useMemo(
     () =>
-      strip && railOrbVisible({ hasStrip: true, hasHost: Boolean(hostId), onJarvisScreen }) ? (
+      strip &&
+      railOrbVisible({
+        hasStrip: true,
+        hasHost: needsPick || live || reachable === true,
+        onJarvisScreen
+      }) ? (
         <JarvisContext.Provider value={value}>
           <JarvisRailOrb stripWidth={strip.width} />
         </JarvisContext.Provider>
       ) : null,
-    [strip, hostId, value, onJarvisScreen]
+    [strip, needsPick, live, reachable, value, onJarvisScreen]
   )
   useSideRailPinned(railOrb)
-  const { phase } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const showBubble = bubbleVisible({
-    live: phase !== 'idle' && phase !== 'error',
-    reachable,
+    live,
+    reachable: needsPick || reachable,
     onJarvisScreen,
     railAvailable: railOrb !== null
   })
@@ -188,6 +188,12 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     <JarvisContext.Provider value={value}>
       {children}
       {showBubble ? <JarvisBubble /> : null}
+      <JarvisHostPicker
+        visible={picking}
+        hosts={xeno.hosts.filter((profile) => xeno.reachable.has(profile.id))}
+        onPick={adoptHost}
+        onClose={() => setPicking(false)}
+      />
     </JarvisContext.Provider>
   )
 }
