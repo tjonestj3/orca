@@ -100,7 +100,7 @@ describe('bubblePress', () => {
 })
 
 describe('railOrbSize', () => {
-  it('fills the strip on its own, and is the size of a key at the end of the shortcut keys', () => {
+  it('fills the strip on its own, and is the size of a key among the shortcut keys', () => {
     expect(railOrbSize(84, false)).toBe(60)
     expect(railOrbSize(84, true)).toBe(40)
   })

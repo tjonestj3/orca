@@ -102,7 +102,7 @@ export function TerminalKeyRail({
   const [repeat] = useState(() => createTerminalAccessoryRepeatController<BridgeTerminalKeyId>())
   const padRef = useRef<TerminalDirectionPadHandle | null>(null)
   const strip = useSideRailStrip()
-  // The app-wide control (Jarvis) ends the keys, so it never takes their room.
+  // The app-wide control (Jarvis) leads the keys as one of them, so it never takes their room.
   const pinned = useSideRailPinnedNode()
   const padAvailable = useSideRailDirectionPadAvailable()
   const pinPad = hasTerminalDirectionPadSpace(strip)
@@ -259,6 +259,7 @@ export function TerminalKeyRail({
         }}
       >
         {!pinPad && pad}
+        {pinned}
         {renderedKeys.map((key) => (
           <Pressable
             key={key.id}
@@ -335,7 +336,6 @@ export function TerminalKeyRail({
             )}
           </Pressable>
         ))}
-        {pinned}
       </ScrollView>
       {pinPad && pad}
     </View>

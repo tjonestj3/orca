@@ -84,7 +84,7 @@ function mount() {
 }
 const touch = (pageY: number) => ({ nativeEvent: { pageX: 20, pageY } })
 
-it("ends the keys with the strip's pinned control (Jarvis) instead of giving it the keys' room", () => {
+it("starts the keys with the strip's pinned control (Jarvis) instead of giving it the keys' room", () => {
   function PinnedOrb() {
     return null
   }
@@ -92,8 +92,8 @@ it("ends the keys with the strip's pinned control (Jarvis) instead of giving it 
   const { root } = mount()
   const scroll = root.findByType(ScrollView)
   expect(scroll.findAllByType(PinnedOrb)).toHaveLength(1)
-  const items = scroll.props.children.flat().filter(Boolean)
-  expect(items.at(-1).type).toBe(PinnedOrb)
+  const first = scroll.props.children.flat().find(Boolean)
+  expect(first.type).toBe(PinnedOrb)
 })
 
 it('uses a vertical scroll view and sends a tap only on release', () => {

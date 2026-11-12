@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   outlet: { position: 'absolute' }
 })
 
-/** The app-wide pinned control, for a screen's controls to end with so it never takes their room. */
+/** The app-wide pinned control, for a screen's controls to start with so it never takes their room. */
 export function useSideRailPinnedNode(): ReactNode | null {
   const store = useContext(SideRailContext)?.store
   return useSyncExternalStore(
@@ -134,7 +134,7 @@ export function useSideRailHasContent(): boolean {
   )
 }
 
-/** Keeps `node` in the side strip on every screen: at the top, or after the screen's own controls; null removes it. */
+/** Keeps `node` in the side strip on every screen: at the top, or first among the screen's own controls; null removes it. */
 export function useSideRailPinned(node: ReactNode | null): void {
   const store = useContext(SideRailContext)?.store
   useEffect(() => {

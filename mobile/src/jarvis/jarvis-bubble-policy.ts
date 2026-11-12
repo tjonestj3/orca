@@ -1,4 +1,4 @@
-// The rail orb fills the side strip on its own; at the end of a worktree's shortcut keys it is key-sized.
+// The rail orb fills the side strip on its own; among a worktree's shortcut keys it is key-sized.
 const RAIL_KEY_SIZE = 40
 const RAIL_ORB_INSET = 12
 
