@@ -1,3 +1,4 @@
+import { readArtifact, readArtifacts, type JarvisArtifact } from './jarvis-artifacts'
 import { readJarvisMessage, type JarvisMessage } from './jarvis-history'
 
 // What the Jarvis screen shows, driven by the voice server's RTVI events on the data channel.
@@ -17,6 +18,8 @@ export type JarvisWorktreeCard = {
   readonly repo: string
   readonly state: string
   readonly isNew: boolean
+  // Claude artifacts its agent linked: an Open in Claude button.
+  readonly artifacts: readonly JarvisArtifact[]
 }
 
 export type JarvisCallState = {
@@ -32,6 +35,8 @@ export type JarvisCallState = {
   // "Hey Xeno" mode counted this turn (jarvis-hearing while you talk, jarvis-woke once you stop), until Xeno
   // starts to answer or the server takes it back (jarvis-dropped).
   readonly woke: boolean
+  // An artifact Xeno was asked to open in the Claude app; seq makes each request a new one.
+  readonly opening: (JarvisArtifact & { readonly seq: number }) | null
 }
 
 const MAX_CARDS = 3
@@ -47,7 +52,8 @@ export const IDLE_JARVIS_CALL: JarvisCallState = {
   said: '',
   cards: [],
   messages: [],
-  woke: false
+  woke: false,
+  opening: null
 }
 
 type RtviMessage = {
@@ -60,6 +66,7 @@ type RtviMessage = {
     new?: unknown
     worktree?: unknown
     message?: unknown
+    url?: unknown
   }
 }
 
@@ -79,7 +86,8 @@ function readCard(data: RtviMessage['data']): JarvisWorktreeCard | null {
     name: text(worktree.name) || worktree.id,
     repo: text(worktree.repo),
     state: text(worktree.state),
-    isNew: data.new === true
+    isNew: data.new === true,
+    artifacts: readArtifacts(worktree.artifacts)
   }
 }
 
@@ -131,6 +139,12 @@ export function reduceJarvisMessage(
     case 'server-message': {
       if (message.data?.type === 'jarvis-hearing') {
         return { ...state, phase: 'hearing', woke: true, said: '' }
+      }
+      if (message.data?.type === 'jarvis-open-artifact') {
+        const artifact = readArtifact(message.data)
+        return artifact
+          ? { ...state, opening: { ...artifact, seq: (state.opening?.seq ?? 0) + 1 } }
+          : state
       }
       if (message.data?.type === 'jarvis-woke') {
         return { ...state, phase: 'thinking', woke: true, said: '' }

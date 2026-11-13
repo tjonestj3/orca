@@ -35,7 +35,8 @@ describe('reduceJarvisMessage', () => {
       said: 'Yes, one thing. Audio polish needs you.',
       cards: [],
       messages: [],
-      woke: false
+      woke: false,
+      opening: null
     })
   })
 
@@ -60,7 +61,8 @@ describe('reduceJarvisMessage', () => {
       said: '',
       cards: [],
       messages: [],
-      woke: false
+      woke: false,
+      opening: null
     })
   })
 })
@@ -109,6 +111,49 @@ describe('worktree cards', () => {
       { id: 1, kind: 'reply', text: 'Sending it.', at: 5 },
       { id: 2, kind: 'update', text: 'jarvis-brain: the design is done.', at: 5 }
     ])
+  })
+})
+
+describe('artifacts', () => {
+  const MOCKUP = 'https://claude.ai/artifact/VjFHgpyKnqH5fcXKHKHbNj'
+
+  it('puts the artifacts an agent linked on its card', () => {
+    const state = run(
+      rtvi('server-message', {
+        type: 'jarvis-worktree',
+        worktree: {
+          id: 'w1',
+          name: 'manual-aiming',
+          repo: 'spell-duel',
+          state: 'done',
+          artifacts: [{ url: MOCKUP, title: 'Control layouts' }]
+        }
+      })
+    )
+    expect(state.cards[0].artifacts).toEqual([{ url: MOCKUP, title: 'Control layouts' }])
+  })
+
+  it('asks for an artifact Xeno was told to open, each request once', () => {
+    const first = run(
+      rtvi('server-message', {
+        type: 'jarvis-open-artifact',
+        url: MOCKUP,
+        title: 'Control layouts'
+      })
+    )
+    expect(first.opening).toMatchObject({ url: MOCKUP, title: 'Control layouts' })
+    const again = reduceJarvisMessage(
+      first,
+      rtvi('server-message', { type: 'jarvis-open-artifact', url: MOCKUP, title: null })
+    )
+    expect(again.opening?.seq).toBeGreaterThan(first.opening?.seq ?? 0)
+  })
+
+  it('ignores a request to open anything but a Claude artifact', () => {
+    const state = run(
+      rtvi('server-message', { type: 'jarvis-open-artifact', url: 'https://evil.example/x' })
+    )
+    expect(state.opening).toBeNull()
   })
 })
 

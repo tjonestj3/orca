@@ -8,6 +8,7 @@ import { colors, pressedStyle, radii, spacing, typography } from '../theme/mobil
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { askForUpdate, askToSendMessage, askToTalkAbout } from './jarvis-asks'
+import { JarvisArtifactButton } from './JarvisArtifactButton'
 import type { JarvisWorktreeCard } from './jarvis-call-state'
 import type { JarvisMessage } from './jarvis-history'
 import type { JarvisWorktree } from './jarvis-worktrees'
@@ -106,6 +107,7 @@ export function JarvisWorktreePanel({
                   {card.repo ? ` · ${card.repo}` : ''}
                 </Text>
               </View>
+              {card.artifacts[0] ? <JarvisArtifactButton artifact={card.artifacts[0]} /> : null}
               <SquareArrowOutUpRight size={16} color={colors.textSecondary} />
             </Pressable>
           ))}
@@ -168,6 +170,7 @@ export function JarvisWorktreePanel({
                     {wt.status ? ` · ${wt.status}` : ''}
                   </Text>
                 </View>
+                {wt.artifacts[0] ? <JarvisArtifactButton artifact={wt.artifacts[0]} /> : null}
                 <ChevronRight size={18} color={colors.textSecondary} />
               </Pressable>
             ))
@@ -222,7 +225,7 @@ const styles = themedStyleSheet(() => ({
     paddingVertical: spacing.sm,
     borderRadius: radii.control,
     backgroundColor: colors.bgRaised,
-    maxWidth: 260
+    maxWidth: 320
   },
   cardText: { flexShrink: 1 },
   tabs: { marginHorizontal: spacing.lg, marginTop: spacing.md, marginBottom: spacing.sm },

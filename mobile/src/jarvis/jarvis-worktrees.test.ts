@@ -12,8 +12,41 @@ describe('parseJarvisWorktrees', () => {
       ]
     })
     expect(parsed).toEqual([
-      { id: 'r::a', name: 'reactions-doc', repo: 'spell-duel', state: 'needs you', status: null },
-      { id: 'r::b', name: 'main', repo: 'SDI', state: 'idle', status: 'Running tests' }
+      {
+        id: 'r::a',
+        name: 'reactions-doc',
+        repo: 'spell-duel',
+        state: 'needs you',
+        status: null,
+        artifacts: []
+      },
+      {
+        id: 'r::b',
+        name: 'main',
+        repo: 'SDI',
+        state: 'idle',
+        status: 'Running tests',
+        artifacts: []
+      }
+    ])
+  })
+
+  it("keeps the Claude artifacts a worktree's agent linked", () => {
+    const [wt] = parseJarvisWorktrees({
+      worktrees: [
+        {
+          id: 'r::m',
+          name: 'manual-aiming',
+          state: 'done',
+          artifacts: [
+            { url: 'https://claude.ai/artifact/VjFHgpyKnqH5fcXKHKHbNj', title: null },
+            { url: 'https://evil.example/artifact/x', title: 'Nope' }
+          ]
+        }
+      ]
+    })
+    expect(wt.artifacts).toEqual([
+      { url: 'https://claude.ai/artifact/VjFHgpyKnqH5fcXKHKHbNj', title: null }
     ])
   })
 

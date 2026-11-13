@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { readArtifacts, type JarvisArtifact } from './jarvis-artifacts'
 
 // The active worktrees as Jarvis sees them, for the list on the Jarvis screen.
 export type JarvisWorktreeState = 'needs you' | 'working' | 'done' | 'idle'
@@ -9,6 +10,8 @@ export type JarvisWorktree = {
   readonly repo: string
   readonly state: JarvisWorktreeState
   readonly status: string | null
+  // Claude artifacts its agent linked: an Open in Claude button.
+  readonly artifacts: readonly JarvisArtifact[]
 }
 
 const STATES: readonly JarvisWorktreeState[] = ['needs you', 'working', 'done', 'idle']
@@ -32,7 +35,8 @@ export function parseJarvisWorktrees(raw: unknown): JarvisWorktree[] {
         name: entry.name,
         repo: typeof entry.repo === 'string' ? entry.repo : '',
         state,
-        status: typeof entry.status === 'string' && entry.status ? entry.status : null
+        status: typeof entry.status === 'string' && entry.status ? entry.status : null,
+        artifacts: readArtifacts(entry.artifacts)
       }
     ]
   })

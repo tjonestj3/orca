@@ -27,7 +27,9 @@ function toneColor(tone: JarvisOrbTone): string {
       return colors.statusRed
     case 'idle':
       return colors.textSecondary
-    default:
+    case 'connecting':
+    case 'listening':
+    case 'speaking':
       return colors.accentBlue
   }
 }

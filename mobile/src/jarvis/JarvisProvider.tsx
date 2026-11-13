@@ -22,6 +22,7 @@ import { chooseXenoHost, hostIdFromPath } from './jarvis-host-choice'
 import { JarvisHostPicker } from './JarvisHostPicker'
 import { useXenoHosts } from './use-xeno-hosts'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
+import { openInClaude } from './jarvis-open-in-claude'
 import { viewingTarget } from './jarvis-viewing'
 import {
   loadJarvisHandsFree,
@@ -47,7 +48,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [voice, setVoiceState] = useState<JarvisVoice>('male')
   const [handsFree, setHandsFreeState] = useState(false)
   const [wake, setWakeState] = useState(false)
-  const { phase } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const { phase, opening } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
   const routeHostId = hostIdFromPath(pathname)
@@ -161,6 +162,13 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       active.remove()
     }
   }, [])
+  // Xeno was asked to open an artifact: open it in the Claude app. Each request is a new object; other updates
+  // carry the same one along, so this runs once per request.
+  useEffect(() => {
+    if (opening) {
+      openInClaude(opening.url)
+    }
+  }, [opening])
   // While a call is live, tell Xeno's server when the phone locks, unlocks or its audio is interrupted.
   useEffect(() => {
     if (!live) {
