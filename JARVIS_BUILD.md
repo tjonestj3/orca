@@ -40,7 +40,15 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 8. `feat(jarvis): Talk to Xeno from the Action Button` — an App Intent written into the app target at prebuild
    (`plugins/ios-xeno-talk-intent.js`) plus `modules/orca-xeno-talk`, which hands each press to JS. Assign it in
    Settings → Action Button → Shortcut → Xeno → Talk to Xeno; also "Talk to Xeno" in Shortcuts and Siri.
-9. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+9. `feat(jarvis): show Xeno hearing a Hey Xeno turn while you talk` — purple and moving with your voice as soon
+   as the brain says a turn counts (`jarvis-hearing`), amber thinking once you stop, back to listening if the brain
+   takes it back (`jarvis-dropped`). Needs the brain from `7efa655`.
+10. `feat(jarvis): keep Hey Xeno waiting with the phone locked, and report why it stops` — an hour's idle hang-up
+   in Hey Xeno mode, and lock/unlock, audio interruptions, route changes and app state sent to the brain's log
+   (`jarvis-device`, via `modules/orca-xeno-talk`), to find what stops a locked call hearing you.
+11. `feat(jarvis): open an agent's Claude artifacts in the Claude app` — an Open in Claude button on cards and list
+   rows, and `jarvis-open-artifact` from the brain's `open_artifact` tool. Needs the brain from `94d36c1`.
+12. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
