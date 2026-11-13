@@ -39,7 +39,9 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     return t('jarvis.screen.dropped', 'The call dropped. Hold to talk again.')
   }
   if (state.error === 'idle') {
-    return t('jarvis.screen.idleHungUp', 'Hung up after 10 quiet minutes.')
+    return state.wake
+      ? t('jarvis.screen.idleHungUpWake', 'Hung up after an hour with nobody saying “Hey Xeno”.')
+      : t('jarvis.screen.idleHungUp', 'Hung up after 10 quiet minutes.')
   }
   if (state.error === 'dictation') {
     return t('jarvis.screen.dictationHungUp', 'Xeno hung up so you could dictate.')

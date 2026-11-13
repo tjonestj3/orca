@@ -4995,6 +4995,7 @@
       "rowHint": "Touch and hold to talk about it, send it a message or open it",
       "playLast": "Play the last message again",
       "idleHungUp": "Hung up after 10 quiet minutes.",
+      "idleHungUpWake": "Hung up after an hour with nobody saying “Hey Xeno”.",
       "dictationHungUp": "Xeno hung up so you could dictate.",
       "tapToStart": "Tap to start hands-free",
       "holdToTalk": "Hold to talk",

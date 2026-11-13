@@ -16,7 +16,7 @@ import {
 import {
   IDLE_CHECK_MS,
   IDLE_SNAPSHOT,
-  JARVIS_IDLE_HANG_UP_MS,
+  jarvisIdleHangUpMs,
   QUIET,
   type JarvisCallError,
   type JarvisCallSnapshot,
@@ -107,6 +107,11 @@ export class JarvisCall {
   setHandsFree(on: boolean): void {
     this.set({ ...this.snapshot, handsFree: on })
     this.applyMic()
+  }
+
+  // For the server's log: the phone locking or its audio being interrupted, which is why a locked phone goes unheard.
+  reportDevice(note: { readonly kind: string; readonly at?: number }): void {
+    this.sendClientMessage('jarvis-device', { ...note, at: note.at ?? Date.now() })
   }
 
   // The worktree the app has open, so "this" means it; sent now or when the call connects.
@@ -228,7 +233,7 @@ export class JarvisCall {
         this.applyMic()
         this.every(LEVEL_POLL_MS, () => void this.pollLevels(pc, generation))
         this.every(IDLE_CHECK_MS, () => {
-          if (Date.now() - this.lastActivityAt > JARVIS_IDLE_HANG_UP_MS) {
+          if (Date.now() - this.lastActivityAt > jarvisIdleHangUpMs(this.snapshot)) {
             this.fail(generation, 'idle')
           }
         })

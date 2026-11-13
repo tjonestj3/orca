@@ -17,6 +17,12 @@ export type JarvisCallSnapshot = JarvisCallState & {
 
 // A forgotten call hangs up after this long with neither side speaking.
 export const JARVIS_IDLE_HANG_UP_MS = 10 * 60 * 1000
+// "Hey Xeno" waits for its name, often with the phone locked in a pocket, so it waits longer.
+export const JARVIS_WAKE_IDLE_HANG_UP_MS = 60 * 60 * 1000
+
+export function jarvisIdleHangUpMs(s: { readonly wake: boolean }): number {
+  return s.wake ? JARVIS_WAKE_IDLE_HANG_UP_MS : JARVIS_IDLE_HANG_UP_MS
+}
 export const IDLE_CHECK_MS = 15_000
 
 // 0..1, roughly how loud each side sounds; drives the orb.

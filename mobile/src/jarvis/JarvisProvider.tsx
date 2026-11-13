@@ -161,6 +161,20 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       active.remove()
     }
   }, [])
+  // While a call is live, tell Xeno's server when the phone locks, unlocks or its audio is interrupted.
+  useEffect(() => {
+    if (!live) {
+      return
+    }
+    const device = OrcaXenoTalk?.addListener('onDevice', (note) => call.reportDevice(note))
+    const app = AppState.addEventListener('change', (state) =>
+      call.reportDevice({ kind: `app-${state}` })
+    )
+    return () => {
+      device?.remove()
+      app.remove()
+    }
+  }, [call, live])
   useEffect(() => {
     if (pendingPress && xeno.checked) {
       setPendingPress(false)
