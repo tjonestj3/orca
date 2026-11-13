@@ -5002,7 +5002,7 @@
       "handsFreeSwitch": "Hands-free: Xeno listens without holding",
       "openTranscript": "See the whole conversation",
       "conversation": "Conversation",
-      "woke": "Picked that up",
+      "hearingWoke": "Xeno is listening",
       "listeningForName": "Say “Hey Xeno” to talk",
       "wake": "Hey Xeno",
       "wakeSwitch": "Hey Xeno: the mic stays on and Xeno answers when you say its name"

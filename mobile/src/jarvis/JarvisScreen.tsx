@@ -44,9 +44,6 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
   if (state.error === 'dictation') {
     return t('jarvis.screen.dictationHungUp', 'Xeno hung up so you could dictate.')
   }
-  if (state.woke) {
-    return t('jarvis.screen.woke', 'Picked that up')
-  }
   switch (state.phase) {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
@@ -55,7 +52,9 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
         ? t('jarvis.screen.listeningForName', 'Say “Hey Xeno” to talk')
         : t('jarvis.screen.listening', 'Listening')
     case 'hearing':
-      return t('jarvis.screen.hearing', 'Hearing you')
+      return state.woke
+        ? t('jarvis.screen.hearingWoke', 'Xeno is listening')
+        : t('jarvis.screen.hearing', 'Hearing you')
     case 'thinking':
       return t('jarvis.screen.thinking', 'Thinking')
     case 'speaking':

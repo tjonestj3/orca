@@ -5,18 +5,20 @@ import { useReducedMotionEnabled } from '../platform/use-reduced-motion'
 import { colors } from '../theme/mobile-theme'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisCall } from './jarvis-call'
-import type { JarvisPhase } from './jarvis-call-state'
+import { jarvisOrbTone, type JarvisOrbTone, type JarvisPhase } from './jarvis-call-state'
 
 type Props = {
   readonly call: JarvisCall
   readonly phase: JarvisPhase
   readonly size: number
-  // "Hey Xeno" picked up a turn: its own colour, apart from holding the button.
+  // "Hey Xeno" counted this turn: purple while Xeno hears it, amber like any other once it's thinking.
   readonly woke?: boolean
 }
 
-function phaseColor(phase: JarvisPhase): string {
-  switch (phase) {
+function toneColor(tone: JarvisOrbTone): string {
+  switch (tone) {
+    case 'heard':
+      return colors.statusPurple
     case 'thinking':
       return colors.statusAmber
     case 'hearing':
@@ -79,7 +81,7 @@ export function JarvisOrb({ call, phase, size, woke = false }: Props) {
     }).start()
   }, [level, still, swell])
 
-  const color = woke ? colors.statusPurple : phaseColor(phase)
+  const color = toneColor(jarvisOrbTone({ phase, woke }))
   const resting = phase === 'idle' || phase === 'error'
   const c = size / 2
   const ring = (fraction: number) => size * fraction
