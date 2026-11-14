@@ -1,4 +1,4 @@
-import { Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { mediaDevices, RTCPeerConnection, type MediaStream } from 'react-native-webrtc'
 import {
   preferSpeakerForCallIOS,
@@ -7,7 +7,6 @@ import {
 import { nativeMicrophoneScreenLock } from '../platform/native-audio-device'
 import { reduceJarvisMessage, RTVI_LABEL } from './jarvis-call-state'
 import {
-  audioLevelsFromStats,
   iceGathered,
   clientReadyMessage,
   parseChannelData,
@@ -20,10 +19,12 @@ import {
   QUIET,
   type JarvisCallError,
   type JarvisCallSnapshot,
-  type JarvisLevels,
   type JarvisOpening
 } from './jarvis-call-types'
+import { JarvisLevelMeter } from './jarvis-call-levels'
 import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
+import { CallDictation } from './jarvis-call-dictation'
+import type { PhoneDictation } from './jarvis-phone-dictation'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
@@ -33,9 +34,8 @@ const LEVEL_POLL_MS = 100
 // One voice call to the Jarvis server on the paired desktop: WebRTC audio both ways plus a data channel of RTVI events.
 export class JarvisCall {
   private snapshot: JarvisCallSnapshot = IDLE_SNAPSHOT
-  private levels: JarvisLevels = QUIET
+  private readonly meter = new JarvisLevelMeter()
   private readonly listeners = new Set<() => void>()
-  private readonly levelListeners = new Set<() => void>()
   private pc: RTCPeerConnection | null = null
   private mic: MediaStream | null = null
   private channel: DataChannel | null = null
@@ -45,6 +45,26 @@ export class JarvisCall {
   private lastActivityAt = 0
   // Bumped on every start and hang-up so late async steps of an abandoned call do nothing.
   private generation = 0
+  // Holding to talk with the phone's own dictation (Apple's recognizer) rather than the desktop's Whisper.
+  private readonly phone: CallDictation
+
+  constructor(dictation: PhoneDictation | null = null) {
+    this.phone = new CallDictation(dictation, {
+      snapshot: () => this.snapshot,
+      set: (next) => this.set(next),
+      send: (type, data) => this.sendClientMessage(type, data),
+      generation: () => this.generation,
+      touch: () => void (this.lastActivityAt = Date.now()),
+      holdThroughCall: () => {
+        this.applyMic()
+        this.sendClientMessage('jarvis-ptt', { state: 'down' })
+      }
+    })
+  }
+
+  setPhoneDictation(on: boolean): void {
+    this.phone.on = on
+  }
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
@@ -53,12 +73,9 @@ export class JarvisCall {
 
   readonly getSnapshot = (): JarvisCallSnapshot => this.snapshot
 
-  readonly subscribeLevels = (listener: () => void): (() => void) => {
-    this.levelListeners.add(listener)
-    return () => this.levelListeners.delete(listener)
-  }
+  readonly subscribeLevels = this.meter.subscribe
 
-  readonly getLevels = (): JarvisLevels => this.levels
+  readonly getLevels = this.meter.get
 
   // A request from a tap (a worktree's update, "talk about this"): sent into a live call, or opens one with it.
   ask(text: string, offerUrl: string, voice: JarvisVoice): void {
@@ -75,6 +92,9 @@ export class JarvisCall {
       void this.start(offerUrl, voice)
       return
     }
+    if (this.phone.begin(this.connected && AppState.currentState === 'active')) {
+      return
+    }
     this.applyMic()
     this.sendClientMessage('jarvis-ptt', { state: 'down' })
   }
@@ -85,6 +105,9 @@ export class JarvisCall {
       return
     }
     this.set({ ...this.snapshot, holding: false })
+    if (this.phone.release()) {
+      return
+    }
     this.applyMic()
     if (this.connected) {
       this.sendClientMessage('jarvis-ptt', { state: 'up' })
@@ -94,6 +117,9 @@ export class JarvisCall {
   // A tap that turned out not to be talk: shut the mic and say nothing to Jarvis.
   cancelTalk(): void {
     this.set({ ...this.snapshot, holding: false })
+    if (this.phone.cancel()) {
+      return
+    }
     this.applyMic()
     this.sendClientMessage('jarvis-ptt', { state: 'cancel' })
   }
@@ -220,7 +246,13 @@ export class JarvisCall {
         this.connected = true
         this.lastActivityAt = Date.now()
         this.applyMic()
-        this.every(LEVEL_POLL_MS, () => void this.pollLevels(pc, generation))
+        this.every(LEVEL_POLL_MS, () => {
+          void this.meter.poll(
+            pc,
+            () => generation === this.generation,
+            () => this.micOpen()
+          )
+        })
         this.every(IDLE_CHECK_MS, () => {
           if (Date.now() - this.lastActivityAt > jarvisIdleHangUpMs(this.snapshot)) {
             this.fail(generation, 'idle')
@@ -280,6 +312,7 @@ export class JarvisCall {
   }
 
   private teardown(): void {
+    this.phone.stop()
     this.timers.forEach(clearInterval)
     this.timers = []
     const { pc, mic } = this
@@ -297,38 +330,15 @@ export class JarvisCall {
       mic.getTracks().forEach((track) => track.stop())
       nativeMicrophoneScreenLock.release()
     }
-    this.setLevels(QUIET)
+    this.meter.set(QUIET)
   }
 
   private every(ms: number, tick: () => void): void {
     this.timers.push(setInterval(tick, ms))
   }
 
-  private async pollLevels(pc: RTCPeerConnection, generation: number): Promise<void> {
-    let report: Map<string, { type?: string; kind?: string; audioLevel?: number }>
-    try {
-      report = await pc.getStats()
-    } catch {
-      return
-    }
-    if (generation !== this.generation) {
-      return
-    }
-    const { user, bot } = audioLevelsFromStats(report)
-    const micOpen = this.micOpen()
-    this.setLevels({ user: micOpen ? user : 0, bot })
-  }
-
   private set(next: JarvisCallSnapshot): void {
     this.snapshot = next
     this.listeners.forEach((listener) => listener())
-  }
-
-  private setLevels(next: JarvisLevels): void {
-    if (next.user === this.levels.user && next.bot === this.levels.bot) {
-      return
-    }
-    this.levels = next
-    this.levelListeners.forEach((listener) => listener())
   }
 }

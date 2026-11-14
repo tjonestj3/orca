@@ -5002,7 +5002,11 @@
       "listeningForName": "Say “Hey Xeno” to talk",
       "tapOrHold": "Tap to start, or hold to talk",
       "voiceMenu": "Xeno’s voice: {{name}}. Change it",
-      "voiceMenuTitle": "Xeno’s voice"
+      "voiceMenuTitle": "Xeno’s voice",
+      "dictating": "Listening on your iPhone…",
+      "phoneDictation": "Hold to talk with iPhone dictation",
+      "phoneDictationOn": "iPhone dictation",
+      "phoneDictationOff": "Desktop dictation"
     },
     "worktree": {
       "needsYou": "Needs you",

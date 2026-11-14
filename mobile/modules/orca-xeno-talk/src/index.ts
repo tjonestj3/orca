@@ -17,6 +17,10 @@ type XenoTalkEvents = {
 declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
   /** A press that came before JS was listening, as when it launched the app; taking it clears it. */
   takePending(): boolean
+  /** Stops the call's audio so the phone's dictation can have the microphone; false if it couldn't. */
+  pauseCallAudio?(): boolean
+  /** Starts the call's audio again after dictation; activate is false when the call is ending anyway. */
+  resumeCallAudio?(activate: boolean): boolean
 }
 
 /** Null on Android, the web and in a binary built before the module existed. */

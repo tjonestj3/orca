@@ -1,5 +1,6 @@
 import AVFoundation
 import ExpoModulesCore
+import ObjectiveC
 import UIKit
 
 // The Talk to Xeno App Intent lives in the app target (plugins/ios-xeno-talk-intent.js). It leaves a pending press
@@ -11,6 +12,47 @@ func takeXenoTalkPress() -> Bool {
   let defaults = UserDefaults.standard
   guard defaults.bool(forKey: xenoTalkPendingKey) else { return false }
   defaults.set(false, forKey: xenoTalkPendingKey)
+  return true
+}
+
+// WebRTC's RTCAudioSession, looked up at run time so this module needn't link WebRTC: manual audio with audio
+// disabled stops the call's audio unit, and enabling it again (and leaving manual audio) restarts it. False when
+// the class or its properties aren't there, and the caller keeps the call's own microphone.
+func callAudio(enabled: Bool, activate: Bool) -> Bool {
+  let shared = NSSelectorFromString("sharedInstance")
+  guard let type: AnyClass = NSClassFromString("RTCAudioSession"),
+        let method = class_getClassMethod(type, shared)
+  else {
+    return false
+  }
+  typealias SharedInstance = @convention(c) (AnyObject, Selector) -> Unmanaged<AnyObject>
+  let instance = unsafeBitCast(method_getImplementation(method), to: SharedInstance.self)(type as AnyObject, shared)
+  guard let session = instance.takeUnretainedValue() as? NSObject,
+        session.responds(to: NSSelectorFromString("setUseManualAudio:")),
+        session.responds(to: NSSelectorFromString("setIsAudioEnabled:"))
+  else {
+    return false
+  }
+  if enabled {
+    // The dictation engine deactivated the shared audio session as it finished; WebRTC needs it active.
+    if activate {
+      try? AVAudioSession.sharedInstance().setActive(true)
+      let didActivate = NSSelectorFromString("audioSessionDidActivate:")
+      if session.responds(to: didActivate) {
+        session.perform(didActivate, with: AVAudioSession.sharedInstance())
+      }
+    }
+    session.setValue(true, forKey: "isAudioEnabled")
+    session.setValue(false, forKey: "useManualAudio")
+  } else {
+    session.setValue(false, forKey: "isAudioEnabled")
+    session.setValue(true, forKey: "useManualAudio")
+    // Balances the activation above, as CallKit apps do: the dictation engine takes the session over now.
+    let didDeactivate = NSSelectorFromString("audioSessionDidDeactivate:")
+    if session.responds(to: didDeactivate) {
+      session.perform(didDeactivate, with: AVAudioSession.sharedInstance())
+    }
+  }
   return true
 }
 
@@ -44,6 +86,17 @@ public class OrcaXenoTalkModule: Module {
 
     Function("takePending") { () -> Bool in
       takeXenoTalkPress()
+    }
+
+    // Holding the talk button with the phone's own dictation: the call's audio stops so the dictation engine
+    // can have the microphone (two voice-processing units can't share it), and starts again after.
+    Function("pauseCallAudio") { () -> Bool in
+      callAudio(enabled: false, activate: false)
+    }
+
+    // activate is false when the call is ending: the flags go back, but nothing reactivates the audio session.
+    Function("resumeCallAudio") { (activate: Bool) -> Bool in
+      callAudio(enabled: true, activate: activate)
     }
   }
 

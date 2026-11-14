@@ -53,7 +53,13 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    Male / Female switch becomes a menu of every voice the desktop lists (`/api/jarvis/voices`): 21 fast Pocket voices
    and the Kokoro ones; an older desktop without the list still gets Male / Female. Needs the brain from `bb63fab`,
    which also stops answering nearby talk at the end of a reply.
-13. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+13. `feat(jarvis): hold to talk with iPhone dictation` — while the talk button is held in the app, the call's
+   audio pauses and Apple's on-device recognizer (the one Orca's dictation uses) hears you; your words show as they
+   come and go to Xeno as text when you let go. "Hey Xeno" listening still goes through the call to Whisper. A
+   switch on the Xeno screen (iPhone / Desktop dictation, on by default); a phone without the recognizer ready, a
+   locked phone, or a hold that starts the call uses the call's microphone as before. Needs the brain from
+   `68bc351` (the `jarvis-dictation` message).
+14. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
