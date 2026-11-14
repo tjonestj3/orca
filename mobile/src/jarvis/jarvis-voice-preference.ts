@@ -1,46 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// Which voice Jarvis answers in; the desktop maps it to a concrete voice.
-export type JarvisVoice = 'male' | 'female'
+// Which voice Xeno answers in: a voice id from the desktop's list (/api/jarvis/voices), or "male" / "female",
+// which the desktop maps to its first voice of that kind (what the app stored before it had a voice menu).
+export type JarvisVoice = string
+
+export const DEFAULT_JARVIS_VOICE: JarvisVoice = 'male'
 
 const JARVIS_VOICE_KEY = 'orca:jarvisVoice'
 
 export async function loadJarvisVoice(): Promise<JarvisVoice> {
   try {
-    return (await AsyncStorage.getItem(JARVIS_VOICE_KEY)) === 'female' ? 'female' : 'male'
+    const stored = await AsyncStorage.getItem(JARVIS_VOICE_KEY)
+    return stored && /^[a-z_]+$/.test(stored) ? stored : DEFAULT_JARVIS_VOICE
   } catch {
-    return 'male'
+    return DEFAULT_JARVIS_VOICE
   }
 }
 
 export async function saveJarvisVoice(voice: JarvisVoice): Promise<void> {
   await AsyncStorage.setItem(JARVIS_VOICE_KEY, voice)
-}
-
-const JARVIS_HANDS_FREE_KEY = 'orca:jarvisHandsFree'
-
-export async function loadJarvisHandsFree(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(JARVIS_HANDS_FREE_KEY)) === 'on'
-  } catch {
-    return false
-  }
-}
-
-export async function saveJarvisHandsFree(on: boolean): Promise<void> {
-  await AsyncStorage.setItem(JARVIS_HANDS_FREE_KEY, on ? 'on' : 'off')
-}
-
-const JARVIS_WAKE_KEY = 'orca:jarvisWake'
-
-export async function loadJarvisWake(): Promise<boolean> {
-  try {
-    return (await AsyncStorage.getItem(JARVIS_WAKE_KEY)) === 'on'
-  } catch {
-    return false
-  }
-}
-
-export async function saveJarvisWake(on: boolean): Promise<void> {
-  await AsyncStorage.setItem(JARVIS_WAKE_KEY, on ? 'on' : 'off')
 }

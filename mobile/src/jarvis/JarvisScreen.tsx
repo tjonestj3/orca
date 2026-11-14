@@ -1,12 +1,20 @@
-import { useSyncExternalStore } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, Ear, MessagesSquare, Mic, PhoneOff, RotateCcw } from 'lucide-react-native'
+import {
+  AudioLines,
+  ChevronDown,
+  ChevronLeft,
+  Ear,
+  MessagesSquare,
+  Mic,
+  PhoneOff,
+  RotateCcw
+} from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
-import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
-import { MobileSwitch } from '../components/MobileSwitch'
+import { PickerListDrawer } from '../components/PickerListDrawer'
 import { useHostProfile } from '../host-catalog/use-host-profile'
 import { leaveHostRoute } from '../host-route-exit'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
@@ -15,11 +23,11 @@ import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisCallSnapshot } from './jarvis-call-types'
 import { useJarvis } from './jarvis-context'
-import { jarvisHistoryUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import { jarvisHistoryUrl, jarvisVoicesUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
 import { JarvisOrb } from './JarvisOrb'
 import { stageOrbSize } from './jarvis-screen-layout'
-import type { JarvisVoice } from './jarvis-voice-preference'
+import { chosenVoice, useJarvisVoices, voiceDetail } from './jarvis-voices'
 import { useJarvisWorktrees } from './jarvis-worktrees'
 import { JarvisWorktreePanel } from './JarvisWorktreePanel'
 
@@ -39,9 +47,7 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     return t('jarvis.screen.dropped', 'The call dropped. Hold to talk again.')
   }
   if (state.error === 'idle') {
-    return state.wake
-      ? t('jarvis.screen.idleHungUpWake', 'Hung up after an hour with nobody saying “Hey Xeno”.')
-      : t('jarvis.screen.idleHungUp', 'Hung up after 10 quiet minutes.')
+    return t('jarvis.screen.idleHungUpWake', 'Hung up after an hour with nobody saying “Hey Xeno”.')
   }
   if (state.error === 'dictation') {
     return t('jarvis.screen.dictationHungUp', 'Xeno hung up so you could dictate.')
@@ -50,9 +56,7 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
     case 'listening':
-      return state.wake
-        ? t('jarvis.screen.listeningForName', 'Say “Hey Xeno” to talk')
-        : t('jarvis.screen.listening', 'Listening')
+      return t('jarvis.screen.listeningForName', 'Say “Hey Xeno” to talk')
     case 'hearing':
       return state.woke
         ? t('jarvis.screen.hearingWoke', 'Xeno is listening')
@@ -62,9 +66,7 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
     case 'speaking':
       return t('jarvis.screen.speaking', 'Speaking')
     default:
-      return state.handsFree || state.wake
-        ? t('jarvis.screen.tapToStart', 'Tap to start hands-free')
-        : t('jarvis.screen.holdToTalk', 'Hold to talk')
+      return t('jarvis.screen.tapOrHold', 'Tap to start, or hold to talk')
   }
 }
 
@@ -77,9 +79,13 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const { width, height } = useWindowDimensions()
   const host = useHostProfile(hostId)
   // The app-wide call: leaving this screen or the app keeps it going.
-  const { call, offerUrl, voice, setVoice, handsFree, setHandsFree, wake, setWake } = useJarvis()
-  const openMic = handsFree || wake
+  const { call, offerUrl, voice, setVoice } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const openMic = state.wake
+  // The voice menu: the desktop's voices, asked for once the screen knows the desktop.
+  const [choosingVoice, setChoosingVoice] = useState(false)
+  const voices = useJarvisVoices(host ? jarvisVoicesUrl(host.endpoint) : null)
+  const current = chosenVoice(voice, voices)
   const { worktrees, reachable } = useJarvisWorktrees(
     host ? jarvisWorktreesUrl(host.endpoint) : null
   )
@@ -231,38 +237,34 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         </View>
       </View>
       <View style={styles.settingsRow}>
-        <View style={styles.handsFree}>
-          <Text style={styles.handsFreeLabel}>{t('jarvis.screen.handsFree', 'Hands-free')}</Text>
-          <MobileSwitch
-            value={handsFree}
-            onValueChange={setHandsFree}
-            accessibilityLabel={t(
-              'jarvis.screen.handsFreeSwitch',
-              'Hands-free: Xeno listens without holding'
-            )}
-          />
-        </View>
-        <View style={styles.handsFree}>
-          <Text style={styles.handsFreeLabel}>{t('jarvis.screen.wake', 'Hey Xeno')}</Text>
-          <MobileSwitch
-            value={wake}
-            onValueChange={setWake}
-            accessibilityLabel={t(
-              'jarvis.screen.wakeSwitch',
-              'Hey Xeno: the mic stays on and Xeno answers when you say its name'
-            )}
-          />
-        </View>
-        <MobileSegmentedControl<JarvisVoice>
-          segments={[
-            { value: 'male', label: t('jarvis.screen.male', 'Male') },
-            { value: 'female', label: t('jarvis.screen.female', 'Female') }
-          ]}
-          selected={voice}
-          onSelect={setVoice}
-          testIDPrefix="jarvis-voice"
-        />
+        <Pressable
+          onPress={() => setChoosingVoice(true)}
+          style={({ pressed }) => [styles.voiceButton, pressed && pressedStyle]}
+          accessibilityRole="button"
+          accessibilityLabel={t('jarvis.screen.voiceMenu', 'Xeno’s voice: {{name}}. Change it', {
+            name: current?.name ?? voice
+          })}
+          testID="jarvis-voice-menu"
+        >
+          <AudioLines size={16} color={colors.textSecondary} />
+          <Text style={styles.voiceLabel} numberOfLines={1}>
+            {current?.name ?? voice}
+          </Text>
+          <ChevronDown size={16} color={colors.textSecondary} />
+        </Pressable>
       </View>
+      <PickerListDrawer
+        visible={choosingVoice}
+        title={t('jarvis.screen.voiceMenuTitle', 'Xeno’s voice')}
+        items={voices.map((option) => ({
+          id: option.id,
+          label: option.name,
+          detail: voiceDetail(option)
+        }))}
+        selectedId={current?.id ?? voice}
+        onSelect={(item) => setVoice(item.id)}
+        onClose={() => setChoosingVoice(false)}
+      />
     </View>
   )
 }
@@ -316,7 +318,6 @@ const styles = themedStyleSheet(() => ({
   },
   talkButtonOpen: { backgroundColor: colors.statusGreen },
   hangUpButton: { backgroundColor: colors.statusRed },
-  // Wraps on a narrow screen: the two switches first, the voice below.
   settingsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -327,6 +328,15 @@ const styles = themedStyleSheet(() => ({
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg
   },
-  handsFree: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  handsFreeLabel: { color: colors.textSecondary, fontSize: typography.bodySize }
+  voiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 18,
+    backgroundColor: colors.bgRaised,
+    maxWidth: '100%'
+  },
+  voiceLabel: { color: colors.textPrimary, fontSize: typography.bodySize, flexShrink: 1 }
 }))

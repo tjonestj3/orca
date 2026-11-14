@@ -25,11 +25,8 @@ import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { openInClaude } from './jarvis-open-in-claude'
 import { viewingTarget } from './jarvis-viewing'
 import {
-  loadJarvisHandsFree,
-  loadJarvisWake,
+  DEFAULT_JARVIS_VOICE,
   loadJarvisVoice,
-  saveJarvisHandsFree,
-  saveJarvisWake,
   saveJarvisVoice,
   type JarvisVoice
 } from './jarvis-voice-preference'
@@ -45,9 +42,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [lastHostId, setLastHostId] = useState<string | null>(null)
   const [callHostId, setCallHostId] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
-  const [voice, setVoiceState] = useState<JarvisVoice>('male')
-  const [handsFree, setHandsFreeState] = useState(false)
-  const [wake, setWakeState] = useState(false)
+  const [voice, setVoiceState] = useState<JarvisVoice>(DEFAULT_JARVIS_VOICE)
   const { phase, opening } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
@@ -78,15 +73,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   useEffect(() => {
     void loadJarvisHost().then(setLastHostId)
     void loadJarvisVoice().then(setVoiceState)
-    void loadJarvisHandsFree().then((on) => {
-      setHandsFreeState(on)
-      call.setHandsFree(on)
-    })
-    void loadJarvisWake().then((on) => {
-      setWakeState(on)
-      call.setWake(on)
-    })
-  }, [call])
+  }, [])
   useEffect(() => call.setViewing(viewingTarget(pathname, hostId)), [call, pathname, hostId])
   useEffect(() => onDictationStarting(() => call.endFor('dictation')), [call])
 
@@ -101,22 +88,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       }
     },
     [call, offerUrl]
-  )
-  const setHandsFree = useCallback(
-    (on: boolean) => {
-      setHandsFreeState(on)
-      call.setHandsFree(on)
-      void saveJarvisHandsFree(on)
-    },
-    [call]
-  )
-  const setWake = useCallback(
-    (on: boolean) => {
-      setWakeState(on)
-      call.setWake(on)
-      void saveJarvisWake(on)
-    },
-    [call]
   )
   const adoptHost = useCallback((next: string) => {
     setLastHostId(next)
@@ -203,10 +174,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       reachable,
       voice,
       setVoice,
-      handsFree,
-      setHandsFree,
-      wake,
-      setWake,
       hostName: host?.name ?? null,
       pickHost,
       adoptHost,
@@ -219,10 +186,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       reachable,
       voice,
       setVoice,
-      handsFree,
-      setHandsFree,
-      wake,
-      setWake,
       host,
       pickHost,
       adoptHost,

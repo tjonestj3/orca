@@ -13,8 +13,7 @@ import { useJarvis } from './jarvis-context'
 export function JarvisTalkControl({ size }: { readonly size: number }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
-  const { call, offerUrl, voice, handsFree, wake, openJarvisScreen, pickHost, hostName } =
-    useJarvis()
+  const { call, offerUrl, voice, openJarvisScreen, pickHost, hostName } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = state.phase !== 'idle' && state.phase !== 'error'
   // Read at press time, so the press keeps the latest call details without being rebuilt mid-hold.
@@ -71,15 +70,11 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
           <X size={11} color={colors.onAccent} />
         </Pressable>
       ) : null}
-      {handsFree || wake ? (
+      {live ? (
         <View
-          style={[styles.badge, styles.handsFree]}
+          style={[styles.badge, styles.listening]}
           accessible
-          accessibilityLabel={
-            wake
-              ? t('jarvis.bubble.wake', 'Hey Xeno is on')
-              : t('jarvis.bubble.handsFree', 'Hands-free is on')
-          }
+          accessibilityLabel={t('jarvis.bubble.listeningForName', 'Listening for “Hey Xeno”')}
         >
           <Ear size={11} color={colors.onAccent} />
         </View>
@@ -99,5 +94,5 @@ const styles = themedStyleSheet(() => ({
     justifyContent: 'center'
   },
   hangUp: { top: -4, left: -4, backgroundColor: colors.statusRed },
-  handsFree: { bottom: -4, right: -4, backgroundColor: colors.accentBlue }
+  listening: { bottom: -4, right: -4, backgroundColor: colors.accentBlue }
 }))

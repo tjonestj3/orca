@@ -10,10 +10,6 @@ export type JarvisContextValue = {
   readonly reachable: boolean | null
   readonly voice: JarvisVoice
   readonly setVoice: (voice: JarvisVoice) => void
-  readonly handsFree: boolean
-  readonly setHandsFree: (on: boolean) => void
-  readonly wake: boolean
-  readonly setWake: (on: boolean) => void
   // The desktop being talked to, shown so it's never in doubt.
   readonly hostName: string | null
   // Set while several desktops run Xeno and none was picked yet: a press asks which instead of talking.

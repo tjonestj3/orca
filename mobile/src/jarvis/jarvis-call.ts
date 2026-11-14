@@ -98,17 +98,6 @@ export class JarvisCall {
     this.sendClientMessage('jarvis-ptt', { state: 'cancel' })
   }
 
-  setWake(on: boolean): void {
-    this.set({ ...this.snapshot, wake: on })
-    this.applyMic()
-    this.sendClientMessage('jarvis-wake', { on })
-  }
-
-  setHandsFree(on: boolean): void {
-    this.set({ ...this.snapshot, handsFree: on })
-    this.applyMic()
-  }
-
   // For the server's log: the phone locking or its audio being interrupted, which is why a locked phone goes unheard.
   reportDevice(note: { readonly kind: string; readonly at?: number }): void {
     this.sendClientMessage('jarvis-device', { ...note, at: note.at ?? Date.now() })
@@ -266,8 +255,8 @@ export class JarvisCall {
   }
 
   private idleKeepingChoices(): JarvisCallSnapshot {
-    const { handsFree, wake, holding } = this.snapshot
-    return { ...IDLE_SNAPSHOT, handsFree, wake, holding }
+    const { holding } = this.snapshot
+    return { ...IDLE_SNAPSHOT, holding }
   }
 
   private micOpen(): boolean {

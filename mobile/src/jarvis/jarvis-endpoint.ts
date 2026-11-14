@@ -35,3 +35,9 @@ export function jarvisPingUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)
   return base && `${base}/api/jarvis/ping`
 }
+
+// The voices Xeno can speak in, for the voice menu.
+export function jarvisVoicesUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/voices`
+}

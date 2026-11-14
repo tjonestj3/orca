@@ -48,7 +48,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    (`jarvis-device`, via `modules/orca-xeno-talk`), to find what stops a locked call hearing you.
 11. `feat(jarvis): open an agent's Claude artifacts in the Claude app` — an Open in Claude button on cards and list
    rows, and `jarvis-open-artifact` from the brain's `open_artifact` tool. Needs the brain from `94d36c1`.
-12. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+12. `feat(jarvis): always Hey Xeno, and a voice menu` — the Hands-free and Hey Xeno switches are gone: a live call
+   always listens for "Hey Xeno" (or "Xeno"), and holding the orb or pressing the Action Button needs no name. The
+   Male / Female switch becomes a menu of every voice the desktop lists (`/api/jarvis/voices`): 21 fast Pocket voices
+   and the Kokoro ones; an older desktop without the list still gets Male / Female. Needs the brain from `bb63fab`,
+   which also stops answering nearby talk at the end of a reply.
+13. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

@@ -1,12 +1,11 @@
-// Whether the call's microphone track sends audio: never before the call connects, then hands-free, with
-// "Hey Xeno" (which listens for its name), or while held.
+// Whether the call's microphone track sends audio: never before the call connects, then while listening for
+// "Hey Xeno" (always, now) or while held.
 export function micShouldBeOpen(gate: {
-  handsFree: boolean
   wake: boolean
   holding: boolean
   connected: boolean
 }): boolean {
-  return gate.connected && (gate.handsFree || gate.wake || gate.holding)
+  return gate.connected && (gate.wake || gate.holding)
 }
 
 // What Xeno hears once the data channel opens: the worktree on screen, a talk button held since before, and

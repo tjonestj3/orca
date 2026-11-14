@@ -4975,7 +4975,6 @@
       "unreachable": "Couldn't reach Xeno on this computer. Is it running?",
       "dropped": "The call dropped. Hold to talk again.",
       "connecting": "Connecting…",
-      "listening": "Listening",
       "hearing": "Hearing you",
       "thinking": "Thinking",
       "speaking": "Speaking",
@@ -4983,8 +4982,6 @@
       "youSaid": "You: {{text}}",
       "hangUp": "Hang up",
       "talk": "Hold to talk to Xeno",
-      "male": "Male",
-      "female": "Female",
       "openWorktree": "Open {{name}} in Orca",
       "newWorktree": "New",
       "worktrees": "Worktrees",
@@ -4997,19 +4994,15 @@
       "artifact": "artifact",
       "openArtifact": "Open {{name}} in Claude",
       "openInClaude": "Open in Claude",
-      "idleHungUp": "Hung up after 10 quiet minutes.",
       "idleHungUpWake": "Hung up after an hour with nobody saying “Hey Xeno”.",
       "dictationHungUp": "Xeno hung up so you could dictate.",
-      "tapToStart": "Tap to start hands-free",
-      "holdToTalk": "Hold to talk",
-      "handsFree": "Hands-free",
-      "handsFreeSwitch": "Hands-free: Xeno listens without holding",
       "openTranscript": "See the whole conversation",
       "conversation": "Conversation",
       "hearingWoke": "Xeno is listening",
       "listeningForName": "Say “Hey Xeno” to talk",
-      "wake": "Hey Xeno",
-      "wakeSwitch": "Hey Xeno: the mic stays on and Xeno answers when you say its name"
+      "tapOrHold": "Tap to start, or hold to talk",
+      "voiceMenu": "Xeno’s voice: {{name}}. Change it",
+      "voiceMenuTitle": "Xeno’s voice"
     },
     "worktree": {
       "needsYou": "Needs you",
@@ -5023,9 +5016,8 @@
     "bubble": {
       "holdToTalk": "Xeno. Hold to talk, tap to open.",
       "hangUp": "Hang up Xeno",
-      "handsFree": "Hands-free is on",
-      "wake": "Hey Xeno is on",
-      "holdToTalkOn": "Xeno on {{host}}. Hold to talk, tap to open."
+      "holdToTalkOn": "Xeno on {{host}}. Hold to talk, tap to open.",
+      "listeningForName": "Listening for “Hey Xeno”"
     },
     "transcript": {
       "empty": "Your conversation with Xeno shows up here.",

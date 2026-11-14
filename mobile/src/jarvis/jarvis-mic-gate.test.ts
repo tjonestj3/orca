@@ -3,33 +3,16 @@ import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 
 describe('micShouldBeOpen', () => {
   it('keeps the mic shut until the call is connected', () => {
-    expect(micShouldBeOpen({ handsFree: true, wake: false, holding: true, connected: false })).toBe(
-      false
-    )
-    expect(micShouldBeOpen({ handsFree: false, wake: true, holding: true, connected: false })).toBe(
-      false
-    )
-  })
-
-  it('opens it in hands-free mode or while the talk control is held', () => {
-    expect(micShouldBeOpen({ handsFree: true, wake: false, holding: false, connected: true })).toBe(
-      true
-    )
-    expect(micShouldBeOpen({ handsFree: false, wake: false, holding: true, connected: true })).toBe(
-      true
-    )
+    expect(micShouldBeOpen({ wake: true, holding: true, connected: false })).toBe(false)
   })
 
   it('keeps it open for "Hey Xeno", which listens for its name', () => {
-    expect(micShouldBeOpen({ handsFree: false, wake: true, holding: false, connected: true })).toBe(
-      true
-    )
+    expect(micShouldBeOpen({ wake: true, holding: false, connected: true })).toBe(true)
   })
 
-  it('shuts it once the talk control is let go, unless hands-free', () => {
-    expect(
-      micShouldBeOpen({ handsFree: false, wake: false, holding: false, connected: true })
-    ).toBe(false)
+  it('opens it while the talk control is held, and shuts it after without "Hey Xeno"', () => {
+    expect(micShouldBeOpen({ wake: false, holding: true, connected: true })).toBe(true)
+    expect(micShouldBeOpen({ wake: false, holding: false, connected: true })).toBe(false)
   })
 })
 
