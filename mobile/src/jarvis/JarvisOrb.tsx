@@ -5,24 +5,22 @@ import { useReducedMotionEnabled } from '../platform/use-reduced-motion'
 import { colors } from '../theme/mobile-theme'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisCall } from './jarvis-call'
-import { jarvisOrbTone, type JarvisOrbTone, type JarvisPhase } from './jarvis-call-state'
+import type { JarvisPhase } from './jarvis-call-state'
 
 type Props = {
   readonly call: JarvisCall
   readonly phase: JarvisPhase
   readonly size: number
-  // "Hey Xeno" counted this turn: purple while Xeno hears it, amber like any other once it's thinking.
-  readonly woke?: boolean
 }
 
-function toneColor(tone: JarvisOrbTone): string {
-  switch (tone) {
-    case 'heard':
+// Blue while Xeno waits or talks, purple while it's hearing you (however you got its attention), amber while it
+// thinks.
+function phaseColor(phase: JarvisPhase): string {
+  switch (phase) {
+    case 'hearing':
       return colors.statusPurple
     case 'thinking':
       return colors.statusAmber
-    case 'hearing':
-      return colors.textPrimary
     case 'error':
       return colors.statusRed
     case 'idle':
@@ -66,7 +64,7 @@ const turn = (spin: Animated.Value, reverse = false) => ({
 })
 
 // Jarvis as an orb: rings that turn, an amber sweep while thinking, a core that swells with whoever is talking.
-export function JarvisOrb({ call, phase, size, woke = false }: Props) {
+export function JarvisOrb({ call, phase, size }: Props) {
   useMobileColorScheme()
   const still = useReducedMotionEnabled() !== false
   const levels = useSyncExternalStore(call.subscribeLevels, call.getLevels)
@@ -83,7 +81,7 @@ export function JarvisOrb({ call, phase, size, woke = false }: Props) {
     }).start()
   }, [level, still, swell])
 
-  const color = toneColor(jarvisOrbTone({ phase, woke }))
+  const color = phaseColor(phase)
   const resting = phase === 'idle' || phase === 'error'
   const c = size / 2
   const ring = (fraction: number) => size * fraction

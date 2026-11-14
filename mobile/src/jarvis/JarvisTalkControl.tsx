@@ -6,6 +6,7 @@ import { colors, pressedStyle } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { bubblePress } from './jarvis-bubble-policy'
+import { jarvisOrbPhase } from './jarvis-call-types'
 import { JarvisOrb } from './JarvisOrb'
 import { useJarvis } from './jarvis-context'
 
@@ -52,12 +53,7 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
             : t('jarvis.bubble.holdToTalk', 'Xeno. Hold to talk, tap to open.')
         }
       >
-        <JarvisOrb
-          call={call}
-          phase={state.holding && live ? 'hearing' : state.phase}
-          size={size}
-          woke={state.woke}
-        />
+        <JarvisOrb call={call} phase={jarvisOrbPhase(state)} size={size} />
       </Pressable>
       {live ? (
         <Pressable

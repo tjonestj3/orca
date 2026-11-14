@@ -22,7 +22,7 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import type { JarvisCallSnapshot } from './jarvis-call-types'
+import { jarvisOrbPhase, type JarvisCallSnapshot } from './jarvis-call-types'
 import { useJarvis } from './jarvis-context'
 import { jarvisHistoryUrl, jarvisVoicesUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
@@ -56,15 +56,13 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
   if (state.dictating !== null) {
     return t('jarvis.screen.dictating', 'Listening on your iPhone…')
   }
-  switch (state.phase) {
+  switch (jarvisOrbPhase(state)) {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
     case 'listening':
       return t('jarvis.screen.listeningForName', 'Say “Hey Xeno” to talk')
     case 'hearing':
-      return state.woke
-        ? t('jarvis.screen.hearingWoke', 'Xeno is listening')
-        : t('jarvis.screen.hearing', 'Hearing you')
+      return t('jarvis.screen.hearing', 'Hearing you')
     case 'thinking':
       return t('jarvis.screen.thinking', 'Thinking')
     case 'speaking':
@@ -153,7 +151,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         }
       />
       <View style={styles.stage}>
-        <JarvisOrb call={call} phase={state.phase} size={orbSize} woke={state.woke} />
+        <JarvisOrb call={call} phase={jarvisOrbPhase(state)} size={orbSize} />
         <Text
           style={[styles.status, state.error ? styles.statusError : null]}
           accessibilityRole="text"

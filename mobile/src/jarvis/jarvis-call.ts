@@ -87,7 +87,7 @@ export class JarvisCall {
   // Holding a talk control: opens the mic, starting the call first if there isn't one.
   pressTalk(offerUrl: string, voice: JarvisVoice): void {
     this.lastActivityAt = Date.now()
-    this.set({ ...this.snapshot, holding: true })
+    this.set({ ...this.snapshot, holding: true, heldTurn: true })
     if (!this.pc) {
       void this.start(offerUrl, voice)
       return
@@ -116,7 +116,7 @@ export class JarvisCall {
 
   // A tap that turned out not to be talk: shut the mic and say nothing to Jarvis.
   cancelTalk(): void {
-    this.set({ ...this.snapshot, holding: false })
+    this.set({ ...this.snapshot, holding: false, heldTurn: false })
     if (this.phone.cancel()) {
       return
     }
@@ -222,7 +222,7 @@ export class JarvisCall {
         return
       }
       const next = reduceJarvisMessage(this.snapshot, message, {
-        waitingForName: this.snapshot.wake && !this.snapshot.holding
+        waitingForName: this.snapshot.wake && !this.snapshot.holding && !this.snapshot.heldTurn
       })
       if (
         next.phase !== this.snapshot.phase &&

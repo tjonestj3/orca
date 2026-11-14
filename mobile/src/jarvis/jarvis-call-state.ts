@@ -35,6 +35,9 @@ export type JarvisCallState = {
   // "Hey Xeno" mode counted this turn (jarvis-hearing while you talk, jarvis-woke once you stop), until Xeno
   // starts to answer or the server takes it back (jarvis-dropped).
   readonly woke: boolean
+  // This turn began with a hold, so it counts without the name even once the button is let go: the desktop's
+  // "your turn is over" turns it to thinking. Until then, letting go left it showing Xeno hearing you.
+  readonly heldTurn: boolean
   // An artifact Xeno was asked to open in the Claude app; seq makes each request a new one.
   readonly opening: (JarvisArtifact & { readonly seq: number }) | null
 }
@@ -53,6 +56,7 @@ export const IDLE_JARVIS_CALL: JarvisCallState = {
   cards: [],
   messages: [],
   woke: false,
+  heldTurn: false,
   opening: null
 }
 
@@ -91,14 +95,6 @@ function readCard(data: RtviMessage['data']): JarvisWorktreeCard | null {
   }
 }
 
-// How the orb looks: Xeno hearing a "Hey Xeno" turn gets its own colour, apart from holding the button, and from
-// thinking once you stop.
-export type JarvisOrbTone = JarvisPhase | 'heard'
-
-export function jarvisOrbTone(state: Pick<JarvisCallState, 'phase' | 'woke'>): JarvisOrbTone {
-  return state.woke && state.phase === 'hearing' ? 'heard' : state.phase
-}
-
 // With "Hey Xeno" on and the button not held, speech only counts once the server says so (jarvis-hearing, as soon
 // as it does), so the screen doesn't react to everyone talking.
 export function reduceJarvisMessage(
@@ -117,7 +113,7 @@ export function reduceJarvisMessage(
     case 'user-stopped-speaking':
       return options.waitingForName && !(state.woke && state.phase === 'hearing')
         ? state
-        : { ...state, phase: 'thinking' }
+        : { ...state, phase: 'thinking', heldTurn: false }
     case 'user-transcription':
       return message.data?.final === true && text ? { ...state, heard: text } : state
     case 'bot-llm-started':
@@ -129,7 +125,7 @@ export function reduceJarvisMessage(
     case 'bot-llm-stopped':
       return { ...state, composing: false }
     case 'bot-started-speaking':
-      return { ...state, phase: 'speaking', woke: false }
+      return { ...state, phase: 'speaking', woke: false, heldTurn: false }
     case 'bot-stopped-speaking':
       return state.phase === 'speaking'
         ? { ...state, phase: state.composing ? 'thinking' : 'listening' }

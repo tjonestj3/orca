@@ -1,4 +1,4 @@
-import { IDLE_JARVIS_CALL, type JarvisCallState } from './jarvis-call-state'
+import { IDLE_JARVIS_CALL, type JarvisCallState, type JarvisPhase } from './jarvis-call-state'
 
 // The shapes a Jarvis call reports to the screen, and its resting values.
 export type JarvisCallError = 'microphone' | 'unreachable' | 'dropped' | 'idle' | 'dictation'
@@ -37,3 +37,13 @@ export const IDLE_SNAPSHOT: JarvisCallSnapshot = {
   error: null
 }
 export const QUIET: JarvisLevels = { user: 0, bot: 0 }
+
+// What the orb shows. Hearing you looks the same however you got Xeno's attention (holding, the Action Button or
+// "Hey Xeno"), and holding shows it the moment you press, before the desktop has heard a sound.
+export function jarvisOrbPhase(
+  s: Pick<JarvisCallSnapshot, 'phase' | 'holding' | 'dictating'>
+): JarvisPhase {
+  // Still connecting, the microphone isn't open yet: that shows as connecting.
+  const connected = s.phase !== 'idle' && s.phase !== 'error' && s.phase !== 'connecting'
+  return connected && (s.holding || s.dictating !== null) ? 'hearing' : s.phase
+}

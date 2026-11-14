@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  IDLE_JARVIS_CALL,
-  jarvisOrbTone,
-  reduceJarvisMessage,
-  type JarvisCallState
-} from './jarvis-call-state'
+import { IDLE_JARVIS_CALL, reduceJarvisMessage, type JarvisCallState } from './jarvis-call-state'
 
 const rtvi = (type: string, data?: object) => ({ label: 'rtvi-ai', type, data })
 
@@ -36,6 +31,7 @@ describe('reduceJarvisMessage', () => {
       cards: [],
       messages: [],
       woke: false,
+      heldTurn: false,
       opening: null
     })
   })
@@ -62,6 +58,7 @@ describe('reduceJarvisMessage', () => {
       cards: [],
       messages: [],
       woke: false,
+      heldTurn: false,
       opening: null
     })
   })
@@ -186,7 +183,6 @@ describe('"Hey Xeno"', () => {
       rtvi('server-message', { type: 'jarvis-hearing', route: 'name' })
     )
     expect(hearing).toMatchObject({ phase: 'hearing', woke: true })
-    expect(jarvisOrbTone(hearing)).toBe('heard')
   })
 
   it('turns from hearing to thinking once you stop, a different look from hearing', () => {
@@ -196,7 +192,6 @@ describe('"Hey Xeno"', () => {
       rtvi('user-stopped-speaking')
     )
     expect(thinking.phase).toBe('thinking')
-    expect(jarvisOrbTone(thinking)).toBe('thinking')
     const answered = reduceJarvisMessage(
       thinking,
       rtvi('server-message', { type: 'jarvis-woke' }),
@@ -204,7 +199,7 @@ describe('"Hey Xeno"', () => {
         waitingForName: true
       }
     )
-    expect(jarvisOrbTone(answered)).toBe('thinking')
+    expect(answered.phase).toBe('thinking')
   })
 
   it('goes back to listening when the server takes a turn back', () => {
@@ -215,11 +210,5 @@ describe('"Hey Xeno"', () => {
       rtvi('server-message', { type: 'jarvis-dropped' })
     )
     expect(dropped).toMatchObject({ phase: 'listening', woke: false })
-  })
-
-  it('keeps the plain look for holding the button and for Xeno speaking', () => {
-    const holding = run(rtvi('user-started-speaking'))
-    expect(jarvisOrbTone(holding)).toBe('hearing')
-    expect(jarvisOrbTone(run(rtvi('bot-started-speaking')))).toBe('speaking')
   })
 })

@@ -59,7 +59,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    switch on the Xeno screen (iPhone / Desktop dictation, on by default); a phone without the recognizer ready, a
    locked phone, or a hold that starts the call uses the call's microphone as before. Needs the brain from
    `68bc351` (the `jarvis-dictation` message).
-14. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+14. `fix(jarvis): one look for Xeno hearing you` — the orb is purple and says "Hearing you" whether you're holding
+   or said "Hey Xeno", from the moment you press (the Xeno screen used to wait for the desktop to hear a sound).
+   Letting go of a hold now turns it amber (thinking) once the desktop has your words; it used to stay on hearing
+   until Xeno spoke. Goes with the brain from `80ba85d`, which shows a named request as heard while you're still
+   saying it and ticks when a hands-free request is taken; older brains work too.
+15. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
