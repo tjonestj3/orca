@@ -127,6 +127,9 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
           working={working}
           onSend={send}
           onStop={stop}
+          calling={live}
+          onCall={() => offerUrl && void call.start(offerUrl, voice)}
+          onHangUp={() => call.hangUp()}
         />
       </KeyboardAvoidingView>
     </View>

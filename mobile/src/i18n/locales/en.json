@@ -5039,6 +5039,7 @@
     "chat": {
       "placeholder": "Message Xeno",
       "send": "Send",
+      "call": "Talk to Xeno",
       "stop": "Stop Xeno",
       "unreachable": "Couldn't reach Xeno. Your message is still here.",
       "new": "New conversation",

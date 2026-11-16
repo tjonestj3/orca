@@ -1,15 +1,22 @@
-// What the chat's one button does. Typed text always sends, even while Xeno answers (it's answered next); with
-// nothing typed while Xeno is answering, it stops the reply; while a send is on its way it does nothing.
+export type ChatComposerButton = 'send' | 'stop' | 'call' | 'hangUp' | 'off'
+
+// What the chat's one round button does, as in the Claude app. Typed text always sends, even while Xeno answers
+// (it's answered next); with nothing typed while Xeno is answering, it stops the reply; with nothing typed
+// otherwise, it calls Xeno, or hangs up the call that's open. While a send is on its way it does nothing.
 export function chatComposerButton(at: {
   readonly text: string
   readonly working: boolean
   readonly sending: boolean
-}): 'send' | 'stop' | 'off' {
+  readonly calling: boolean
+}): ChatComposerButton {
   if (at.sending) {
     return 'off'
   }
   if (at.text.trim()) {
     return 'send'
   }
-  return at.working ? 'stop' : 'off'
+  if (at.working) {
+    return 'stop'
+  }
+  return at.calling ? 'hangUp' : 'call'
 }
