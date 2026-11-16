@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
-import { colors, spacing, typography } from '../theme/mobile-theme'
+import { colors, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisMessage } from './jarvis-history'
@@ -79,14 +79,20 @@ export function JarvisTranscript({ messages, hearing, enabled, working = false, 
 
 const styles = themedStyleSheet(() => ({
   list: { flex: 1 },
-  content: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: spacing.md },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    gap: spacing.lg
+  },
   empty: {
     flex: 1,
     color: colors.textSecondary,
-    fontSize: typography.bodySize,
+    fontSize: 17,
+    lineHeight: 25,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md
   },
   working: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
-  workingText: { color: colors.textMuted, fontSize: typography.metaSize }
+  workingText: { color: colors.textMuted, fontSize: 15 }
 }))

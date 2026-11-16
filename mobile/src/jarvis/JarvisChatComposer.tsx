@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { ArrowUp, Square } from 'lucide-react-native'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
-import { colors, pressedStyle, radii, spacing, typography } from '../theme/mobile-theme'
+import {
+  COMPOSER_CONTROL_HIT_SLOP,
+  composerInputStyles as box
+} from '../components/composer-input/composer-input-styles'
+import { colors, pressedStyle, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { chatComposerButton } from './jarvis-chat-composer'
@@ -15,7 +19,8 @@ type Props = {
   readonly onStop: () => void
 }
 
-// Typing to Xeno: a box at the bottom of the conversation, with one button that sends, or stops Xeno's reply.
+// Typing to Xeno, drawn like the Claude app's composer: a rounded card at the bottom of the conversation, with one
+// round button that sends, or stops Xeno's reply.
 // Answers come back as text and are never spoken.
 export function JarvisChatComposer({ enabled, working, onSend, onStop }: Props) {
   useMobileColorScheme()
@@ -46,6 +51,7 @@ export function JarvisChatComposer({ enabled, working, onSend, onStop }: Props) 
     }
   }
 
+  const live = button !== 'off'
   return (
     <View style={styles.dock}>
       {failed ? (
@@ -53,9 +59,9 @@ export function JarvisChatComposer({ enabled, working, onSend, onStop }: Props) 
           {t('jarvis.chat.unreachable', "Couldn't reach Xeno. Your message is still here.")}
         </Text>
       ) : null}
-      <View style={styles.row}>
+      <View style={[box.box, styles.card]}>
         <TextInput
-          style={styles.input}
+          style={[box.messageText, styles.input]}
           value={text}
           onChangeText={(next) => {
             setText(next)
@@ -67,25 +73,34 @@ export function JarvisChatComposer({ enabled, working, onSend, onStop }: Props) 
           multiline
           accessibilityLabel={t('jarvis.chat.placeholder', 'Message Xeno')}
         />
-        <Pressable
-          onPress={press}
-          disabled={button === 'off'}
-          style={({ pressed }) => [
-            styles.button,
-            button === 'off' && styles.buttonOff,
-            pressed && pressedStyle
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={
-            button === 'stop' ? t('jarvis.chat.stop', 'Stop Xeno') : t('jarvis.chat.send', 'Send')
-          }
-        >
-          {button === 'stop' ? (
-            <Square size={14} color={colors.onAccent} fill={colors.onAccent} />
-          ) : (
-            <ArrowUp size={18} color={colors.onAccent} />
-          )}
-        </Pressable>
+        <View style={box.actionRow}>
+          <View style={box.actionSpacer} />
+          <Pressable
+            onPress={press}
+            disabled={!live}
+            hitSlop={COMPOSER_CONTROL_HIT_SLOP}
+            style={({ pressed }) => [
+              box.sendButton,
+              !live && box.sendButtonDisabled,
+              pressed && live && pressedStyle
+            ]}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !live }}
+            accessibilityLabel={
+              button === 'stop' ? t('jarvis.chat.stop', 'Stop Xeno') : t('jarvis.chat.send', 'Send')
+            }
+          >
+            {button === 'stop' ? (
+              <Square size={13} color={colors.bgBase} fill={colors.bgBase} />
+            ) : (
+              <ArrowUp
+                size={19}
+                color={live ? colors.bgBase : colors.textMuted}
+                strokeWidth={2.4}
+              />
+            )}
+          </Pressable>
+        </View>
       </View>
     </View>
   )
@@ -94,37 +109,13 @@ export function JarvisChatComposer({ enabled, working, onSend, onStop }: Props) 
 const styles = themedStyleSheet(() => ({
   dock: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderSubtle,
     backgroundColor: colors.bgBase,
     gap: spacing.xs
   },
-  error: { color: colors.statusRed, fontSize: typography.metaSize, paddingHorizontal: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
-  input: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 140,
-    paddingHorizontal: spacing.md,
-    paddingTop: 10,
-    paddingBottom: 10,
-    borderRadius: radii.surface,
-    borderWidth: 1,
-    borderColor: colors.chatUserBorder,
-    backgroundColor: colors.chatUserSurface,
-    color: colors.textPrimary,
-    fontSize: typography.bodySize
-  },
-  button: {
-    width: 36,
-    height: 36,
-    marginBottom: 2,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentBlue
-  },
-  buttonOff: { opacity: 0.35 }
+  error: { color: colors.statusRed, fontSize: typography.metaSize, paddingHorizontal: spacing.sm },
+  // The Claude app's composer: a rounded card, the text on top and its button below.
+  card: { paddingTop: spacing.md, paddingBottom: spacing.sm, paddingHorizontal: spacing.md },
+  input: { fontSize: 17, lineHeight: 24, maxHeight: 7 * 24 }
 }))

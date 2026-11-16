@@ -2,7 +2,7 @@ import { Pressable, Text, View } from 'react-native'
 import { Mic, Play, Wrench } from 'lucide-react-native'
 import { MobileMarkdown } from '../components/MobileMarkdown'
 import type { Translate } from '../i18n/mobile-i18n'
-import { colors, pressedStyle, radii, spacing, typography } from '../theme/mobile-theme'
+import { colors, pressedStyle, radii, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import type { TranscriptEntry } from './jarvis-transcript'
 
@@ -14,6 +14,11 @@ type Props = {
   readonly onReplay: (id: number) => void
   readonly onCopy: (entry: TranscriptEntry) => void
 }
+
+// The Claude app's reading size: 17 pt prose, set from markdown's 13 pt base.
+const TEXT_SIZE = 17
+const LINE_HEIGHT = 25
+const PROSE_SCALE = TEXT_SIZE / 13
 
 function timeOf(at: number): string {
   return new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -45,7 +50,7 @@ export function JarvisTranscriptRow({ entry, enabled, copied, t, onReplay, onCop
   if (entry.who === 'tool') {
     return (
       <View style={styles.toolRow} accessibilityRole="text">
-        <Wrench size={13} color={colors.textMuted} />
+        <Wrench size={15} color={colors.textMuted} />
         <Text style={styles.toolText} numberOfLines={1}>
           {entry.text}
         </Text>
@@ -70,7 +75,7 @@ export function JarvisTranscriptRow({ entry, enabled, copied, t, onReplay, onCop
           accessibilityHint={t('jarvis.transcript.copyHint', 'Touch and hold to copy.')}
         >
           <View style={styles.yourLine}>
-            {entry.spoken ? <Mic size={13} color={colors.textMuted} style={styles.mic} /> : null}
+            {entry.spoken ? <Mic size={15} color={colors.textMuted} style={styles.mic} /> : null}
             <Text style={styles.yourText}>{entry.text}</Text>
           </View>
           {copiedNote}
@@ -99,22 +104,25 @@ export function JarvisTranscriptRow({ entry, enabled, copied, t, onReplay, onCop
             : t('jarvis.transcript.copyHint', 'Touch and hold to copy.')
         }
       >
-        <View style={styles.meta}>
-          <Text style={[styles.label, update && styles.updateLabel]}>{label}</Text>
-          {entry.playable ? <Play size={12} color={colors.textSecondary} /> : null}
-        </View>
+        {update ? <Text style={[styles.label, styles.updateLabel]}>{label}</Text> : null}
         {entry.markdown || entry.growing ? (
           <MobileMarkdown
             content={entry.text}
             fallback="…"
             growing={entry.growing}
             streaming={entry.growing}
+            textScale={PROSE_SCALE}
             chatMath
           />
         ) : (
           <Text style={styles.theirText}>{entry.text}</Text>
         )}
-        {copiedNote}
+        {entry.playable || copied ? (
+          <View style={styles.meta}>
+            {entry.playable ? <Play size={15} color={colors.textMuted} /> : null}
+            {copiedNote}
+          </View>
+        ) : null}
       </Pressable>
     </View>
   )
@@ -125,41 +133,40 @@ const styles = themedStyleSheet(() => ({
   time: {
     alignSelf: 'center',
     color: colors.textSecondary,
-    fontSize: typography.metaSize,
+    fontSize: 13,
     paddingVertical: spacing.xs
   },
+  // Your messages as the Claude app draws them: a soft, very round bubble on the right.
   bubble: {
     alignSelf: 'flex-end',
-    maxWidth: '88%',
+    maxWidth: '85%',
     backgroundColor: colors.chatUserSurface,
-    borderWidth: 1,
-    borderColor: colors.chatUserBorder,
-    borderRadius: radii.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderRadius: radii.floating,
+    paddingHorizontal: spacing.lg + 2,
+    paddingVertical: spacing.md,
     gap: spacing.xs
   },
   pending: { opacity: 0.6 },
-  yourLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
-  mic: { marginTop: 4 },
+  yourLine: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  mic: { marginTop: 5 },
   yourText: {
     flexShrink: 1,
     color: colors.textPrimary,
-    fontSize: typography.bodySize,
-    lineHeight: 22
+    fontSize: TEXT_SIZE,
+    lineHeight: LINE_HEIGHT
   },
-  theirs: { alignSelf: 'stretch', gap: spacing.xs, paddingVertical: 2 },
+  theirs: { alignSelf: 'stretch', gap: spacing.sm, paddingVertical: 2 },
   update: {
     borderLeftWidth: 2,
     borderLeftColor: colors.statusAmber,
-    paddingLeft: spacing.sm
+    paddingLeft: spacing.md
   },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  label: { color: colors.textSecondary, fontSize: typography.metaSize, fontWeight: '600' },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  label: { fontSize: 13, fontWeight: '600' },
   updateLabel: { color: colors.statusAmber },
-  theirText: { color: colors.textPrimary, fontSize: typography.bodySize, lineHeight: 22 },
-  toolRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 3 },
-  toolText: { flexShrink: 1, color: colors.textMuted, fontSize: typography.metaSize },
+  theirText: { color: colors.textPrimary, fontSize: TEXT_SIZE, lineHeight: LINE_HEIGHT },
+  toolRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
+  toolText: { flexShrink: 1, color: colors.textMuted, fontSize: 15 },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -167,6 +174,6 @@ const styles = themedStyleSheet(() => ({
     paddingVertical: spacing.sm
   },
   rule: { flex: 1, height: 1, backgroundColor: colors.borderSubtle },
-  dividerText: { color: colors.textMuted, fontSize: typography.metaSize },
-  copied: { color: colors.textSecondary, fontSize: typography.metaSize }
+  dividerText: { color: colors.textMuted, fontSize: 13 },
+  copied: { color: colors.textSecondary, fontSize: 13 }
 }))
