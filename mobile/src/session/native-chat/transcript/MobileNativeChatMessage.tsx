@@ -363,7 +363,7 @@ function MobileNativeChatMessageImpl({
               blocks={tools}
               disclosureId={runOwner ?? rowKey ?? message.id}
               asides={asides}
-              activeTurnIsWorking={structuredActivityUi ? activeTurnIsWorking : undefined}
+              activeTurnIsWorking={activeTurnIsWorking}
               trailing={trailingRun}
               awaitingAnswer={askPending}
               previousTodoWrite={previousTodoWrite}

@@ -110,6 +110,26 @@ describe('mobile tool result availability', () => {
     vi.restoreAllMocks()
   })
 
+  // A terminal agent's transcript says nothing about whether a call is running, so the turn's working state must
+  // reach its last run, as on desktop; otherwise a command still running is drawn finished, with a check.
+  it("draws a terminal agent's last command as running while its turn is working", () => {
+    const running = message([
+      { type: 'tool-call', callId: 'one', name: 'Bash', input: { command: 'npm test' } }
+    ])
+    act(() => {
+      renderer = create(
+        createElement(MobileNativeChatMessage, {
+          message: running,
+          activeTurnIsWorking: true,
+          trailingRun: true,
+          structuredActivityUi: false
+        })
+      )
+    })
+    expect(renderer!.root.findAll((node) => String(node.type) === 'Check')).toHaveLength(0)
+    expect(textIn(renderer!.root).join(' ')).toMatch(/Running/)
+  })
+
   // The page's window unmounts a row scrolled past; older messages joining its fold change its id.
   it('keeps what the reader opened in a windowed-out row by its row key', () => {
     const row = message([
