@@ -25,7 +25,10 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
   const host = useHostProfile(hostId)
   const { call, offerUrl, voice } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
-  const messages = useJarvisHistory(host ? jarvisHistoryUrl(host.endpoint) : null, state.messages)
+  const { messages } = useJarvisHistory(
+    host ? jarvisHistoryUrl(host.endpoint) : null,
+    state.messages
+  )
   const live = state.phase !== 'idle' && state.phase !== 'error'
 
   const back = (): void => {

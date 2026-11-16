@@ -105,8 +105,16 @@ describe('worktree cards', () => {
       rtvi('server-message', { type: 'jarvis-said', message: { id: 3, text: '  ' } })
     )
     expect(state.messages).toEqual([
-      { id: 1, kind: 'reply', text: 'Sending it.', at: 5 },
-      { id: 2, kind: 'update', text: 'jarvis-brain: the design is done.', at: 5 }
+      { id: 1, kind: 'reply', text: 'Sending it.', at: 5, via: null, done: true, rev: 0 },
+      {
+        id: 2,
+        kind: 'update',
+        text: 'jarvis-brain: the design is done.',
+        at: 5,
+        via: null,
+        done: true,
+        rev: 0
+      }
     ])
   })
 })

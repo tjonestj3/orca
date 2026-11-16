@@ -91,7 +91,10 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const { worktrees, reachable } = useJarvisWorktrees(
     host ? jarvisWorktreesUrl(host.endpoint) : null
   )
-  const messages = useJarvisHistory(host ? jarvisHistoryUrl(host.endpoint) : null, state.messages)
+  const { messages } = useJarvisHistory(
+    host ? jarvisHistoryUrl(host.endpoint) : null,
+    state.messages
+  )
   // While the phone's dictation hears a hold, its words show as they come.
   const heard = state.dictating || state.heard
 

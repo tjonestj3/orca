@@ -30,6 +30,22 @@ export function jarvisHistoryUrl(endpoint: string): string | null {
   return base && `${base}/api/jarvis/history`
 }
 
+// The typed chat: send a message, stop the reply being written, start a new conversation.
+export function jarvisChatUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/chat`
+}
+
+export function jarvisChatStopUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/chat/stop`
+}
+
+export function jarvisChatNewUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/chat/new`
+}
+
 // The cheap "is Jarvis there?" check: answered without asking Orca anything.
 export function jarvisPingUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)

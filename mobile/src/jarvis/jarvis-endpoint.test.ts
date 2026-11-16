@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  jarvisChatNewUrl,
+  jarvisChatStopUrl,
+  jarvisChatUrl,
   jarvisHistoryUrl,
   jarvisOfferUrl,
   jarvisPingUrl,
@@ -35,5 +38,20 @@ describe('jarvisOfferUrl', () => {
   it('has no address for an endpoint it cannot parse', () => {
     expect(jarvisOfferUrl('not an endpoint')).toBeNull()
     expect(jarvisWorktreesUrl('not an endpoint')).toBeNull()
+  })
+})
+
+describe('the typed chat', () => {
+  it('talks to the same server', () => {
+    expect(jarvisChatUrl('ws://100.126.129.22:6768')).toBe(
+      'http://100.126.129.22:7860/api/jarvis/chat'
+    )
+    expect(jarvisChatStopUrl('ws://100.126.129.22:6768')).toBe(
+      'http://100.126.129.22:7860/api/jarvis/chat/stop'
+    )
+    expect(jarvisChatNewUrl('ws://100.126.129.22:6768')).toBe(
+      'http://100.126.129.22:7860/api/jarvis/chat/new'
+    )
+    expect(jarvisChatUrl('not a url')).toBeNull()
   })
 })
