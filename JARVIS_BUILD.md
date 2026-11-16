@@ -64,7 +64,14 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    Letting go of a hold now turns it amber (thinking) once the desktop has your words; it used to stay on hearing
    until Xeno spoke. Goes with the brain from `80ba85d`, which shows a named request as heard while you're still
    saying it and ticks when a hands-free request is taken; older brains work too.
-15. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+15. `feat(jarvis): history with revisions, and typed chat requests` and
+   `feat(jarvis): type to Xeno in an Orca-style chat` — the conversation screen is now a chat. Type to Xeno and
+   it answers in text, never aloud, as the reply is written; it's the same conversation as your calls, so what
+   you said aloud is there (with a mic mark) and what you type is known in the next call. Tools Xeno used show
+   as quiet lines, replies to typed messages are formatted, and there's a stop button and "New conversation".
+   Needs the brain from `999fb90` (the chat endpoints, and one conversation across calls); with an older brain
+   the screen still shows the conversation but sending fails.
+16. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
