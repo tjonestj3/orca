@@ -4,6 +4,7 @@ import {
   historyPollUrl,
   mergeJarvisMessages,
   parseJarvisHistory,
+  settledMessages,
   type JarvisMessage
 } from './jarvis-history'
 
@@ -105,5 +106,14 @@ describe('polling the history', () => {
     expect(historyPollMs({ working: true, quickUntil: 0, now: 1000 })).toBe(400)
     expect(historyPollMs({ working: false, quickUntil: 5000, now: 1000 })).toBe(400)
     expect(historyPollMs({ working: false, quickUntil: 500, now: 1000 })).toBe(5000)
+  })
+})
+
+describe('settledMessages', () => {
+  it('drops replies left "being written" once Xeno is no longer answering', () => {
+    const kept = message({ id: 1, text: 'Done.', rev: 3 })
+    const dropped = message({ id: 2, text: 'So', done: false, rev: 4 })
+    expect(settledMessages([kept, dropped], false)).toEqual([kept])
+    expect(settledMessages([kept, dropped], true)).toEqual([kept, dropped])
   })
 })

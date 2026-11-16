@@ -85,6 +85,15 @@ export function mergeJarvisMessages(
   return [...byId.values()].sort((a, b) => a.id - b.id).slice(-MAX_MESSAGES)
 }
 
+// Outside a turn nothing is being written: a reply still marked so was dropped on the server (talked over before
+// a word of it played), and polls only report changes, so it would otherwise linger here.
+export function settledMessages(
+  messages: readonly JarvisMessage[],
+  working: boolean
+): JarvisMessage[] {
+  return working ? [...messages] : messages.filter((m) => m.done)
+}
+
 export function historyPollUrl(url: string, since: number): string {
   return `${url}?since=${since}`
 }
@@ -151,7 +160,9 @@ export function useJarvisHistory(
             setFetched(body.messages)
           } else {
             rev = body.rev
-            setFetched((known) => mergeJarvisMessages(known, body.messages))
+            setFetched((known) =>
+              settledMessages(mergeJarvisMessages(known, body.messages), body.working)
+            )
           }
           isWorking = body.working
           setWorking(body.working)
