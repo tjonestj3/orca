@@ -5030,10 +5030,21 @@
       "playHint": "Plays it again. Touch and hold to copy.",
       "copyHint": "Touch and hold to copy.",
       "copied": "Copied",
-      "title": "Conversation"
+      "title": "Conversation",
+      "newConversation": "New conversation"
     },
     "picker": {
       "title": "Talk to Xeno on…"
+    },
+    "chat": {
+      "placeholder": "Message Xeno",
+      "send": "Send",
+      "stop": "Stop Xeno",
+      "unreachable": "Couldn't reach Xeno. Your message is still here.",
+      "new": "New conversation",
+      "newConfirmTitle": "Start a new conversation?",
+      "newConfirmBody": "Xeno forgets this conversation. The messages stay here.",
+      "working": "Xeno is working…"
     }
   }
 }

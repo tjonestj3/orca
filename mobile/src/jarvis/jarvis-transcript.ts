@@ -7,12 +7,22 @@ export type TranscriptEntry = {
   readonly key: string
   // The server's id, to play Jarvis's lines again; null for words still being heard.
   readonly id: number | null
-  readonly who: 'you' | 'jarvis' | 'update'
+  readonly who: 'you' | 'jarvis' | 'update' | 'tool' | 'new'
   readonly text: string
   readonly at: number
   readonly showTime: boolean
   readonly playable: boolean
   readonly pending: boolean
+  // Your words that were said aloud (shown with a mic), not typed or tapped.
+  readonly spoken: boolean
+  // A reply still being written: it grows as the poll brings more.
+  readonly growing: boolean
+  // A typed reply, written for the screen: rendered as markdown.
+  readonly markdown: boolean
+}
+
+function who(kind: JarvisMessage['kind']): TranscriptEntry['who'] {
+  return kind === 'reply' ? 'jarvis' : kind
 }
 
 // The conversation as it went, oldest first, ending with what Jarvis is hearing now until the server keeps it.
@@ -31,12 +41,15 @@ export function transcriptEntries(
     return {
       key: String(message.id),
       id: message.id,
-      who: message.kind === 'you' ? 'you' : message.kind === 'update' ? 'update' : 'jarvis',
+      who: who(message.kind),
       text: message.text,
       at: message.at,
       showTime,
-      playable: message.kind !== 'you',
-      pending: false
+      playable: (message.kind === 'reply' || message.kind === 'update') && message.done,
+      pending: false,
+      spoken: message.kind === 'you' && message.via === 'voice',
+      growing: !message.done,
+      markdown: message.kind === 'reply' && message.via === 'typed'
     }
   })
   const heard = hearing.trim()
@@ -50,7 +63,10 @@ export function transcriptEntries(
       at: 0,
       showTime: false,
       playable: false,
-      pending: true
+      pending: true,
+      spoken: true,
+      growing: false,
+      markdown: false
     })
   }
   return entries

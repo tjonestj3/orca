@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
-import { View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Platform, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft } from 'lucide-react-native'
+import { ChevronLeft, RotateCcw } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
 import { useHostProfile } from '../host-catalog/use-host-profile'
@@ -11,12 +11,21 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
+import { newJarvisConversation, sendJarvisChat, stopJarvisChat } from './jarvis-chat'
 import { useJarvis } from './jarvis-context'
-import { jarvisHistoryUrl } from './jarvis-endpoint'
+import {
+  jarvisChatNewUrl,
+  jarvisChatStopUrl,
+  jarvisChatUrl,
+  jarvisHistoryUrl
+} from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
+import { JarvisChatComposer } from './JarvisChatComposer'
 import { JarvisTranscript } from './JarvisTranscript'
 
-// The whole conversation with Jarvis, full screen. The call carries on meanwhile, and the bubble stays up to talk.
+// The whole conversation with Xeno, full screen, and a box to type to it: one conversation with the calls, so
+// what was said aloud shows here and what's typed here is known in the next call. Typed answers are never
+// spoken. The call carries on meanwhile, and the bubble stays up to talk.
 export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
@@ -25,11 +34,13 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
   const host = useHostProfile(hostId)
   const { call, offerUrl, voice } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
-  const { messages } = useJarvisHistory(
-    host ? jarvisHistoryUrl(host.endpoint) : null,
+  const endpoint = host?.endpoint ?? null
+  const { messages, working, refresh } = useJarvisHistory(
+    endpoint ? jarvisHistoryUrl(endpoint) : null,
     state.messages
   )
   const live = state.phase !== 'idle' && state.phase !== 'error'
+  const chatUrl = endpoint ? jarvisChatUrl(endpoint) : null
 
   const back = (): void => {
     if (router.canGoBack()) {
@@ -37,6 +48,42 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     } else {
       leaveHostRoute(router)
     }
+  }
+
+  const send = async (text: string): Promise<boolean> => {
+    if (!chatUrl) {
+      return false
+    }
+    // Typed from here, the person is looking at the conversation, not a worktree.
+    const result = await sendJarvisChat(chatUrl, text, null)
+    refresh()
+    return result.ok
+  }
+
+  const stop = (): void => {
+    const url = endpoint ? jarvisChatStopUrl(endpoint) : null
+    if (url) {
+      void stopJarvisChat(url).then(refresh)
+    }
+  }
+
+  const startOver = (): void => {
+    const url = endpoint ? jarvisChatNewUrl(endpoint) : null
+    if (!url) {
+      return
+    }
+    Alert.alert(
+      t('jarvis.chat.newConfirmTitle', 'Start a new conversation?'),
+      t('jarvis.chat.newConfirmBody', 'Xeno forgets this conversation. The messages stay here.'),
+      [
+        { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+        {
+          text: t('jarvis.chat.new', 'New conversation'),
+          style: 'destructive',
+          onPress: () => void newJarvisConversation(url).then(refresh)
+        }
+      ]
+    )
   }
 
   return (
@@ -51,21 +98,42 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
         }
         title={t('jarvis.transcript.title', 'Conversation')}
         subtitle={host?.name}
+        trailing={
+          <NavBarButton
+            icon={RotateCcw}
+            onPress={startOver}
+            accessibilityLabel={t('jarvis.chat.new', 'New conversation')}
+          />
+        }
       />
-      <JarvisTranscript
-        messages={messages}
-        hearing={live ? state.heard : ''}
-        enabled={offerUrl != null}
-        onReplay={(id) => {
-          if (offerUrl) {
-            call.replay(id, offerUrl, voice)
-          }
-        }}
-      />
+      <KeyboardAvoidingView
+        style={styles.body}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={insets.top}
+      >
+        <JarvisTranscript
+          messages={messages}
+          hearing={live ? state.heard : ''}
+          enabled={offerUrl != null}
+          working={working}
+          onReplay={(id) => {
+            if (offerUrl) {
+              call.replay(id, offerUrl, voice)
+            }
+          }}
+        />
+        <JarvisChatComposer
+          enabled={chatUrl != null}
+          working={working}
+          onSend={send}
+          onStop={stop}
+        />
+      </KeyboardAvoidingView>
     </View>
   )
 }
 
 const styles = themedStyleSheet(() => ({
-  container: { flex: 1, backgroundColor: colors.bgBase }
+  container: { flex: 1, backgroundColor: colors.bgBase },
+  body: { flex: 1 }
 }))
