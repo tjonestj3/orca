@@ -14,7 +14,8 @@ import { useResponsiveLayout } from '../layout/responsive-layout'
 import { WorkspaceServerContext } from '../worktree/workspace-server-context'
 import { useSessionTitleCard } from './tabs/use-session-title-card'
 import { useDetailCardScope } from '../components/use-detail-card-scope'
-import { useShellSideRail } from '../layout/use-shell-side-rail'
+import { useSideColumn } from '../layout/side-rail'
+import { useSessionFullScreen } from './side-column-full-screen'
 
 export function MobileSessionSurface({ controller }: { controller: MobileSessionController }) {
   useMobileColorScheme()
@@ -22,7 +23,9 @@ export function MobileSessionSurface({ controller }: { controller: MobileSession
   const { setMobileSessionRootRef } = controller
   const server = useContext(WorkspaceServerContext)
   const layout = useResponsiveLayout()
-  const sideRail = useShellSideRail()
+  const sideRail = useSideColumn() !== null
+  // Terminal and chat alike: the session takes the folded Duo's status column when full screen is on.
+  useSessionFullScreen()
   const hasTabs = controller.visibleTabs.length > 0
   const besideTabs = (layout.isLandscapePhone || sideRail) && hasTabs
   const titleVisible =

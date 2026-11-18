@@ -28,6 +28,7 @@ import {
 } from '../terminal/terminal-accessory-layout'
 import { MobileSwitch } from './MobileSwitch'
 import { SmartRailRow } from './SmartRailRow'
+import { FoldedFullScreenSetting } from './FoldedFullScreenSetting'
 
 // Absolutely positioned DragReorderList rows require one fixed height per section.
 const REORDER_ROW_HEIGHT = 56
@@ -198,6 +199,7 @@ export function TerminalShortcutSettings({
           }
         />
       </SettingsSection>
+      <FoldedFullScreenSetting />
       {hasPad ? (
         <SettingsSection
           title={t('components.terminalShortcutSettings.directionPad', 'DIRECTION PAD')}

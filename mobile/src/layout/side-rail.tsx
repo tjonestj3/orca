@@ -18,14 +18,59 @@ import {
   type SideRailStrip
 } from './side-rail-strip'
 import { createRailStore } from './side-rail-store'
+import { extendedColumnSide, foldedFullScreen, useFoldedFullScreen } from './folded-full-screen'
 
 type RailStore = ReturnType<typeof createRailStore>
+
+/** The device's status column, whether screens draw in it or extend over it. */
+export type SideColumn = {
+  side: SideRailStrip['side']
+  width: number
+  extended: boolean
+  /** The folded Duo's cover screen, the only one screens extend over the column on. */
+  folded: boolean
+}
 
 const SideRailContext = createContext<{
   strip: SideRailStrip | null
   directionPadAvailable: boolean
   store: RailStore
+  column: SideColumn | null
+  /** Each screen asking to extend over the column holds one; returns its release. */
+  requestFullScreen: () => () => void
 } | null>(null)
+
+/**
+ * The status column's side and width once seen. iOS stops reporting it while the status bar is hidden
+ * and as the app comes back from the background, so the last one seen stands for it.
+ */
+function useRememberedColumn(strip: SideRailStrip | null) {
+  const [seen, setSeen] = useState<Pick<SideRailStrip, 'side' | 'width'> | null>(null)
+  useEffect(() => {
+    if (strip && (strip.side !== seen?.side || strip.width !== seen.width)) {
+      setSeen({ side: strip.side, width: strip.width })
+    }
+  }, [strip, seen])
+  return strip ?? seen
+}
+
+function useFullScreenRequests() {
+  const [count, setCount] = useState(0)
+  const request = useMemo(
+    () => () => {
+      setCount((n) => n + 1)
+      let released = false
+      return () => {
+        if (!released) {
+          released = true
+          setCount((n) => n - 1)
+        }
+      }
+    },
+    []
+  )
+  return [count > 0, request] as const
+}
 
 /**
  * Lets one screen draw controls in a side inset strip the screens are laid out clear of, such as
@@ -49,9 +94,38 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
   // Keyboard clipping changes what fits now, not this device's shortcut defaults.
   const directionPadAvailable =
     hasFoldDivision === true || hasTerminalDirectionPadSpace(unoccludedStrip)
+  useEffect(() => void foldedFullScreen.load(), [])
+  const remembered = useRememberedColumn(unoccludedStrip)
+  const [requested, requestFullScreen] = useFullScreenRequests()
+  const folded = hasFoldDivision !== true
+  const extendedSide = extendedColumnSide({
+    requested,
+    fullScreen: useFoldedFullScreen(),
+    folded,
+    column: remembered
+  })
+  const column = useMemo(
+    () =>
+      remembered && (unoccludedStrip || extendedSide)
+        ? {
+            side: remembered.side,
+            width: remembered.width,
+            extended: extendedSide !== null,
+            folded
+          }
+        : null,
+    [remembered, unoccludedStrip, extendedSide, folded]
+  )
+  // Extended, no screen draws in the column: the keys go back to the bottom row and Xeno to its bubble.
   const value = useMemo(
-    () => ({ strip, directionPadAvailable, store }),
-    [strip, directionPadAvailable, store]
+    () => ({
+      strip: extendedSide ? null : strip,
+      directionPadAvailable,
+      store,
+      column,
+      requestFullScreen
+    }),
+    [extendedSide, strip, directionPadAvailable, store, column, requestFullScreen]
   )
   return (
     <SideRailContext.Provider value={value}>
@@ -89,7 +163,18 @@ function SideRailOutlet() {
   )
 }
 
-/** The side strip this window has to draw in; null for a window without one. */
+/** The status column this window has, drawn in or extended over; null for a window without one. */
+export function useSideColumn(): SideColumn | null {
+  return useContext(SideRailContext)?.column ?? null
+}
+
+/** Asks for the folded Duo's status column while `active`, when full screen when folded is on. */
+export function useSideColumnFullScreen(active: boolean): void {
+  const request = useContext(SideRailContext)?.requestFullScreen
+  useEffect(() => (active && request ? request() : undefined), [active, request])
+}
+
+/** The side strip this window has to draw in; null for a window without one, or one extended over. */
 export function useSideRailStrip(): SideRailStrip | null {
   return useContext(SideRailContext)?.strip ?? null
 }

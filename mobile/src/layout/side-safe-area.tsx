@@ -8,12 +8,20 @@ import {
   useSafeAreaInsets,
   type EdgeInsets
 } from 'react-native-safe-area-context'
+import { useSideColumn } from './side-rail'
 
 const WindowSafeAreaInsetsContext = createContext<EdgeInsets | null>(null)
 
 // Pad side cutouts/navigation bars once, then expose the padded frame and insets so descendants neither pad twice nor size past it.
 export function SideSafeArea({ children }: { children: ReactNode }) {
-  const insets = useSafeAreaInsets()
+  const windowInsets = useSafeAreaInsets()
+  // A status column screens extend over is theirs; iOS keeps its inset after the status bar hides.
+  const column = useSideColumn()
+  const extendedSide = column?.extended ? column.side : null
+  const insets = useMemo(
+    () => (extendedSide === null ? windowInsets : { ...windowInsets, [extendedSide]: 0 }),
+    [extendedSide, windowInsets]
+  )
   const frame = useSafeAreaFrame()
   const areaInsets = useMemo(() => ({ ...insets, left: 0, right: 0 }), [insets])
   const areaFrame = useMemo(

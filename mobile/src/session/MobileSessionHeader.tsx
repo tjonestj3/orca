@@ -18,7 +18,8 @@ import { useHostSidebarReveal } from '../layout/host-sidebar-reveal'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import type { MobileSessionController } from './use-mobile-session-controller'
 import { useTopChromeSpace } from '../layout/use-top-chrome-space'
-import { useShellSideRail } from '../layout/use-shell-side-rail'
+import { useSideColumn } from '../layout/side-rail'
+import { SideColumnToggle } from './side-column-full-screen'
 
 export function MobileSessionHeader({
   controller,
@@ -56,7 +57,9 @@ export function MobileSessionHeader({
   const moreRef = useRef<View>(null)
   const revealSidebar = useHostSidebarReveal()
   const topChrome = useTopChromeSpace()
-  const sideRail = useShellSideRail()
+  // The Duo's compact bar stays the same whether the keys are in its status column or the bottom row.
+  const column = useSideColumn()
+  const sideRail = column !== null
   // Why: a sideways phone is ~390pt tall, so the tabs share the top bar instead of taking a second row.
   const hasTabs = visibleTabs.length > 0
   const tabsInTopBar = (layout.isLandscapePhone || sideRail) && hasTabs
@@ -117,6 +120,7 @@ export function MobileSessionHeader({
           onPress={() => handlePanelTap('sourceControl')}
         />
       ) : null}
+      <SideColumnToggle />
       <NavBarButton
         ref={moreRef}
         active={activePanel !== null && !(sourceControlInBar && activePanel === 'sourceControl')}
@@ -135,7 +139,12 @@ export function MobileSessionHeader({
             paddingLeft: topChrome.space.left,
             paddingRight: topChrome.space.right,
             minHeight: topChrome.space.minHeight
-          }
+          },
+          // Over the folded Duo's column the bar keeps clear of the camera, as Moshi's does.
+          column?.extended &&
+            (column.side === 'right'
+              ? { paddingRight: column.width }
+              : { paddingLeft: column.width })
         ]}
         edges={topChrome.space ? [] : ['top']}
       >

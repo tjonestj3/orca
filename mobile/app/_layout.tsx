@@ -6,7 +6,7 @@ import {
   setNotificationViewingWorkspace
 } from '../src/notifications/notification-viewing-policy'
 import { useCallback, useEffect } from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { Stack, useGlobalSearchParams, usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
@@ -33,7 +33,7 @@ import { consumeInitialLaunchIntent } from '../src/navigation/initial-launch-int
 import { recoverMobileRelayPairing } from '../src/pairing/mobile-relay-pairing-recovery'
 import { appUpdateChecker } from '../src/app-update/app-update-runtime'
 import { SideSafeArea } from '../src/layout/side-safe-area'
-import { SideRailProvider } from '../src/layout/side-rail'
+import { SideRailProvider, useSideColumn } from '../src/layout/side-rail'
 import { JarvisProvider } from '../src/jarvis/JarvisProvider'
 import { useFollowDeviceUiLocale } from '../src/i18n/use-follow-device-ui-locale'
 import { startMobileUiLanguage } from '../src/i18n/ui-language-preference'
@@ -189,62 +189,84 @@ export default function RootLayout() {
     <RpcClientProvider>
       <OrcaQueryProvider>
         <View style={styles.root} onLayout={onNavigatorLayout}>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          {/* iOS sets it per screen (RootStack): under scenes it ignores the app-wide call. */}
+          {Platform.OS === 'ios' ? null : (
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          )}
           <SideRailProvider>
             <JarvisProvider>
               <SideSafeArea>
-                <Stack
-                  screenOptions={{
-                    headerStyle: { backgroundColor: colors.bgPanel },
-                    headerTintColor: colors.textPrimary,
-                    headerTitleStyle: { fontSize: 16, fontWeight: '600' },
-                    contentStyle: { backgroundColor: colors.bgBase },
-                    headerShadowVisible: false
-                    // Leave orientation unset: react-native-screens overrides rotation lock even for default; Android manifest fullUser honors the user’s setting.
-                  }}
-                >
-                  <Stack.Screen
-                    name="index"
-                    options={{
-                      headerShown: false,
-                      headerTitle: () => <OrcaLogo size={22} />
-                    }}
-                  />
-                  <Stack.Screen name="pair-scan" options={{ headerShown: false }} />
-                  <Stack.Screen name="pair" options={{ headerShown: false }} />
-                  <Stack.Screen name="pair-confirm" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="mobile-onboarding"
-                    options={{ headerShown: false, presentation: 'modal', gestureEnabled: false }}
-                  />
-                  <Stack.Screen name="settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="appearance-settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="terminal-settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="native-chat-settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="browser-settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="voice-settings" options={{ headerShown: false }} />
-                  <Stack.Screen name="notifications" options={{ headerShown: false }} />
-                  <Stack.Screen name="troubleshoot" options={{ headerShown: false }} />
-                  <Stack.Screen name="connection-log" options={{ headerShown: false }} />
-                  <Stack.Screen name="about" options={{ headerShown: false }} />
-                  <Stack.Screen name="h" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="new-workspace"
-                    options={{
-                      headerShown: false,
-                      // Draws nothing of its own: the drawer is the page's, over Home.
-                      presentation: 'transparentModal',
-                      animation: 'none',
-                      contentStyle: { backgroundColor: 'transparent' }
-                    }}
-                  />
-                </Stack>
+                <RootStack colorScheme={colorScheme} />
               </SideSafeArea>
             </JarvisProvider>
           </SideRailProvider>
         </View>
       </OrcaQueryProvider>
     </RpcClientProvider>
+  )
+}
+
+/**
+ * The app's screens. Hides the status bar while a session screen extends over the folded iPhone Duo's
+ * status column, which takes the clock with it, so the screen uses the whole width as Moshi's do.
+ */
+function RootStack({ colorScheme }: { colorScheme: ReturnType<typeof useMobileColorScheme> }) {
+  const column = useSideColumn()
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.bgPanel },
+        headerTintColor: colors.textPrimary,
+        headerTitleStyle: { fontSize: 16, fontWeight: '600' },
+        contentStyle: { backgroundColor: colors.bgBase },
+        headerShadowVisible: false,
+        // Per screen: under scenes iOS ignores the app-wide call. Nested stacks inherit these; needs
+        // UIViewControllerBasedStatusBarAppearance (app.json).
+        ...(Platform.OS === 'ios'
+          ? {
+              statusBarStyle: colorScheme === 'dark' ? ('light' as const) : ('dark' as const),
+              statusBarHidden: column?.extended === true
+            }
+          : {})
+        // Leave orientation unset: react-native-screens overrides rotation lock even for default; Android manifest fullUser honors the user’s setting.
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+          headerTitle: () => <OrcaLogo size={22} />
+        }}
+      />
+      <Stack.Screen name="pair-scan" options={{ headerShown: false }} />
+      <Stack.Screen name="pair" options={{ headerShown: false }} />
+      <Stack.Screen name="pair-confirm" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="mobile-onboarding"
+        options={{ headerShown: false, presentation: 'modal', gestureEnabled: false }}
+      />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
+      <Stack.Screen name="appearance-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="terminal-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="native-chat-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="browser-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="voice-settings" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      <Stack.Screen name="troubleshoot" options={{ headerShown: false }} />
+      <Stack.Screen name="connection-log" options={{ headerShown: false }} />
+      <Stack.Screen name="about" options={{ headerShown: false }} />
+      <Stack.Screen name="h" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="new-workspace"
+        options={{
+          headerShown: false,
+          // Draws nothing of its own: the drawer is the page's, over Home.
+          presentation: 'transparentModal',
+          animation: 'none',
+          contentStyle: { backgroundColor: 'transparent' }
+        }}
+      />
+    </Stack>
   )
 }
 

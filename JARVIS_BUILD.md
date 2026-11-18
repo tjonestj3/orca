@@ -71,7 +71,11 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    as quiet lines, replies to typed messages are formatted, and there's a stop button and "New conversation".
    Needs the brain from `999fb90` (the chat endpoints, and one conversation across calls); with an older brain
    the screen still shows the conversation but sending fails.
-16. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+16. `feat(mobile): full screen when folded on the iPhone Duo` — a session (terminal or chat) can take the
+   folded Duo's status column, as Moshi does: the keys move to the bottom row, Xeno to its bubble in that corner,
+   the status bar hides, and the header keeps clear of the camera. Settings → Terminal → "Full screen when folded"
+   sets the default; the button beside ⋯ in the session header switches it until the app restarts.
+17. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
