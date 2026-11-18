@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { XenoKeys, pairIfNeeded, withXenoKey } from './jarvis-key'
 
@@ -77,5 +78,19 @@ describe('pairIfNeeded', () => {
     expect(fetcher).not.toHaveBeenCalled()
     await pairIfNeeded({ ok: true, key: false }, 'u', keys, fetcher)
     expect(keys.headers()).toEqual({})
+  })
+})
+
+describe('loading the keychain lazily', () => {
+  // Nov 17, build 15: `await import('react-native')` here crashed the app at launch. A lazy import copies every
+  // export of a CommonJS module, and react-native's are getters, so it loaded all of React Native, some of which
+  // throws on iOS. Tests replace react-native, so only the source can show it.
+  it('never lazily imports react-native or another CommonJS package', () => {
+    const source = readFileSync(new URL('./jarvis-key.ts', import.meta.url), 'utf8')
+    const lazy = [...source.matchAll(/import\(\s*'([^']+)'\s*\)/g)].map((m) => m[1])
+    expect(lazy).toEqual([
+      '../host-credentials/pairing-keychain',
+      '../host-credentials/pairing-keychain'
+    ])
   })
 })

@@ -9,26 +9,17 @@ const MAX_KEYS = 5 // one per desktop running Xeno, newest first
 type KeyStore = { read: () => Promise<string | null>; write: (value: string) => Promise<void> }
 
 // The keychain, loaded when first used, so modules that only build requests don't pull in native storage.
+// Never load react-native lazily like this: a lazy import copies every export of a CommonJS module, and
+// react-native's are getters, so it loads all of React Native at once, some of which throws on iOS. It crashed
+// the app at launch (Nov 17, build 15). The keychain module is an ES module, which comes back as it is.
 const keychain: KeyStore = {
-  read: async () => {
-    const { Platform } = await import('react-native')
-    if (Platform.OS === 'web') {
-      return (await import('@react-native-async-storage/async-storage')).default.getItem(STORE_KEY)
-    }
-    return (await import('../host-credentials/pairing-keychain')).readPairingKeychainItem(STORE_KEY)
-  },
-  write: async (value) => {
-    const { Platform } = await import('react-native')
-    if (Platform.OS === 'web') {
-      await (
-        await import('@react-native-async-storage/async-storage')
-      ).default.setItem(STORE_KEY, value)
-      return
-    }
-    await (
-      await import('../host-credentials/pairing-keychain')
-    ).writePairingKeychainItem(STORE_KEY, value)
-  }
+  read: async () =>
+    (await import('../host-credentials/pairing-keychain')).readPairingKeychainItem(STORE_KEY),
+  write: async (value) =>
+    (await import('../host-credentials/pairing-keychain')).writePairingKeychainItem(
+      STORE_KEY,
+      value
+    )
 }
 
 export class XenoKeys {
