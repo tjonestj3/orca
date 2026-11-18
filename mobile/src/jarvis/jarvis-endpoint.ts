@@ -52,6 +52,12 @@ export function jarvisPingUrl(endpoint: string): string | null {
   return base && `${base}/api/jarvis/ping`
 }
 
+// The phone's key, handed out only over Tailscale (see jarvis-key).
+export function jarvisPairUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/pair`
+}
+
 // The voices Xeno can speak in, for the voice menu.
 export function jarvisVoicesUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)

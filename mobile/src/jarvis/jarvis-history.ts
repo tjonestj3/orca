@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { xenoFetch } from './jarvis-key'
 
 // A line of the conversation, kept by the Jarvis server: what you said, typed or tapped, Xeno's answer, an
 // agent's update it read out, a tool it used, or the start of a new conversation. Xeno's own lines can be played
@@ -151,7 +152,7 @@ export function useJarvisHistory(
       const abort = new AbortController()
       const timeout = setTimeout(() => abort.abort(), FETCH_TIMEOUT_MS)
       try {
-        const response = await fetch(historyPollUrl(url, rev), { signal: abort.signal })
+        const response = await xenoFetch(historyPollUrl(url, rev), { signal: abort.signal })
         if (response.ok && !stopped) {
           const body = parseJarvisHistory(await response.json())
           if (body.rev < rev) {

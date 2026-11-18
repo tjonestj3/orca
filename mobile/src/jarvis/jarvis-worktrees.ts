@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { readArtifacts, type JarvisArtifact } from './jarvis-artifacts'
+import { xenoFetch } from './jarvis-key'
 
 // The active worktrees as Jarvis sees them, for the list on the Jarvis screen.
 export type JarvisWorktreeState = 'needs you' | 'working' | 'done' | 'idle'
@@ -58,7 +59,7 @@ export function useJarvisWorktrees(url: string | null): {
       const abort = new AbortController()
       const timer = setTimeout(() => abort.abort(), FETCH_TIMEOUT_MS)
       try {
-        const response = await fetch(url, { signal: abort.signal })
+        const response = await xenoFetch(url, { signal: abort.signal })
         const body: unknown = await response.json()
         if (!stopped) {
           setWorktrees(parseJarvisWorktrees(body))

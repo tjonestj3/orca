@@ -5,6 +5,7 @@ import {
   jarvisChatUrl,
   jarvisHistoryUrl,
   jarvisOfferUrl,
+  jarvisPairUrl,
   jarvisPingUrl,
   jarvisWorktreesUrl
 } from './jarvis-endpoint'
@@ -53,5 +54,10 @@ describe('the typed chat', () => {
       'http://100.126.129.22:7860/api/jarvis/chat/new'
     )
     expect(jarvisChatUrl('not a url')).toBeNull()
+  })
+  it('asks for the phone\u2019s key on the same server', () => {
+    expect(jarvisPairUrl('ws://192.168.86.22:6768')).toBe(
+      'http://192.168.86.22:7860/api/jarvis/pair'
+    )
   })
 })

@@ -1,4 +1,5 @@
 import { readJarvisMessage, type JarvisMessage } from './jarvis-history'
+import { xenoFetch } from './jarvis-key'
 
 // Typing to Xeno: requests to the Jarvis server's chat endpoints. The answer itself arrives through the history
 // poll, as it's written.
@@ -30,7 +31,7 @@ export async function sendJarvisChat(
   url: string,
   text: string,
   viewing: string | null,
-  fetcher: Fetcher = fetch
+  fetcher: Fetcher = xenoFetch
 ): Promise<JarvisChatSend> {
   let response: Response
   try {
@@ -46,7 +47,7 @@ export async function sendJarvisChat(
   return message ? { ok: true, message } : { ok: false, error: 'refused' }
 }
 
-export async function stopJarvisChat(url: string, fetcher: Fetcher = fetch): Promise<boolean> {
+export async function stopJarvisChat(url: string, fetcher: Fetcher = xenoFetch): Promise<boolean> {
   try {
     const response = await post(fetcher, url)
     const body = (await response.json().catch(() => null)) as { stopped?: unknown } | null
@@ -58,7 +59,7 @@ export async function stopJarvisChat(url: string, fetcher: Fetcher = fetch): Pro
 
 export async function newJarvisConversation(
   url: string,
-  fetcher: Fetcher = fetch
+  fetcher: Fetcher = xenoFetch
 ): Promise<boolean> {
   try {
     return (await post(fetcher, url)).ok

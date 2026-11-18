@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { xenoFetch } from './jarvis-key'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 // A voice Xeno can speak in, as the desktop lists it (/api/jarvis/voices).
@@ -70,7 +71,7 @@ export function useJarvisVoices(url: string | null): readonly JarvisVoiceOption[
     let stopped = false
     const abort = new AbortController()
     const timer = setTimeout(() => abort.abort(), FETCH_TIMEOUT_MS)
-    void fetch(url, { signal: abort.signal })
+    void xenoFetch(url, { signal: abort.signal })
       .then(async (response) => (response.ok ? parseJarvisVoices(await response.json()) : []))
       .catch(() => [])
       .then((listed) => {

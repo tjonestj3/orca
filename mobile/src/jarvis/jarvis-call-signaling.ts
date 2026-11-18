@@ -1,6 +1,7 @@
 import type { RTCPeerConnection } from 'react-native-webrtc'
 import { RTVI_LABEL } from './jarvis-call-state'
 import type { JarvisOpening } from './jarvis-call-types'
+import { xenoFetch } from './jarvis-key'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 // Connecting a Jarvis call: the HTTP offer/answer exchange and waiting for ICE candidates.
@@ -42,7 +43,7 @@ export async function postOffer(
   const abort = new AbortController()
   const timer = setTimeout(() => abort.abort(), OFFER_TIMEOUT_MS)
   try {
-    const response = await fetch(url, {
+    const response = await xenoFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(offer),
