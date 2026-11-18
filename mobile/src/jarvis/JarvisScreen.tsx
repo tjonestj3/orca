@@ -10,7 +10,7 @@ import {
   MessagesSquare,
   Mic,
   PhoneOff,
-  RotateCcw,
+  Play,
   Smartphone
 } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
@@ -238,7 +238,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
               accessibilityRole="button"
               accessibilityLabel={t('jarvis.screen.playLast', 'Play the last message again')}
             >
-              <RotateCcw size={20} color={colors.textPrimary} />
+              <Play size={20} color={colors.textPrimary} />
             </Pressable>
           ) : null}
         </View>

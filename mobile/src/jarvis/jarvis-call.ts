@@ -34,7 +34,7 @@ const LEVEL_POLL_MS = 100
 // One voice call to the Jarvis server on the paired desktop: WebRTC audio both ways plus a data channel of RTVI events.
 export class JarvisCall {
   private snapshot: JarvisCallSnapshot = IDLE_SNAPSHOT
-  private readonly meter = new JarvisLevelMeter()
+  private readonly meter = new JarvisLevelMeter((note) => this.reportDevice(note))
   private readonly listeners = new Set<() => void>()
   private pc: RTCPeerConnection | null = null
   private mic: MediaStream | null = null

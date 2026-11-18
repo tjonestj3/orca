@@ -1,11 +1,18 @@
 import type { RTCPeerConnection } from 'react-native-webrtc'
 import { audioLevelsFromStats } from './jarvis-call-signaling'
 import { QUIET, type JarvisLevels } from './jarvis-call-types'
+import { ReplyLevelTracker, type ReplyLevel } from './jarvis-reply-level'
+
+type ReplyLevelNote = ReplyLevel & { readonly kind: 'reply-level'; readonly at: number }
 
 // How loud each side of a call sounds, read from WebRTC's stats; drives the orb.
 export class JarvisLevelMeter {
   private levels: JarvisLevels = QUIET
   private readonly listeners = new Set<() => void>()
+  private readonly replies = new ReplyLevelTracker()
+
+  // report: how loud each finished reply arrived, start against end, as a note for the desktop's log.
+  constructor(private readonly report: (note: ReplyLevelNote) => void = () => {}) {}
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
@@ -25,6 +32,10 @@ export class JarvisLevelMeter {
     if (current()) {
       const { user, bot } = audioLevelsFromStats(report)
       this.set({ user: micOpen() ? user : 0, bot })
+      const reply = this.replies.feed(bot, Date.now())
+      if (reply) {
+        this.report({ kind: 'reply-level', ...reply, at: Date.now() })
+      }
     }
   }
 
