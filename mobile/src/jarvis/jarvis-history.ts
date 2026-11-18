@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { readArtifact, type JarvisArtifact } from './jarvis-artifacts'
 import { xenoFetch } from './jarvis-key'
 
 // A line of the conversation, kept by the Jarvis server: what you said, typed or tapped, Xeno's answer, an
@@ -12,6 +13,8 @@ export type JarvisMessage = {
   readonly via: 'voice' | 'typed' | 'tap' | null
   readonly done: boolean
   readonly rev: number
+  // A typed open_artifact's line carries the artifact, for the app to open as it arrives (a call opens its own).
+  readonly open?: JarvisArtifact | null
 }
 
 export type JarvisHistory = {
@@ -45,6 +48,7 @@ export function readJarvisMessage(raw: unknown): JarvisMessage | null {
   const via = VIAS.has(entry.via as NonNullable<JarvisMessage['via']>)
     ? (entry.via as JarvisMessage['via'])
     : null
+  const open = kind === 'tool' ? readArtifact(entry.open) : null
   return {
     id: entry.id,
     kind,
@@ -52,8 +56,34 @@ export function readJarvisMessage(raw: unknown): JarvisMessage | null {
     at: typeof entry.at === 'number' ? entry.at : 0,
     via,
     done,
-    rev: typeof entry.rev === 'number' ? entry.rev : 0
+    rev: typeof entry.rev === 'number' ? entry.rev : 0,
+    ...(open ? { open } : {})
   }
+}
+
+// How long after Xeno opened an artifact the app still opens it: a screen that comes back later doesn't.
+const OPEN_WITHIN_MS = 2 * 60_000
+
+// The artifacts typed chat asked to open that just arrived, each once (`seen` remembers them). Nothing on the
+// first load, so opening the conversation never replays old ones.
+export function takeArtifactsToOpen(
+  messages: readonly JarvisMessage[],
+  at: { readonly seen: Set<number>; readonly firstLoad: boolean; readonly now: number }
+): string[] {
+  const urls: string[] = []
+  for (const message of messages) {
+    if (message.kind !== 'tool' || message.via !== 'typed' || !message.open) {
+      continue
+    }
+    if (at.seen.has(message.id)) {
+      continue
+    }
+    at.seen.add(message.id)
+    if (!at.firstLoad && at.now - message.at < OPEN_WITHIN_MS) {
+      urls.push(message.open.url)
+    }
+  }
+  return urls
 }
 
 export function parseJarvisHistory(raw: unknown): JarvisHistory {
@@ -116,13 +146,18 @@ export type JarvisHistoryView = {
 }
 
 const QUICK_AFTER_SEND_MS = 3000
+// Lines whose artifact was opened or passed over, across screens and remounts.
+const seenArtifactLines = new Set<number>()
 
 // The server's history, polled while the screen is mounted for just what changed, joined with what the live call
-// has said.
+// has said. onOpenArtifact: the typed chat's, for artifacts Xeno opens from it.
 export function useJarvisHistory(
   url: string | null,
-  live: readonly JarvisMessage[]
+  live: readonly JarvisMessage[],
+  onOpenArtifact?: (url: string) => void
 ): JarvisHistoryView {
+  const openArtifact = useRef(onOpenArtifact)
+  openArtifact.current = onOpenArtifact
   const [fetched, setFetched] = useState<JarvisMessage[]>([])
   const [working, setWorking] = useState(false)
   const kick = useRef<() => void>(() => undefined)
@@ -155,6 +190,16 @@ export function useJarvisHistory(
         const response = await xenoFetch(historyPollUrl(url, rev), { signal: abort.signal })
         if (response.ok && !stopped) {
           const body = parseJarvisHistory(await response.json())
+          if (openArtifact.current) {
+            const firstLoad = rev === 0 || body.rev < rev
+            for (const link of takeArtifactsToOpen(body.messages, {
+              seen: seenArtifactLines,
+              firstLoad,
+              now: Date.now()
+            })) {
+              openArtifact.current(link)
+            }
+          }
           if (body.rev < rev) {
             // The server restarted and counts revisions afresh: take everything again.
             rev = 0

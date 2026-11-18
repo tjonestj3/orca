@@ -29,7 +29,7 @@ export function FoldedFullScreenSetting() {
         title={title}
         subtitle={t(
           'components.foldedFullScreen.description',
-          'Sessions use the whole cover screen and the keys move to the bottom row. The panel button left of ⋯ in a session switches it for now.'
+          'Sessions and the Xeno chat use the whole cover screen, and the keys move to the bottom row. The panel button at the top switches it for now.'
         )}
         accessory={
           <MobileSwitch

@@ -79,3 +79,13 @@ export function extendedColumnSide<Side extends string>(s: {
 }): Side | null {
   return s.requested && s.fullScreen && s.column ? s.column.side : null
 }
+
+/** A header's padding over the column while screens extend over it, so it keeps clear of the camera like Moshi's. */
+export function columnClearance(
+  column: { side: 'left' | 'right'; width: number; extended: boolean } | null
+): { paddingRight: number } | { paddingLeft: number } | null {
+  if (!column?.extended) {
+    return null
+  }
+  return column.side === 'right' ? { paddingRight: column.width } : { paddingLeft: column.width }
+}

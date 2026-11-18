@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
-import { ArrowUp, AudioLines, PhoneOff, Square } from 'lucide-react-native'
+import { Keyboard, Pressable, Text, TextInput, View } from 'react-native'
+import { ArrowUp, AudioLines, KeyboardOff, PhoneOff, Square } from 'lucide-react-native'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import {
   COMPOSER_CONTROL_HIT_SLOP,
@@ -40,6 +40,7 @@ export function JarvisChatComposer({
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [typing, setTyping] = useState(false)
   const button = enabled ? chatComposerButton({ text, working, sending, calling }) : 'off'
 
   const send = async (): Promise<void> => {
@@ -50,6 +51,8 @@ export function JarvisChatComposer({
     setSending(false)
     if (sent) {
       setText((now) => (now.trim() === typed ? '' : now))
+      // Xeno has it: the keyboard would cover the answer. A failed send keeps it up to try again.
+      Keyboard.dismiss()
     } else {
       setFailed(true)
     }
@@ -94,10 +97,23 @@ export function JarvisChatComposer({
           placeholder={t('jarvis.chat.placeholder', 'Message Xeno')}
           placeholderTextColor={colors.textMuted}
           editable={enabled}
+          onFocus={() => setTyping(true)}
+          onBlur={() => setTyping(false)}
           multiline
           accessibilityLabel={t('jarvis.chat.placeholder', 'Message Xeno')}
         />
         <View style={box.actionRow}>
+          {typing ? (
+            <Pressable
+              onPress={() => Keyboard.dismiss()}
+              hitSlop={COMPOSER_CONTROL_HIT_SLOP}
+              style={({ pressed }) => [styles.hideKeyboard, pressed && pressedStyle]}
+              accessibilityRole="button"
+              accessibilityLabel={t('jarvis.chat.hideKeyboard', 'Hide keyboard')}
+            >
+              <KeyboardOff size={18} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          ) : null}
           <View style={box.actionSpacer} />
           <Pressable
             onPress={press}
@@ -145,5 +161,6 @@ const styles = themedStyleSheet(() => ({
   // The Claude app's composer: a rounded card, the text on top and its button below.
   card: { paddingTop: spacing.md, paddingBottom: spacing.sm, paddingHorizontal: spacing.md },
   hangUp: { backgroundColor: colors.statusRed },
+  hideKeyboard: { padding: spacing.xs },
   input: { fontSize: 17, lineHeight: 24, maxHeight: 7 * 24 }
 }))

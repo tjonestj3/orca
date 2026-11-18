@@ -20,6 +20,10 @@ import {
   jarvisHistoryUrl
 } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
+import { openInClaude } from './jarvis-open-in-claude'
+import { columnClearance } from '../layout/folded-full-screen'
+import { useSideColumn } from '../layout/side-rail'
+import { SideColumnToggle, useSessionFullScreen } from '../session/side-column-full-screen'
 import { JarvisChatComposer } from './JarvisChatComposer'
 import { JarvisTranscript } from './JarvisTranscript'
 
@@ -31,13 +35,18 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
   const t = useMobileTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // Full screen when folded, like a session: the Duo's status column too, with the same button to switch it.
+  useSessionFullScreen()
+  const column = useSideColumn()
   const host = useHostProfile(hostId)
   const { call, offerUrl, voice } = useJarvis()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const endpoint = host?.endpoint ?? null
   const { messages, working, refresh } = useJarvisHistory(
     endpoint ? jarvisHistoryUrl(endpoint) : null,
-    state.messages
+    state.messages,
+    // Asked from here, Xeno has no call to open an artifact through: it comes on the tool's line.
+    openInClaude
   )
   const live = state.phase !== 'idle' && state.phase !== 'error'
   const chatUrl = endpoint ? jarvisChatUrl(endpoint) : null
@@ -89,6 +98,7 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <NavBar
+        style={columnClearance(column) ?? undefined}
         leading={
           <NavBarButton
             icon={ChevronLeft}
@@ -99,11 +109,14 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
         title={t('jarvis.transcript.title', 'Conversation')}
         subtitle={host?.name}
         trailing={
-          <NavBarButton
-            icon={RotateCcw}
-            onPress={startOver}
-            accessibilityLabel={t('jarvis.chat.new', 'New conversation')}
-          />
+          <>
+            <SideColumnToggle />
+            <NavBarButton
+              icon={RotateCcw}
+              onPress={startOver}
+              accessibilityLabel={t('jarvis.chat.new', 'New conversation')}
+            />
+          </>
         }
       />
       <KeyboardAvoidingView

@@ -74,8 +74,13 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 16. `feat(mobile): full screen when folded on the iPhone Duo` — a session (terminal or chat) can take the
    folded Duo's status column, as Moshi does: the keys move to the bottom row, Xeno to its bubble in that corner,
    the status bar hides, and the header keeps clear of the camera. Settings → Terminal → "Full screen when folded"
-   sets the default; the button beside ⋯ in the session header switches it until the app restarts.
-17. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+   sets the default; the button beside ⋯ in the session header switches it until the app restarts. The Xeno chat
+   takes it too, with the same button. It applies wherever the status column is found: iOS reports the fold on both
+   of the Duo's screens, so that can't tell the cover screen apart.
+17. `fix(jarvis): artifacts open from typed chat, and the keyboard goes away` — open_artifact in typed chat opens
+   the artifact (needs brain aa8cd18, which puts its link on the tool line; a call still opens it through the
+   call). The Xeno composer puts the keyboard away after a send and has a button to hide it while typing.
+18. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

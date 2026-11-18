@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { createFoldedFullScreenStore, extendedColumnSide } from './folded-full-screen'
+import {
+  columnClearance,
+  createFoldedFullScreenStore,
+  extendedColumnSide
+} from './folded-full-screen'
 
 function memoryStorage(initial: string | null = null) {
   const saved = { value: initial }
@@ -71,5 +75,18 @@ describe('which side the screens extend over', () => {
     expect(extendedColumnSide({ ...on, requested: false })).toBeNull()
     expect(extendedColumnSide({ ...on, fullScreen: false })).toBeNull()
     expect(extendedColumnSide({ ...on, column: null })).toBeNull()
+  })
+})
+
+describe('the room a header leaves for the camera', () => {
+  it('is the column width on its side, only while screens extend over it', () => {
+    expect(columnClearance({ side: 'right', width: 84, extended: true })).toEqual({
+      paddingRight: 84
+    })
+    expect(columnClearance({ side: 'left', width: 84, extended: true })).toEqual({
+      paddingLeft: 84
+    })
+    expect(columnClearance({ side: 'right', width: 84, extended: false })).toBeNull()
+    expect(columnClearance(null)).toBeNull()
   })
 })

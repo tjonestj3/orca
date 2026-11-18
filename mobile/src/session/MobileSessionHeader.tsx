@@ -20,6 +20,7 @@ import type { MobileSessionController } from './use-mobile-session-controller'
 import { useTopChromeSpace } from '../layout/use-top-chrome-space'
 import { useSideColumn } from '../layout/side-rail'
 import { SideColumnToggle } from './side-column-full-screen'
+import { columnClearance } from '../layout/folded-full-screen'
 
 export function MobileSessionHeader({
   controller,
@@ -141,10 +142,7 @@ export function MobileSessionHeader({
             minHeight: topChrome.space.minHeight
           },
           // Over the folded Duo's column the bar keeps clear of the camera, as Moshi's does.
-          column?.extended &&
-            (column.side === 'right'
-              ? { paddingRight: column.width }
-              : { paddingLeft: column.width })
+          columnClearance(column)
         ]}
         edges={topChrome.space ? [] : ['top']}
       >

@@ -4,7 +4,9 @@ import {
   historyPollUrl,
   mergeJarvisMessages,
   parseJarvisHistory,
+  readJarvisMessage,
   settledMessages,
+  takeArtifactsToOpen,
   type JarvisMessage
 } from './jarvis-history'
 
@@ -115,5 +117,47 @@ describe('settledMessages', () => {
     const dropped = message({ id: 2, text: 'So', done: false, rev: 4 })
     expect(settledMessages([kept, dropped], false)).toEqual([kept])
     expect(settledMessages([kept, dropped], true)).toEqual([kept, dropped])
+  })
+})
+
+describe('artifacts Xeno opened from typed chat', () => {
+  const url = 'https://claude.ai/artifact/VjFHgpyKnqH5fcXKHKHbNj'
+  const now = 1_795_041_500_000
+  const line = (id: number, extra: Record<string, unknown> = {}) =>
+    readJarvisMessage({
+      id,
+      kind: 'tool',
+      text: 'Opened Control layouts',
+      at: now - 2000,
+      via: 'typed',
+      done: true,
+      rev: id,
+      open: { url, title: 'Control layouts' },
+      ...extra
+    })!
+
+  it('reads the link a tool line carries, and only a Claude artifact link', () => {
+    expect(line(1).open).toEqual({ url, title: 'Control layouts' })
+    expect(line(2, { open: { url: 'https://evil.example/x' } }).open).toBeUndefined()
+    expect(line(3, { open: undefined }).open).toBeUndefined()
+  })
+
+  it('opens each one once, as it arrives', () => {
+    const seen = new Set<number>()
+    expect(takeArtifactsToOpen([line(1)], { seen, firstLoad: false, now })).toEqual([url])
+    expect(takeArtifactsToOpen([line(1)], { seen, firstLoad: false, now })).toEqual([])
+  })
+
+  it('never reopens old ones when the conversation first loads, or long after', () => {
+    const seen = new Set<number>()
+    expect(takeArtifactsToOpen([line(1)], { seen, firstLoad: true, now })).toEqual([])
+    expect(takeArtifactsToOpen([line(1)], { seen, firstLoad: false, now })).toEqual([])
+    const stale = line(2, { at: now - 10 * 60_000 })
+    expect(takeArtifactsToOpen([stale], { seen: new Set(), firstLoad: false, now })).toEqual([])
+  })
+
+  it('leaves a call to open its own, through the call', () => {
+    const spoken = line(1, { via: 'voice' })
+    expect(takeArtifactsToOpen([spoken], { seen: new Set(), firstLoad: false, now })).toEqual([])
   })
 })
