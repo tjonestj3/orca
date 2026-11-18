@@ -42,7 +42,7 @@ const DUO_FOLDED: Geometry = {
     hasFoldDivision: true
   }
 }
-const DUO_UNFOLDED: Geometry = {
+const DUO_WIDE: Geometry = {
   ...DUO_FOLDED,
   window: { width: 951, height: 669 },
   insets: { top: 0, right: 84, bottom: 20, left: 0 },
@@ -101,7 +101,7 @@ describe('full screen when folded', () => {
   it('keeps the column for the keys while it is off', () => {
     render(DUO_FOLDED)
     expect(seen?.strip?.side).toBe('right')
-    expect(seen?.column).toMatchObject({ extended: false, folded: true })
+    expect(seen?.column?.extended).toBe(false)
   })
 
   it('gives a session screen the column, and screens see no rail to draw in', async () => {
@@ -137,10 +137,11 @@ describe('full screen when folded', () => {
     expect(seen?.column?.extended).toBe(false)
   })
 
-  it('leaves the unfolded Duo alone', async () => {
+  it('works on any screen with a status column, whatever size the phone reports', async () => {
     await act(() => foldedFullScreen.setDefault(true))
-    render(DUO_UNFOLDED)
-    expect(seen?.column).toMatchObject({ extended: false, folded: false })
+    render(DUO_WIDE)
+    expect(seen?.strip).toBeNull()
+    expect(seen?.column).toMatchObject({ side: 'right', extended: true })
   })
 
   it('leaves a phone without a status column alone', async () => {

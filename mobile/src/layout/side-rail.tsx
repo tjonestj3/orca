@@ -27,8 +27,6 @@ export type SideColumn = {
   side: SideRailStrip['side']
   width: number
   extended: boolean
-  /** The folded Duo's cover screen, the only one screens extend over the column on. */
-  folded: boolean
 }
 
 const SideRailContext = createContext<{
@@ -72,9 +70,6 @@ function useFullScreenRequests() {
   return [count > 0, request] as const
 }
 
-/** The folded Duo's cover screen is 466pt across; its inner screen is 669pt at its shortest. */
-const FOLDED_MAX_SHORT_SIDE = 600
-
 /**
  * Lets one screen draw controls in a side inset strip the screens are laid out clear of, such as
  * the iPhone Duo's status column. Sits outside `SideSafeArea`, which pads every screen out of it.
@@ -100,12 +95,9 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
   useEffect(() => void foldedFullScreen.load(), [])
   const remembered = useRememberedColumn(unoccludedStrip)
   const [requested, requestFullScreen] = useFullScreenRequests()
-  // iOS reports the fold on both of the Duo's screens, so the narrow cover screen is told by its size.
-  const folded = Math.min(width, height) < FOLDED_MAX_SHORT_SIDE
   const extendedSide = extendedColumnSide({
     requested,
     fullScreen: useFoldedFullScreen(),
-    folded,
     column: remembered
   })
   const column = useMemo(
@@ -114,11 +106,10 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
         ? {
             side: remembered.side,
             width: remembered.width,
-            extended: extendedSide !== null,
-            folded
+            extended: extendedSide !== null
           }
         : null,
-    [remembered, unoccludedStrip, extendedSide, folded]
+    [remembered, unoccludedStrip, extendedSide]
   )
   // Extended, no screen draws in the column: the keys go back to the bottom row and Xeno to its bubble.
   const value = useMemo(

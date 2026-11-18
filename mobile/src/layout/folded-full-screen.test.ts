@@ -61,16 +61,15 @@ describe('the folded full-screen choice', () => {
 
 describe('which side the screens extend over', () => {
   const column = { side: 'right' as const }
-  const on = { requested: true, fullScreen: true, folded: true, column }
+  const on = { requested: true, fullScreen: true, column }
 
-  it('is the column side while a session screen asks, full screen is on and the phone is folded', () => {
+  it('is the column side while a session screen asks and full screen is on', () => {
     expect(extendedColumnSide(on)).toBe('right')
   })
 
   it('is none when any of those is missing', () => {
     expect(extendedColumnSide({ ...on, requested: false })).toBeNull()
     expect(extendedColumnSide({ ...on, fullScreen: false })).toBeNull()
-    expect(extendedColumnSide({ ...on, folded: false })).toBeNull()
     expect(extendedColumnSide({ ...on, column: null })).toBeNull()
   })
 })

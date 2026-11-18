@@ -68,12 +68,14 @@ export function useFoldedFullScreenDefault(): boolean {
   return useSyncExternalStore(foldedFullScreen.subscribe, foldedFullScreen.readDefault)
 }
 
-/** The side screens extend over: the status column's, while a session screen asks and it applies. */
+/**
+ * The side screens extend over: the status column's, while a session screen asks and full screen is
+ * on. Only the Duo's cover screen has one; how big iOS says the window is doesn't decide it.
+ */
 export function extendedColumnSide<Side extends string>(s: {
   requested: boolean
   fullScreen: boolean
-  folded: boolean
   column: { side: Side } | null
 }): Side | null {
-  return s.requested && s.fullScreen && s.folded && s.column ? s.column.side : null
+  return s.requested && s.fullScreen && s.column ? s.column.side : null
 }

@@ -25,7 +25,7 @@ export function useSessionFullScreen(): void {
 export function SideColumnToggle() {
   const t = useMobileTranslation()
   const column = useSideColumn()
-  if (!column?.folded) {
+  if (!column) {
     return null
   }
   const icon =
