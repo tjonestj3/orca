@@ -72,6 +72,9 @@ function useFullScreenRequests() {
   return [count > 0, request] as const
 }
 
+/** The folded Duo's cover screen is 466pt across; its inner screen is 669pt at its shortest. */
+const FOLDED_MAX_SHORT_SIDE = 600
+
 /**
  * Lets one screen draw controls in a side inset strip the screens are laid out clear of, such as
  * the iPhone Duo's status column. Sits outside `SideSafeArea`, which pads every screen out of it.
@@ -97,7 +100,8 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
   useEffect(() => void foldedFullScreen.load(), [])
   const remembered = useRememberedColumn(unoccludedStrip)
   const [requested, requestFullScreen] = useFullScreenRequests()
-  const folded = hasFoldDivision !== true
+  // iOS reports the fold on both of the Duo's screens, so the narrow cover screen is told by its size.
+  const folded = Math.min(width, height) < FOLDED_MAX_SHORT_SIDE
   const extendedSide = extendedColumnSide({
     requested,
     fullScreen: useFoldedFullScreen(),

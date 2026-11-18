@@ -37,13 +37,19 @@ const DUO_FOLDED: Geometry = {
     occlusions: [
       { x: 399.67, y: 29.33, width: 37, height: 37 },
       { x: 382, y: 0, width: 84, height: 174 }
-    ]
+    ],
+    // The device has a fold, so iOS reports it (inactive) on the cover screen too.
+    hasFoldDivision: true
   }
 }
 const DUO_UNFOLDED: Geometry = {
   ...DUO_FOLDED,
-  // The inner screen reports its fold even when lying flat.
-  regions: { ...DUO_FOLDED.regions, hasFoldDivision: true }
+  window: { width: 951, height: 669 },
+  insets: { top: 0, right: 84, bottom: 20, left: 0 },
+  regions: {
+    ...DUO_FOLDED.regions,
+    occlusions: [{ x: 867, y: 0, width: 84, height: 174 }]
+  }
 }
 const IPHONE_PORTRAIT: Geometry = {
   window: { width: 402, height: 874 },
@@ -95,7 +101,7 @@ describe('full screen when folded', () => {
   it('keeps the column for the keys while it is off', () => {
     render(DUO_FOLDED)
     expect(seen?.strip?.side).toBe('right')
-    expect(seen?.column?.extended).toBe(false)
+    expect(seen?.column).toMatchObject({ extended: false, folded: true })
   })
 
   it('gives a session screen the column, and screens see no rail to draw in', async () => {
@@ -119,7 +125,7 @@ describe('full screen when folded', () => {
     render({
       ...DUO_FOLDED,
       insets: { ...DUO_FOLDED.insets, right: 0 },
-      regions: { divisions: [], occlusions: [] }
+      regions: { divisions: [], occlusions: [], hasFoldDivision: true }
     })
     expect(seen?.column).toMatchObject({ side: 'right', extended: true })
   })
@@ -134,7 +140,7 @@ describe('full screen when folded', () => {
   it('leaves the unfolded Duo alone', async () => {
     await act(() => foldedFullScreen.setDefault(true))
     render(DUO_UNFOLDED)
-    expect(seen?.column?.extended).toBe(false)
+    expect(seen?.column).toMatchObject({ extended: false, folded: false })
   })
 
   it('leaves a phone without a status column alone', async () => {
