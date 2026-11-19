@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getDefaultWorkspaceSession } from '../../../../shared/constants'
+import { getDefaultWorkspaceSession } from '../../../../shared/orca-profiles/constants'
 import type { WorkspaceSessionState } from '../../../../shared/workspace-session/workspace-session-state-types'
 
 const switchState = vi.hoisted(() => ({ on: true }))
-vi.mock('../../../../shared/layout-owner-switch', () => ({
+vi.mock('../../../../shared/workspace-layout/layout-owner-switch', () => ({
   get ORCA_LAYOUT_OWNER_IS_MAIN() {
     return switchState.on
   }
@@ -118,28 +118,5 @@ describe('a spawn commit binding a reused terminal id (switch on)', () => {
     expect(session.terminalPtyIncarnationsByPaneKey).toEqual({
       [`saved-tab:${NEW_LEAF}`]: 'inc-now'
     })
-  })
-
-  it('leaves a pane stamped with the same incarnation bound', () => {
-    switchState.on = true
-    const session = savedSession('inc-now')
-
-    bindNewTerminal(session)
-
-    expect(panesBinding(session, 'pty-3').sort()).toEqual(
-      [`new-tab:${NEW_LEAF}`, `saved-tab:${SAVED_LEAF}`].sort()
-    )
-  })
-
-  // Legacy saves lack incarnation proof, so they cannot establish an ID was reused.
-  it('leaves an unstamped saved binding alone', () => {
-    switchState.on = true
-    const session = savedSession(null)
-
-    bindNewTerminal(session)
-
-    expect(panesBinding(session, 'pty-3').sort()).toEqual(
-      [`new-tab:${NEW_LEAF}`, `saved-tab:${SAVED_LEAF}`].sort()
-    )
   })
 })

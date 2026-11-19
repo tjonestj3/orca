@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, View, type ScrollViewInstance } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, spacing } from '../theme/mobile-theme'
@@ -26,7 +26,7 @@ type Props = {
 export function JarvisTranscript({ messages, hearing, enabled, working = false, onReplay }: Props) {
   useMobileColorScheme()
   const t = useMobileTranslation()
-  const scroller = useRef<ScrollView>(null)
+  const scroller = useRef<ScrollViewInstance>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const entries = transcriptEntries(messages, hearing)
   const writing = entries.at(-1)?.growing === true

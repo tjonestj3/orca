@@ -8,14 +8,13 @@ import { MobileSessionContentRow } from './MobileSessionContentRow'
 import { MobileSessionHeader } from './MobileSessionHeader'
 import { MobileSessionSheets } from './MobileSessionSheets'
 import { MobileWorkerAutoCloseStrip } from './tabs/MobileWorkerAutoCloseStrip'
-import { AnchoredDetailCardLayer } from '../components/AnchoredDetailCard'
-import { StatusDot } from '../components/StatusDot'
+import { AnchoredDetailCardLayer } from '../components/detail-cards/AnchoredDetailCard'
+import { StatusDot } from '../components/feedback/StatusDot'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { WorkspaceServerContext } from '../worktree/workspace-server-context'
+import { WorkspaceServerContext } from '../worktree/execution-hosts/workspace-server-context'
 import { useSessionTitleCard } from './tabs/use-session-title-card'
-import { useDetailCardScope } from '../components/use-detail-card-scope'
-import { useSideColumn } from '../layout/side-rail'
-import { useSessionFullScreen } from './side-column-full-screen'
+import { useDetailCardScope } from '../components/detail-cards/use-detail-card-scope'
+import { useShellSideRail } from '../layout/use-shell-side-rail'
 
 export function MobileSessionSurface({ controller }: { controller: MobileSessionController }) {
   useMobileColorScheme()
@@ -23,9 +22,7 @@ export function MobileSessionSurface({ controller }: { controller: MobileSession
   const { setMobileSessionRootRef } = controller
   const server = useContext(WorkspaceServerContext)
   const layout = useResponsiveLayout()
-  const sideRail = useSideColumn() !== null
-  // Terminal and chat alike: the session takes the folded Duo's status column when full screen is on.
-  useSessionFullScreen()
+  const sideRail = useShellSideRail()
   const hasTabs = controller.visibleTabs.length > 0
   const besideTabs = (layout.isLandscapePhone || sideRail) && hasTabs
   const titleVisible =
@@ -36,6 +33,7 @@ export function MobileSessionSurface({ controller }: { controller: MobileSession
     controller.showHeaderMoreActions ||
     controller.showCreateTabDrawer ||
     controller.showTerminalLayout ||
+    controller.textSizeSheet != null ||
     (controller.showQuickCommands && controller.quickCommandsSupported === true) ||
     controller.pendingDiffNotesDelivery != null ||
     controller.actionTarget != null ||

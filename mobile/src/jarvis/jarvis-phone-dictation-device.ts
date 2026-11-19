@@ -11,7 +11,7 @@ import {
   toggleRecording
 } from '@orca/expo-two-way-audio'
 import { OrcaXenoTalk } from '../../modules/orca-xeno-talk/src'
-import { NATIVE_AUDIO_DEVICE_SAMPLE_RATE } from '../platform/native-audio-device'
+import { NATIVE_AUDIO_DEVICE_SAMPLE_RATE } from '../platform/audio-capture/native-audio-device'
 import { PhoneDictation, type PhoneDictationDevice } from './jarvis-phone-dictation'
 
 // Xeno speaks English (the desktop's Whisper is English-only too).

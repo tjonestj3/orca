@@ -1,5 +1,5 @@
 import { Laptop } from 'lucide-react-native'
-import { ActionSheetModal } from '../components/ActionSheetModal'
+import { ActionSheetModal } from '../components/sheets/ActionSheetModal'
 import type { HostProfile } from '../host-catalog/host-profile'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 

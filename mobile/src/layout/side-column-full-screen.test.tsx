@@ -19,7 +19,7 @@ vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => state.geometry.insets
 }))
 vi.mock('./reserved-regions', () => ({ useReservedRegions: () => state.geometry.regions }))
-vi.mock('../platform/keyboard-occlusion', () => ({ useKeyboardOcclusion: () => 0 }))
+vi.mock('../platform/keyboard/keyboard-occlusion', () => ({ useKeyboardOcclusion: () => 0 }))
 vi.mock('./column-toggle', () => ({ ColumnToggle: 'ColumnToggle' }))
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: { getItem: async () => null, setItem: async () => undefined }

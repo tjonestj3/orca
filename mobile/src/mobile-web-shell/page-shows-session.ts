@@ -1,4 +1,4 @@
-import { sessionOfPageLocation } from '../notifications/notification-viewing-policy'
+import { sessionOfPageLocation } from '../notifications/delivery-policy/notification-viewing-policy'
 
 /**
  * Whether a page is showing a session: its own session screen, or the host list's page once it has

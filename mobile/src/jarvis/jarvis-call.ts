@@ -4,7 +4,7 @@ import {
   preferSpeakerForCallIOS,
   requestMicrophonePermissionsAsync
 } from '@orca/expo-two-way-audio'
-import { nativeMicrophoneScreenLock } from '../platform/native-audio-device'
+import { nativeMicrophoneScreenLock } from '../platform/audio-capture/native-audio-device'
 import { reduceJarvisMessage, RTVI_LABEL } from './jarvis-call-state'
 import {
   iceGathered,

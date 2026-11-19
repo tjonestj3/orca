@@ -1,7 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Animated, Easing, StyleSheet, View } from 'react-native'
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg'
-import { useReducedMotionEnabled } from '../platform/use-reduced-motion'
+import { useReducedMotionEnabled } from '../platform/accessibility/use-reduced-motion'
 import { colors } from '../theme/mobile-theme'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisCall } from './jarvis-call'
@@ -231,5 +231,5 @@ export function JarvisOrb({ call, phase, size }: Props) {
 }
 
 const styles = StyleSheet.create({
-  center: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' }
+  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' }
 })

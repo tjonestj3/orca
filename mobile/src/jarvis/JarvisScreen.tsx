@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
-import { PickerListDrawer } from '../components/PickerListDrawer'
+import { PickerListDrawer } from '../components/sheets/PickerListDrawer'
 import { useHostProfile } from '../host-catalog/use-host-profile'
 import { leaveHostRoute } from '../host-route-exit'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'

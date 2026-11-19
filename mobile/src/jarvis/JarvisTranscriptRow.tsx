@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { Mic, Play, Wrench } from 'lucide-react-native'
-import { MobileMarkdown } from '../components/MobileMarkdown'
+import { MobileMarkdown } from '../components/markdown/MobileMarkdown'
 import type { Translate } from '../i18n/mobile-i18n'
 import { colors, pressedStyle, radii, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'

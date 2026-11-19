@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native'
 import { ListRow } from './list/ListGroup'
-import { MobileSwitch } from './MobileSwitch'
+import { MobileSwitch } from './controls/MobileSwitch'
 import { SettingsSection } from '../settings/settings-screen-frame'
 import { foldedFullScreen, useFoldedFullScreenDefault } from '../layout/folded-full-screen'
 import { useSideColumn } from '../layout/side-rail'
