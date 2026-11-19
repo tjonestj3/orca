@@ -97,7 +97,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    camera; Xeno sees them and can hand them to an agent (`send_to_agent` gives the agent their saved paths), and
    your messages show them, loaded with the phone's key. Needs the brain from `a57a324` (image chat and
    `/api/jarvis/images/<id>`); an older brain refuses image-only messages and ignores images sent with text.
-21. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+21. `feat(jarvis): music plays on through a call, turned down while Xeno talks` — on the Xeno screen ("Music
+   plays on", on by default): a call mixes with other apps' audio and keeps Bluetooth headphones in music
+   quality (the phone's own mic listens), and music is ducked while Xeno speaks or the orb is held, coming back
+   up 1.5 s after. Each duck reports to the brain log (`phone: music-duck …`, with whether other audio was
+   playing), since iOS's voice processing may duck other audio by itself for the whole call.
+22. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
