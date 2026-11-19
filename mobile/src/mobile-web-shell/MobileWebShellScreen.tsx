@@ -46,6 +46,7 @@ import { useReportedShellOverlayLoad, type ShellOverlayLoad } from './shell-over
 import { pageSafeAreaInsets, usePublishedSafeAreaInsets } from './page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-fold-division'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
+import { pageShowsSession } from './page-shows-session'
 import { usePublishedShellKeyRail, useShellKeyRail } from './use-shell-key-rail'
 import { hostProfileUnreadableLine, pageFaultLine } from './shell-lifecycle-log'
 import { recordShellLifecycleLine } from './shell-lifecycle-line-recorder'
@@ -127,8 +128,10 @@ export function MobileWebShellScreen({
   // Edge-to-edge disables adjustResize and zeroes WebView IME insets, so visualViewport never shrinks; publish native keyboard height to the page.
   const keyboardInset = Math.max(0, useKeyboardOcclusion())
   // A session takes the folded Duo's status column, as the Xeno chat does. The page is the desktop's,
-  // which has no full-screen button, so the column holds it.
-  useSessionFullScreen({ enabled: route.pathname.includes('/session/'), columnToggle: true })
+  // which has no full-screen button, so the column holds it. The host list's page opens sessions inside
+  // itself, so where it says it is counts, not only this screen's route.
+  const [pageHref, setPageHref] = useState<string | null>(null)
+  useSessionFullScreen({ enabled: pageShowsSession(route.pathname, pageHref), columnToggle: true })
   const pageFold = usePageFoldDivision()
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,
@@ -246,6 +249,7 @@ export function MobileWebShellScreen({
     onPageBackClaim: reportPageBackClaim,
     // A caller that tracks the location takes it; pages from #34484 desktops report it only for a fold to reopen.
     onPageLocation: (href) => {
+      setPageHref(href)
       openTarget.recordLocation(href)
       return onPageLocation === undefined
         ? holdPageLocation(href, ownsHostArea)

@@ -84,7 +84,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    is the desktop's page (the official Orca, without this fork's code), so the app does it from outside: it
    asks for the column while a session shows, tells the page there's no side inset and that the column's top
    is a cutout (the page's header already pads out of cutouts, so it keeps clear of the camera), and draws
-   the full-screen button in the column itself, under the camera, or heading the rail when the column is back.
+   the full-screen button in the column itself, under the camera, or heading the rail when the column is back. A
+   session opened from the host list lives inside the host list's page, so the app goes by where that page
+   says it is, not only by its own route.
 19. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
