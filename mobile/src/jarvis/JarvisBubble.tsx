@@ -7,7 +7,13 @@ import { useShowingSession } from '../session/showing-session'
 import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
-import { micOrbPlace, plusOrbPlace, terminalMicOrbPlace, usePageAnchors } from './page-anchors'
+import {
+  micOrbPlace,
+  plusOrbPlace,
+  terminalMicOrbPlace,
+  usePageAnchors,
+  usePageShowing
+} from './page-anchors'
 
 const BUBBLE_SIZE = 56
 // No desktop name beside the orb here: in a session, a host list or settings, which desktop is clear (or doesn't
@@ -19,6 +25,7 @@ export function JarvisBubble() {
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
   const { plus, mic, copy, question } = usePageAnchors()
+  const pageShowing = usePageShowing()
   const screen = useWindowDimensions()
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
@@ -106,6 +113,11 @@ export function JarvisBubble() {
         </View>
       </View>
     )
+  }
+  if (pageShowing) {
+    // A desktop page that hasn't said where the orb goes yet (it's still opening): wait, rather than flash in the
+    // corner and jump to its place.
+    return null
   }
   const bottom = insets.bottom + spacing.xl
   // Full screen on the folded Duo: the bubble keeps to the corner the status column was in.

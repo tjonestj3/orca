@@ -9,6 +9,8 @@ import { bubblePress } from './jarvis-bubble-policy'
 import { jarvisOrbPhase } from './jarvis-call-types'
 import { JarvisOrb } from './JarvisOrb'
 import { useJarvis } from './jarvis-context'
+import { useOrbTheme } from '../theme/mobile-appearance'
+import { ORB_THEMES } from './orb-themes/orb-themes'
 
 // Room around the orb that still counts as pressing it.
 const GRAB_SLOP = 8
@@ -19,6 +21,7 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
   const { call, offerUrl, voice, openJarvisScreen, pickHost, hostName } = useJarvis()
+  const drawn = ORB_THEMES[useOrbTheme()].drawing !== null
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = state.phase !== 'idle' && state.phase !== 'error'
   // Read at press time, so the press keeps the latest call details without being rebuilt mid-hold.
@@ -49,7 +52,13 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
         onPressOut={pickHost ? undefined : press.pressOut}
         // Easier to catch than the orb itself, which can be small beside the mic.
         hitSlop={GRAB_SLOP}
-        style={({ pressed }) => [styles.orb, { borderRadius: size / 2 }, pressed && pressedStyle]}
+        style={({ pressed }) => [
+          styles.orb,
+          // A drawn theme draws its own ground; a grey one under it peeked out as the web view lagged a slide.
+          drawn && styles.drawn,
+          { borderRadius: size / 2 },
+          pressed && pressedStyle
+        ]}
         accessibilityRole="button"
         accessibilityLabel={
           hostName
@@ -78,6 +87,7 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
 
 const styles = themedStyleSheet(() => ({
   orb: { flex: 1, overflow: 'hidden', backgroundColor: colors.bgRaised },
+  drawn: { backgroundColor: 'transparent' },
   badge: {
     position: 'absolute',
     width: 20,

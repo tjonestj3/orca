@@ -233,6 +233,8 @@ function createPageAnchorStore() {
   const notify = () => listeners.forEach((listener) => listener())
   return {
     read: (): Anchors => shown,
+    /** Whether a desktop page is the screen showing, whatever it has reported yet. */
+    readShowing: (): boolean => owner !== null,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
@@ -256,6 +258,14 @@ function createPageAnchorStore() {
 }
 
 export const pageAnchors = createPageAnchorStore()
+
+/**
+ * Whether a desktop page is showing. Until it reports where the orb goes, the orb waits rather than show in the
+ * corner and jump: opening a workspace, the page slides in a moment before it can say.
+ */
+export function usePageShowing(): boolean {
+  return useSyncExternalStore(pageAnchors.subscribe, pageAnchors.readShowing)
+}
 
 /** The focused desktop page's anchors for Xeno's orb. */
 export function usePageAnchors(): Anchors {
