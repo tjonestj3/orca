@@ -116,14 +116,25 @@ describe('showJumpToLatest', () => {
 })
 
 describe('animatesIn', () => {
+  const items = (messages: JarvisMessage[], hearing = '') =>
+    transcriptListItems(transcriptEntries(messages, hearing), false)
+
   it('never animates what was there when the conversation opened', () => {
-    expect(animatesIn('5', null)).toBe(false)
+    const [item] = items([reply(5, 'Hi.')])
+    expect(animatesIn(item, null)).toBe(false)
   })
 
   it('animates a line that arrives later, once', () => {
     const seen = new Set(['1', '2'])
-    expect(animatesIn('3', seen)).toBe(true)
-    expect(animatesIn('2', seen)).toBe(false)
+    const [newest, older] = items([you(2, 'hi'), reply(3, 'Hello.')])
+    expect(animatesIn(newest, seen)).toBe(true)
+    expect(animatesIn(older, seen)).toBe(false)
+  })
+
+  it('does not animate your spoken words again when the server keeps the line already shown', () => {
+    const seen = new Set(['1', 'hearing'])
+    const [kept] = items([line(2, 'you', 'what is going on', at, { via: 'voice' })])
+    expect(animatesIn(kept, seen)).toBe(false)
   })
 })
 

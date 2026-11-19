@@ -10,7 +10,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent
 } from 'react-native'
-import Animated, { FadeInUp } from 'react-native-reanimated'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import { ArrowDown } from 'lucide-react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
@@ -31,7 +31,9 @@ import { JarvisTranscriptRow } from './JarvisTranscriptRow'
 const COPIED_MS = 1500
 // Within this of the newest line, new lines and a growing reply keep it in view; further up, the reader stays put.
 const FOLLOW_WITHIN = 80
-const ARRIVE = FadeInUp.duration(220)
+// A new line rises into place from just below (FadeInDown starts 25 pt low). The inverted list flips the
+// scroll view and each cell, which cancel out, so this reads the same as in an upright list.
+const ARRIVE = FadeInDown.duration(220)
 
 type Props = {
   readonly messages: readonly JarvisMessage[]
@@ -99,7 +101,7 @@ export function JarvisTranscript({
 
   const renderItem = ({ item }: ListRenderItemInfo<TranscriptListItem>) => (
     // Always the same wrapper, so a line never remounts once it has arrived; `entering` only plays on mount.
-    <Animated.View entering={animatesIn(item.key, seen.current) ? ARRIVE : undefined}>
+    <Animated.View entering={animatesIn(item, seen.current) ? ARRIVE : undefined}>
       {item.kind === 'working' ? (
         <View style={styles.working} accessibilityLiveRegion="polite">
           <ActivityIndicator size="small" color={colors.textMuted} />

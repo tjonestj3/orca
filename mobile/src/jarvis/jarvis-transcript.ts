@@ -100,7 +100,11 @@ export function showJumpToLatest(offsetY: number, viewHeight: number): boolean {
 }
 
 // Lines slide in as they arrive, but never the ones there when the conversation opened (`seen` is null until the
-// first lines load), and never again when the list redraws one scrolled back into view.
-export function animatesIn(key: string, seen: ReadonlySet<string> | null): boolean {
-  return seen !== null && !seen.has(key)
+// first lines load), never again when the list redraws one scrolled back into view, and never your spoken words
+// when the server keeps the line that was already showing them as heard.
+export function animatesIn(item: TranscriptListItem, seen: ReadonlySet<string> | null): boolean {
+  if (seen === null || seen.has(item.key)) {
+    return false
+  }
+  return !(item.kind === 'entry' && item.entry.spoken && seen.has('hearing'))
 }
