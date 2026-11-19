@@ -120,6 +120,9 @@ function lifted(name, button, by) {
 }
 function check() {
   state.pending = false;
+  // While a sheet or menu is open the orb is hidden, and measuring the page as the sheet moves would only make the
+  // page measure itself again: leave everything as it is until the sheet closes.
+  if (document.querySelector('[aria-modal="true"]')) return;
   state.watches.forEach(function (watch) {
     var button = find(watch);
     // Only a bar asked to make room is touched; padding is put back when it's no longer asked for.

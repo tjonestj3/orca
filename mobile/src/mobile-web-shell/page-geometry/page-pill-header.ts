@@ -75,6 +75,8 @@ function conversation(chrome) {
 }
 function check() {
   state.pending = false;
+  // Nothing moves under a sheet or menu: leave the pill as it is until it closes.
+  if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
   var pill = state.pill;
   var more = pill && byLabel(pill.moreLabel);
   var tab = pill && byLabel(pill.newTabLabel);

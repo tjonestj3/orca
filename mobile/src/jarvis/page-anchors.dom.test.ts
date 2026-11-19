@@ -136,3 +136,20 @@ it('gives the host list’s header back the camera’s room when it shows beside
   new Function(pageAnchorsScript(header(0)))() // folded again: the session alone
   expect(document.getElementById('safe')!.style.getPropertyValue('padding-top')).toBe('67px')
 })
+
+it('leaves the page alone while a sheet is open, and catches up when it closes', () => {
+  const posted = listen()
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="mic" aria-label="Dictate"></div><div id="sheet" aria-modal="true"></div>'
+  place(document.getElementById('mic')!, { left: 300, top: height - 60, width: 36, height: 36 })
+  const mic = [{ name: 'mic' as const, labels: ['Dictate'], near: 'bottom' as const, pad: 0 }]
+  new Function(pageAnchorsScript(mic))()
+  expect(posted).toEqual([])
+  document.getElementById('sheet')!.remove()
+  new Function(pageAnchorsScript(mic))()
+  expect(posted.at(-1)).toEqual({
+    name: 'mic',
+    at: { x: 300, y: height - 60, width: 36, height: 36 }
+  })
+})
