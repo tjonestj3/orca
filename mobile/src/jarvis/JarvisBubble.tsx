@@ -18,7 +18,7 @@ export function JarvisBubble() {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const { plus, mic, question } = usePageAnchors()
+  const { plus, mic, copy, question } = usePageAnchors()
   const screen = useWindowDimensions()
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
@@ -69,6 +69,22 @@ export function JarvisBubble() {
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <View style={[styles.anchored, { left: at.left, top: at.top }]}>
             <JarvisTalkControl size={at.size} />
+          </View>
+        </View>
+      )
+    }
+    if (view === 'chat' && copy) {
+      // A markdown file: just left of its Copy button, on the same row (page-anchors).
+      const at = micOrbPlace(copy)
+      return (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View
+            style={[
+              styles.row,
+              { top: at.middle - place.size / 2, right: screen.width - at.right }
+            ]}
+          >
+            <JarvisTalkControl size={place.size} />
           </View>
         </View>
       )

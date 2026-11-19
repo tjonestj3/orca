@@ -13,10 +13,12 @@ import { useSyncExternalStore } from 'react'
  *   a tab without a composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over
  *   the page. In a terminal the live input row is full, so the script pads it on the right (the input field gives
  *   up the room) and the orb sits just right of the mic.
+ * - `copy`: a markdown file's floating Copy button, bottom right of the reader; with no composer there, the orb
+ *   sits just left of it, on the same row.
  * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
  *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
-export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus'
+export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus' | 'copy'
 export type PageAnchor = { x: number; y: number; width: number; height: number }
 
 export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
@@ -171,7 +173,8 @@ export function readPageAnchorMessage(
     (parsed.name !== 'header' &&
       parsed.name !== 'mic' &&
       parsed.name !== 'question' &&
-      parsed.name !== 'plus') ||
+      parsed.name !== 'plus' &&
+      parsed.name !== 'copy') ||
     !('at' in parsed) ||
     typeof parsed.at !== 'string'
   ) {

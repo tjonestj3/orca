@@ -41,6 +41,10 @@ export function usePageRepaint(options: {
   const themed = scheme === 'dark' && theme !== 'orca' ? DARK_THEMES[theme].colours : null
   const header = t('hostScreen.hostScreenHeader.moreActions', 'More actions')
   const plus = t('hostScreen.hostBottomBar.newWorkspace', 'New workspace')
+  const copy = [
+    t('session.markdownReader.copySource', 'Copy Markdown source'),
+    t('session.markdownReader.copyLoadedSource', 'Copy loaded Markdown source')
+  ].join('\n')
   const mic = [
     t('dictation.controls.start', 'Dictate'),
     t('dictation.controls.starting', 'Starting dictation'),
@@ -74,6 +78,7 @@ export function usePageRepaint(options: {
           ]
         : [
             { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
+            { name: 'copy', labels: copy.split('\n'), near: 'bottom', pad: 0 },
             // The host list's header, when it shows beside the session (unfolded): up into the room it was given
             // for the camera, which is over the session's side.
             { name: 'header', labels: [header], near: 'top', pad: 0, lift: lift },
@@ -106,6 +111,7 @@ export function usePageRepaint(options: {
     options.headerClear,
     header,
     plus,
+    copy,
     mic,
     pad,
     plusRoom,
