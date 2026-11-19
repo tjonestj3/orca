@@ -1,6 +1,6 @@
 import type { MobilePalette } from './mobile-theme'
 
-/** Catppuccin Mocha (catppuccin.com/palette), the theme Moshi's chat is in. */
+/** Catppuccin Mocha (catppuccin.com/palette), the theme Moshi's chat is in. Its colour roles name every theme's. */
 export const MOCHA = {
   rosewater: '#f5e0dc',
   mauve: '#cba6f7',
@@ -28,49 +28,79 @@ export const MOCHA = {
   crust: '#11111b'
 } as const
 
+export type ThemeRole = keyof typeof MOCHA
+/** A dark theme's colour for each of Catppuccin's roles: grounds from crust up, text, and accents. */
+export type ThemeColours = Readonly<Record<ThemeRole, string>>
+
 /**
- * Each of Orca's dark colours as Mocha has it, colour for colour, so the app's own screens and the session page
- * (Orca's, repainted) agree. See-through colours (borders, tints) read on Mocha as they are, and are left.
+ * Each of Orca's dark colours as the role it plays, so a theme paints the app's own screens and the session page
+ * (Orca's, repainted) alike. See-through colours (borders, tints) read on any dark ground as they are, and are left.
  */
-export const ORCA_DARK_TO_MOCHA: Readonly<Record<string, string>> = {
+export const ORCA_DARK_ROLES: Readonly<Record<string, ThemeRole>> = {
   // Grounds: the screen, panels and sheets, raised controls and your own messages, the composer.
-  '#0a0a0a': MOCHA.base,
-  '#171717': MOCHA.mantle,
-  '#1e1e1e': MOCHA.mantle,
-  '#1a1b26': MOCHA.base,
-  '#1f1f1f': MOCHA.surface0,
-  '#262626': MOCHA.surface1,
+  '#0a0a0a': 'base',
+  '#171717': 'mantle',
+  '#1e1e1e': 'mantle',
+  '#1a1b26': 'base',
+  '#1f1f1f': 'surface0',
+  '#262626': 'surface1',
   // Text, from strongest to faintest, and a field's edge.
-  '#fafafa': MOCHA.text,
-  '#e3e3e3': MOCHA.text,
-  '#e5e5e5': MOCHA.subtext1,
-  '#acacac': MOCHA.subtext0,
-  '#898989': MOCHA.overlay1,
-  '#737373': MOCHA.overlay0,
-  // Accents and states; ink on a filled accent goes dark, since Mocha's fills are pale.
-  '#3276f2': MOCHA.blue,
-  '#8ab4f8': MOCHA.blue,
-  '#ffffff': MOCHA.crust,
-  '#86efac': MOCHA.green,
-  '#16a34a': MOCHA.green,
-  '#eab308': MOCHA.yellow,
-  '#ff6568': MOCHA.red,
-  '#450a0a': MOCHA.crust,
-  '#d8b4fe': MOCHA.mauve,
+  '#fafafa': 'text',
+  '#e3e3e3': 'text',
+  '#e5e5e5': 'subtext1',
+  '#acacac': 'subtext0',
+  '#898989': 'overlay1',
+  '#737373': 'overlay0',
+  // Accents and states; ink on a filled accent goes dark, since these themes' fills are pale.
+  '#3276f2': 'blue',
+  '#8ab4f8': 'blue',
+  '#ffffff': 'crust',
+  '#86efac': 'green',
+  '#16a34a': 'green',
+  '#eab308': 'yellow',
+  '#ff6568': 'red',
+  '#450a0a': 'crust',
+  '#d8b4fe': 'mauve',
   // Code.
-  '#8b949e': MOCHA.overlay2,
-  '#ff7b72': MOCHA.mauve,
-  '#a5d6ff': MOCHA.green,
-  '#79c0ff': MOCHA.peach,
-  '#ffa657': MOCHA.yellow,
-  '#d2a8ff': MOCHA.blue,
-  '#7ee787': MOCHA.teal
+  '#8b949e': 'overlay2',
+  '#ff7b72': 'mauve',
+  '#a5d6ff': 'green',
+  '#79c0ff': 'peach',
+  '#ffa657': 'yellow',
+  '#d2a8ff': 'blue',
+  '#7ee787': 'teal'
 }
 
-export function mochaPalette(dark: MobilePalette): MobilePalette {
-  const out: Record<string, string> = {}
-  for (const [key, value] of Object.entries(dark)) {
-    out[key] = ORCA_DARK_TO_MOCHA[value.toLowerCase()] ?? value
+/** The ground Orca's inline code sits on (bgRaised): the session page's script finds inline code by it. */
+export const ORCA_RAISED = '#262626'
+
+/** Orca's dark colours and the theme's in their place, for repainting the session page. */
+export function themePairs(theme: ThemeColours): [string, string][] {
+  return Object.entries(ORCA_DARK_ROLES).map(([orca, role]) => [orca, theme[role]])
+}
+
+function isPaletteKey(key: string, palette: MobilePalette): key is keyof MobilePalette {
+  return key in palette
+}
+
+/** Orca's dark palette with each colour it maps swapped for the theme's. */
+export function themedPalette(dark: MobilePalette, theme: ThemeColours): MobilePalette {
+  const swapped: Partial<Record<keyof MobilePalette, string>> = {}
+  for (const key of Object.keys(dark)) {
+    if (isPaletteKey(key, dark)) {
+      const role = ORCA_DARK_ROLES[dark[key].toLowerCase()]
+      if (role !== undefined) {
+        swapped[key] = theme[role]
+      }
+    }
   }
-  return out as MobilePalette
+  return { ...dark, ...swapped }
+}
+
+export const ORCA_DARK_TO_MOCHA: Readonly<Record<string, string>> = Object.fromEntries(
+  themePairs(MOCHA)
+)
+
+export function mochaPalette(dark: MobilePalette): MobilePalette {
+  return themedPalette(dark, MOCHA)
 }

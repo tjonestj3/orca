@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSyncExternalStore } from 'react'
 import { AppState, Appearance } from 'react-native'
 import { applyMobileColorScheme, applyMobileDarkTheme, type MobileDarkTheme } from './mobile-theme'
+import { isDarkThemeId } from './dark-themes'
 
 // Same choices as desktop's theme setting; System follows the phone.
 export type MobileAppearancePreference = 'system' | 'light' | 'dark'
@@ -58,8 +59,8 @@ export function startMobileAppearance(): Promise<void> {
       .catch(() => undefined),
     AsyncStorage.getItem(DARK_THEME_KEY)
       .then((stored) => {
-        if (stored === 'mocha' && darkTheme === 'orca') {
-          adoptDarkTheme('mocha')
+        if (isDarkThemeId(stored) && darkTheme === 'orca') {
+          adoptDarkTheme(stored)
         }
       })
       .catch(() => undefined),
@@ -75,7 +76,7 @@ export function startMobileAppearance(): Promise<void> {
   return started
 }
 
-// Orca's own dark colours or Catppuccin Mocha's, on the app's screens and, repainted, Orca's session page.
+// Orca's own dark colours or a theme's (dark-themes), on the app's screens and, repainted, Orca's session page.
 const DARK_THEME_KEY = 'orca:darkTheme'
 // Sessions in a monospaced font, as Moshi's chat is.
 const SESSION_MONOSPACE_KEY = 'orca:sessionMonospace'

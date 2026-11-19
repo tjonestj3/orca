@@ -33,10 +33,26 @@ function repaintText(text, map) {
 }`
 
 const INSTALL = String.raw`
-var map = {};
-PAIRS.forEach(function (pair) { var key = colourKey(pair[0]); if (key !== null) map[key] = pair[1]; });
 var state = window.__orcaRepaint || (window.__orcaRepaint = {});
+// Nothing painted yet and nothing to paint: Orca's own look, left alone.
+if (!state.installed && PAIRS.length === 0 && !MONO && CODE === null) return;
+// What each colour painted so far stood for in Orca's page, so another theme (or Orca's own) can take its place.
+var painted = state.painted || (state.painted = {});
+var wanted = {};
+PAIRS.forEach(function (pair) { var key = colourKey(pair[0]); if (key !== null) wanted[key] = pair[1]; });
+var map = {};
+Object.keys(painted).forEach(function (key) {
+  var orca = painted[key];
+  var next = wanted[colourKey(orca)];
+  map[key] = next === undefined ? orca : next;
+});
+Object.keys(wanted).forEach(function (key) { map[key] = wanted[key]; });
+PAIRS.forEach(function (pair) {
+  var key = colourKey(pair[1]);
+  if (key !== null && !(key in painted)) painted[key] = pair[0];
+});
 state.map = map;
+state.code = CODE;
 function repaintRule(rule) {
   if (rule.style) {
     for (var i = 0; i < rule.style.length; i++) {
@@ -60,9 +76,26 @@ function repaintElement(el) {
   });
   if (el.tagName === 'STYLE' && el.sheet) repaintSheet(el.sheet);
 }
+// Inline code, as Moshi shows it: its text in the theme's colour. It's the page's only text on a raised ground
+// with an edge.
+function colourCode(el) {
+  if (el.tagName !== 'SPAN') return;
+  var code = state.code;
+  if (code === null) {
+    if (el.hasAttribute('data-orca-code')) { el.style.removeProperty('color'); el.removeAttribute('data-orca-code'); }
+    return;
+  }
+  var look = getComputedStyle(el);
+  if (colourKey(look.backgroundColor) !== colourKey(code.raised) || !(parseFloat(look.borderTopWidth) > 0)) return;
+  el.style.setProperty('color', code.text, 'important');
+  el.setAttribute('data-orca-code', '');
+}
 function repaintTree(root) {
   repaintElement(root);
-  if (root.querySelectorAll) root.querySelectorAll('[style],[fill],[stroke],[color],style').forEach(repaintElement);
+  colourCode(root);
+  if (!root.querySelectorAll) return;
+  root.querySelectorAll('[style],[fill],[stroke],[color],style').forEach(repaintElement);
+  root.querySelectorAll(state.code === null ? 'span[data-orca-code]' : 'span').forEach(colourCode);
 }
 if (!state.installed) {
   state.installed = true;
@@ -89,13 +122,17 @@ if (MONO && !font) {
   font.remove();
 }`
 
-/** The script for these colour swaps (Orca's, then the theme's) and font; empty when there's nothing to change. */
+/** Inline code's text colour in a theme, and the raised ground (as the theme paints it) that marks inline code. */
+export type PageCodeColour = { readonly raised: string; readonly text: string }
+
+/**
+ * The script for these colour swaps (Orca's, then the theme's), font and inline code colour. Run with none of
+ * them after a theme, it puts Orca's own look back.
+ */
 export function pageRepaintScript(
   pairs: readonly (readonly [string, string])[],
-  monospace: boolean
+  monospace: boolean,
+  code: PageCodeColour | null = null
 ): string {
-  if (pairs.length === 0 && !monospace) {
-    return ''
-  }
-  return `(function () {\nvar PAIRS = ${JSON.stringify(pairs)};\nvar MONO = ${monospace};\n${REPAINT_CORE}\n${INSTALL}\n})();`
+  return `(function () {\nvar PAIRS = ${JSON.stringify(pairs)};\nvar MONO = ${monospace};\nvar CODE = ${JSON.stringify(code)};\n${REPAINT_CORE}\n${INSTALL}\n})();`
 }

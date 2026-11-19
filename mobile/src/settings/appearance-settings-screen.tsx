@@ -13,6 +13,7 @@ import {
 import type { MobileDarkTheme } from '../theme/mobile-theme'
 import type { Translate } from '../i18n/mobile-i18n'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
+import { DARK_THEMES, DARK_THEME_IDS } from '../theme/dark-themes'
 import { SettingsScreen, SettingsSection } from './settings-screen-frame'
 import { UiLanguageSettingsSection } from './ui-language-settings-section'
 
@@ -27,7 +28,8 @@ function appearanceOptions(t: Translate): { value: MobileAppearancePreference; l
 function darkThemeOptions(t: Translate): { value: MobileDarkTheme; label: string }[] {
   return [
     { value: 'orca', label: t('settings.appearance.darkTheme.orca', 'Orca') },
-    { value: 'mocha', label: t('settings.appearance.darkTheme.mocha', 'Catppuccin Mocha') }
+    // Theme names are names, the same in every language.
+    ...DARK_THEME_IDS.map((id) => ({ value: id, label: DARK_THEMES[id].label }))
   ]
 }
 

@@ -2,6 +2,7 @@ import { Text } from 'react-native'
 import { colors, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
+import { useSessionMonospace } from '../theme/mobile-appearance'
 import { useJarvis } from './jarvis-context'
 import { hostInitials } from './jarvis-bubble-policy'
 
@@ -16,16 +17,23 @@ export function JarvisHostLabel({
 }) {
   useMobileColorScheme()
   const { hostName } = useJarvis()
+  // In the session font, like the page it sits on (Settings → Appearance → Session text).
+  const monospace = useSessionMonospace()
   if (!hostName) {
     return null
   }
   return (
-    <Text style={[styles.label, { maxWidth }]} numberOfLines={1} accessibilityLabel={hostName}>
+    <Text
+      style={[styles.label, monospace && styles.mono, { maxWidth }]}
+      numberOfLines={1}
+      accessibilityLabel={hostName}
+    >
       {initials ? hostInitials(hostName) : hostName}
     </Text>
   )
 }
 
 const styles = themedStyleSheet(() => ({
-  label: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' }
+  label: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' },
+  mono: { fontFamily: typography.monoFamily }
 }))

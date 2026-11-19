@@ -30,6 +30,13 @@ describe('the dark theme', () => {
     expect(colors.bgBase).toBe(paletteForScheme('dark').bgBase)
   })
 
+  it('goes from one theme straight to another', () => {
+    applyMobileDarkTheme('mocha')
+    applyMobileDarkTheme('dracula')
+    expect(colors.bgBase).toBe('#282a36')
+    expect(getMobilePaletteKey()).toBe('dracula')
+  })
+
   it('leaves light mode as it is', () => {
     applyMobileColorScheme('light')
     applyMobileDarkTheme('mocha')

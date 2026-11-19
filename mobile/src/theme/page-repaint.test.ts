@@ -33,6 +33,6 @@ describe('repainting the session page', () => {
     expect(() => new Function(script)).not.toThrow()
     expect(script).toContain('#1e1e2e')
     expect(script).toContain('monospace')
-    expect(pageRepaintScript([], false)).toBe('')
+    expect(() => new Function(pageRepaintScript([], false))).not.toThrow()
   })
 })

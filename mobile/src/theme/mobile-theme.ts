@@ -1,5 +1,6 @@
 import { codeFontFamily } from './mobile-code-font'
-import { mochaPalette } from './mocha-theme'
+import { themedPalette } from './mocha-theme'
+import { DARK_THEMES, type DarkThemeId } from './dark-themes'
 
 // Desktop's main.css tokens per scheme; keep mobile on these instead of introducing inline colors.
 
@@ -179,9 +180,18 @@ export function paletteForScheme(scheme: MobileColorScheme): MobilePalette {
 // Live object rewritten in place on a scheme change; read it at render time, never copy at module scope.
 export const colors: MobilePalette = { ...darkColors }
 
-/** Orca's own dark colours, or Catppuccin Mocha's (Settings → Appearance); light mode keeps its own. */
-export type MobileDarkTheme = 'orca' | 'mocha'
-const mochaColors = mochaPalette(darkColors)
+/** Orca's own dark colours, or one of the themes in dark-themes (Settings → Appearance); light mode keeps its own. */
+export type MobileDarkTheme = 'orca' | DarkThemeId
+const themedColors = new Map<DarkThemeId, MobilePalette>()
+
+function themeColors(theme: DarkThemeId): MobilePalette {
+  let palette = themedColors.get(theme)
+  if (palette === undefined) {
+    palette = themedPalette(darkColors, DARK_THEMES[theme].colours)
+    themedColors.set(theme, palette)
+  }
+  return palette
+}
 
 let currentScheme: MobileColorScheme = 'dark'
 let currentDarkTheme: MobileDarkTheme = 'orca'
@@ -192,12 +202,13 @@ export function getMobileColorScheme(): MobileColorScheme {
 }
 
 /** Which palette is painted: the scheme, or the dark theme while it's dark. Styles are built once per key. */
-export function getMobilePaletteKey(): MobileColorScheme | 'mocha' {
-  return currentScheme === 'dark' && currentDarkTheme === 'mocha' ? 'mocha' : currentScheme
+export function getMobilePaletteKey(): MobileColorScheme | DarkThemeId {
+  return currentScheme === 'dark' && currentDarkTheme !== 'orca' ? currentDarkTheme : currentScheme
 }
 
 function repaint(): void {
-  Object.assign(colors, getMobilePaletteKey() === 'mocha' ? mochaColors : palettes[currentScheme])
+  const key = getMobilePaletteKey()
+  Object.assign(colors, key === 'dark' || key === 'light' ? palettes[key] : themeColors(key))
   for (const listener of schemeListeners) {
     listener()
   }
