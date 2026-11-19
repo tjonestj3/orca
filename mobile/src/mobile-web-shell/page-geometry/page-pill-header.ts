@@ -44,6 +44,7 @@ function restoreAll() {
   state.held = [];
   state.at = null;
   state.content = null;
+  state.minimalFor = null;
 }
 function byLabel(label) {
   var found = null;
@@ -86,6 +87,35 @@ function restoreOn(el) {
     return false;
   });
 }
+// Inside the pill, only icons and words: Orca's header fills its buttons and the active tab, rules its rows and
+// cells, and sizes them for a solid bar. Redone only when the header's contents change, not on every line of chat.
+function rowOf(button, chrome) {
+  for (var el = button.parentElement; el && el !== chrome; el = el.parentElement) {
+    if (getComputedStyle(el).flexDirection === 'row' && el.getBoundingClientRect().width >= chrome.getBoundingClientRect().width * 0.6) return el;
+  }
+  return null;
+}
+function minimal(chrome, more, tab) {
+  var all = chrome.querySelectorAll('*');
+  var signature = all.length + ':' + chrome.textContent.length;
+  if (state.minimalFor === chrome && state.minimalSig === signature) return;
+  state.minimalFor = chrome;
+  state.minimalSig = signature;
+  var sides = ['border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width'];
+  all.forEach(function (el) {
+    var look = getComputedStyle(el);
+    var bg = look.backgroundColor;
+    if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) set(el, 'background-color', 'transparent');
+    // Lines on rows and cells go; a small box's outline (the tab count) stays.
+    if (el.getBoundingClientRect().width > 60) {
+      sides.forEach(function (side) { if (parseFloat(look.getPropertyValue(side)) > 0) set(el, side, '0px'); });
+    }
+  });
+  var titleRow = rowOf(more, chrome);
+  if (titleRow) set(titleRow, 'height', '42px');
+  var tabRow = rowOf(tab, chrome);
+  if (tabRow && tabRow !== titleRow) set(tabRow, 'height', '32px');
+}
 function check() {
   state.pending = false;
   // Nothing moves under a sheet or menu: leave the pill as it is until it closes.
@@ -97,7 +127,7 @@ function check() {
   if (!chrome) { if (state.held.length) restoreAll(); return; }
   if (state.at && state.at !== chrome) restoreAll();
   state.at = chrome;
-  var bg = rgba(pill.background, 0.78);
+  var bg = rgba(pill.background, 0.62);
   set(chrome, 'position', 'absolute');
   set(chrome, 'top', pill.top + 'px');
   set(chrome, 'left', pill.left + 'px');
@@ -111,14 +141,15 @@ function check() {
   set(chrome, 'border-radius', '22px');
   set(chrome, 'overflow', 'hidden');
   set(chrome, 'background-color', bg);
-  set(chrome, 'border', '1px solid rgba(255,255,255,0.08)');
+  set(chrome, 'border', '1px solid rgba(255,255,255,0.06)');
   set(chrome, 'box-shadow', '0 8px 24px rgba(0,0,0,0.35)');
-  set(chrome, '-webkit-backdrop-filter', 'blur(16px) saturate(140%)');
-  set(chrome, 'backdrop-filter', 'blur(16px) saturate(140%)');
+  set(chrome, '-webkit-backdrop-filter', 'blur(20px) saturate(150%)');
+  set(chrome, 'backdrop-filter', 'blur(20px) saturate(150%)');
   // The tab strip's line across the top is the pill's own edge now.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
   }
+  minimal(chrome, more, tab);
   var list = conversation(chrome);
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
@@ -128,6 +159,8 @@ function check() {
   // wrapper: lift each wrapper up to the one it shares with the conversation, which would draw over it otherwise.
   for (var up = chrome.parentElement; up && up !== document.body && !(list && up.contains(list)); up = up.parentElement) {
     set(up, 'z-index', '20');
+    // A rule under where the header sat would cross the chat now.
+    if (parseFloat(getComputedStyle(up).borderBottomWidth) > 0) set(up, 'border-bottom-width', '0px');
   }
 }
 function soon() { if (!state.pending) { state.pending = true; requestAnimationFrame(check); } }

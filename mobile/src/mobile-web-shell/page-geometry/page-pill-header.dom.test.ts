@@ -87,3 +87,31 @@ it('pads the transcript, not the lower region a tall question scrolls in, and li
   expect(byId('top').style.getPropertyValue('z-index')).toBe('20')
   expect(byId('pane').style.getPropertyValue('z-index')).toBe('') // shared with the chat: left alone
 })
+
+it('keeps only icons and words inside the pill: no button or tab fills, no rules across its rows', () => {
+  document.body.innerHTML =
+    '<div id="pane"><div id="top" style="border-bottom: 1px solid #333"><div id="chrome">' +
+    '<div><div id="more" aria-label="More session actions" style="background-color: #262626"></div></div>' +
+    '<div id="tabs" style="border-top: 1px solid #333"><div id="tab" style="background-color: #262626; border-bottom: 2px solid #aaa">Xeno</div>' +
+    '<div id="count" style="border: 1.5px solid #fff">2</div><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('tab'), { top: 52, height: 40, width: 300 })
+  place(byId('count'), { top: 56, height: 24, width: 24 })
+  place(byId('chat'), { top: 0, height: window.innerHeight })
+
+  new Function(pagePillHeaderScript(PILL))()
+  expect(byId('more').style.getPropertyValue('background-color')).toBe('transparent')
+  expect(byId('tab').style.getPropertyValue('background-color')).toBe('transparent')
+  expect(byId('tab').style.getPropertyValue('border-bottom-width')).toBe('0px')
+  expect(byId('count').style.getPropertyValue('border-top-width')).toBe('1.5px') // the count keeps its box
+  expect(byId('top').style.getPropertyValue('border-bottom-width')).toBe('0px')
+
+  new Function(pagePillHeaderScript(null))()
+  expect(byId('tab').style.getPropertyValue('background-color')).toMatch(
+    /#262626|rgb\(38, 38, 38\)/
+  ) // as the page had it
+})
