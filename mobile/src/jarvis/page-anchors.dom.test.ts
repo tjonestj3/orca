@@ -153,3 +153,24 @@ it('leaves the page alone while a sheet is open, and catches up when it closes',
     at: { x: 300, y: height - 60, width: 36, height: 36 }
   })
 })
+
+it('keeps the host list’s header lifted however often the page changes', async () => {
+  listen()
+  document.body.innerHTML =
+    '<div id="safe" style="padding-top: 67px"><div><div id="more" aria-label="More actions"></div></div></div>'
+  place(document.getElementById('more')!, { left: 250, top: 75, width: 44, height: 44 })
+  const header = [
+    { name: 'header' as const, labels: ['More actions'], near: 'top' as const, pad: 0, lift: 67 }
+  ]
+  new Function(pageAnchorsScript(header))()
+  for (let i = 0; i < 4; i++) {
+    // Each change on the page runs the check again.
+    document.body.appendChild(document.createElement('span'))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    expect(
+      document.getElementById('safe')!.style.getPropertyValue('padding-top'),
+      `change ${i}`
+    ).toBe('0px')
+  }
+})

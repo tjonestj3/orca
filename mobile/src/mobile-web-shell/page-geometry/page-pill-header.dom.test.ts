@@ -61,3 +61,29 @@ it('leaves a page without a session header alone', () => {
   new Function(pagePillHeaderScript(PILL))()
   expect(document.getElementById('x')!.style.getPropertyValue('padding-top')).toBe('4px')
 })
+
+it('pads the transcript, not the lower region a tall question scrolls in, and lifts the pill above the chat', () => {
+  document.body.innerHTML =
+    '<div id="pane">' +
+    '<div id="top"><div id="chrome">' +
+    '<div><div id="more" aria-label="More session actions"></div></div>' +
+    '<div><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div>' +
+    '<div data-testid="native-chat-view">' +
+    '<div id="chat" style="overflow-y: auto"><div id="content"></div></div>' +
+    '<div data-testid="native-chat-lower-scroll" id="lower" style="overflow-y: auto"><div id="card"></div></div>' +
+    '</div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chat'), { top: 0, height: window.innerHeight * 0.35 })
+  // A tall question: the lower region is the bigger scroller now.
+  place(byId('lower'), { top: window.innerHeight * 0.35, height: window.innerHeight * 0.6 })
+
+  new Function(pagePillHeaderScript(PILL))()
+  expect(byId('content').style.getPropertyValue('padding-top')).toBe('100px')
+  expect(byId('card').style.getPropertyValue('padding-top')).toBe('')
+  expect(byId('top').style.getPropertyValue('z-index')).toBe('20')
+  expect(byId('pane').style.getPropertyValue('z-index')).toBe('') // shared with the chat: left alone
+})

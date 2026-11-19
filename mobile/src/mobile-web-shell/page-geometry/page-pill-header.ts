@@ -43,6 +43,7 @@ function restoreAll() {
   });
   state.held = [];
   state.at = null;
+  state.content = null;
 }
 function byLabel(label) {
   var found = null;
@@ -59,19 +60,31 @@ function rgba(hex, a) {
   var n = parseInt(hex.slice(1), 16);
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
-// The conversation: the biggest scrolling box in the pill's pane.
+// The conversation: the chat's transcript, the biggest scrolling box in the chat view that isn't its lower region
+// (the composer and an agent's question, which scrolls too, and can be the bigger while a question is tall).
 function conversation(chrome) {
   var pane = chrome.parentElement && chrome.parentElement.parentElement;
-  if (!pane) return null;
+  var root = document.querySelector('[data-testid="native-chat-view"]') || pane;
+  if (!root) return null;
+  var lower = root.querySelector('[data-testid="native-chat-lower-scroll"]');
   var best = null, area = 0;
-  pane.querySelectorAll('*').forEach(function (el) {
-    if (chrome.contains(el)) return;
+  root.querySelectorAll('*').forEach(function (el) {
+    if (chrome.contains(el) || (lower && (lower === el || lower.contains(el)))) return;
     var oy = getComputedStyle(el).overflowY;
     if (oy !== 'auto' && oy !== 'scroll') return;
     var r = el.getBoundingClientRect();
     if (r.width * r.height > area && r.height > window.innerHeight * 0.3) { best = el; area = r.width * r.height; }
   });
   return best;
+}
+// Puts back what was set on one element (the conversation padded before, when it's another now).
+function restoreOn(el) {
+  state.held = state.held.filter(function (h) {
+    if (h.el !== el) return true;
+    if (h.inline) h.el.style.setProperty(h.prop, h.inline, h.priority);
+    else h.el.style.removeProperty(h.prop);
+    return false;
+  });
 }
 function check() {
   state.pending = false;
@@ -108,7 +121,14 @@ function check() {
   }
   var list = conversation(chrome);
   var content = list && list.firstElementChild;
+  if (state.content && state.content !== content) restoreOn(state.content);
+  state.content = content;
   if (content) set(content, 'padding-top', (chrome.getBoundingClientRect().height + pill.top + ${PILL_GAP}) + 'px');
+  // React Native Web gives every view its own stacking layer, so the pill's z-index only counts within its
+  // wrapper: lift each wrapper up to the one it shares with the conversation, which would draw over it otherwise.
+  for (var up = chrome.parentElement; up && up !== document.body && !(list && up.contains(list)); up = up.parentElement) {
+    set(up, 'z-index', '20');
+  }
 }
 function soon() { if (!state.pending) { state.pending = true; requestAnimationFrame(check); } }
 if (!state.installed) {

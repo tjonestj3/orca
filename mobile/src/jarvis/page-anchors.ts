@@ -110,7 +110,10 @@ function pad(name, row, extra) {
 function lifted(name, button, by) {
   var held = state.lifts[name];
   var box = null;
-  if (button && by > 0) {
+  if (held && by > 0 && button && held.el.isConnected && held.el.contains(button)) {
+    // Still the box lifted before: once lifted it no longer has the padding the search looks for.
+    box = held.el;
+  } else if (button && by > 0) {
     box = button.parentElement;
     while (box && box !== document.body && !(parseFloat(getComputedStyle(box).paddingTop) >= by - 0.5)) box = box.parentElement;
     if (box === document.body) box = null;
