@@ -1,6 +1,6 @@
 import { CalendarClock } from 'lucide-react-native'
 import { Fragment, useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Text, View } from 'react-native'
 import Animated, { FadeIn } from 'react-native-reanimated'
 import { toAutomationOwnerPrecondition } from '../../../../src/shared/automations/ownership/automation-owner-precondition'
 import {
@@ -27,6 +27,7 @@ import { MobileHomeSectionHeading } from '../MobileHomeSectionHeading'
 import { MobileHomeAutomationRow, MobileHomeAutomationRunRow } from './MobileHomeAutomationRows'
 import { MobileHomeHostPill, useHomeTabHost } from './MobileHomeHostPill'
 import { MobileHomeTabHeader } from './MobileHomeTabHeader'
+import { EdgeScrollView } from '../../layout/edge-scroll-view'
 
 const RECENT_RUN_LIMIT = 5
 const UPDATE_OPTIONS = { failWhenDisconnected: true }
@@ -53,7 +54,7 @@ export function MobileHomeAutomationsTab(props: {
   return (
     <>
       <MobileHomeTabHeader title={t('home.tabs.automations', 'Automations')} />
-      <ScrollView
+      <EdgeScrollView
         contentContainerStyle={[styles.content, { paddingBottom: props.bottomInset }]}
         showsVerticalScrollIndicator={false}
       >
@@ -82,7 +83,7 @@ export function MobileHomeAutomationsTab(props: {
             )}
           />
         )}
-      </ScrollView>
+      </EdgeScrollView>
     </>
   )
 }

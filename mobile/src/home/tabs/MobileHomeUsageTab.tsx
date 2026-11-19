@@ -1,6 +1,6 @@
 import { Gauge, RefreshCw } from 'lucide-react-native'
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import Animated, {
   FadeIn,
   useAnimatedStyle,
@@ -37,6 +37,7 @@ import { MobileHomeHostPill, useHomeTabHost } from './MobileHomeHostPill'
 import { MobileHomeTabHeader, MobileHomeTabHeaderButton } from './MobileHomeTabHeader'
 import { mobileHomeUsageStyles as styles } from './mobile-home-usage-styles'
 import { getManagedAccountPrimaryLabel } from '../../../../src/shared/agent-accounts/managed-account-display-names'
+import { EdgeScrollView } from '../../layout/edge-scroll-view'
 
 const PROVIDER_TITLES: Record<ProviderKey, string> = { claude: 'Claude Code', codex: 'Codex' }
 
@@ -90,7 +91,7 @@ export function MobileHomeUsageTab(props: {
           ) : undefined
         }
       />
-      <ScrollView
+      <EdgeScrollView
         contentContainerStyle={[
           styles.content,
           { paddingBottom: spacing.xl + props.bottomInset },
@@ -120,7 +121,7 @@ export function MobileHomeUsageTab(props: {
             message={t('home.usage.pairDesktop', 'Pair a desktop to see agent account usage.')}
           />
         )}
-      </ScrollView>
+      </EdgeScrollView>
     </View>
   )
 }

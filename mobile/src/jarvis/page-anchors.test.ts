@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  HEADER_ORB,
-  HEADER_ORB_GAP,
-  headerOrbPlace,
-  micOrbPlace,
-  readPageAnchorMessage
-} from './page-anchors'
+import { PLUS_ORB, micOrbPlace, plusOrbPlace, readPageAnchorMessage } from './page-anchors'
 
 describe('an anchor message', () => {
   it('says where the button is, or that it’s gone', () => {
@@ -30,11 +24,11 @@ describe('an anchor message', () => {
 })
 
 describe('where the orb goes', () => {
-  it('just right of the host list’s menu, centred on it', () => {
-    expect(headerOrbPlace({ x: 300, y: 8, width: 44, height: 44 })).toEqual({
-      left: 300 + 44 + HEADER_ORB_GAP,
-      top: 8 + (44 - HEADER_ORB) / 2,
-      size: HEADER_ORB
+  it('just right of the host list’s + button, centred on it', () => {
+    expect(plusOrbPlace({ x: 340, y: 790, width: 44, height: 44 })).toEqual({
+      left: 340 + 44 + 8,
+      top: 790 + (44 - PLUS_ORB) / 2,
+      size: PLUS_ORB
     })
   })
 

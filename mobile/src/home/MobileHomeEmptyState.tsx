@@ -1,6 +1,6 @@
 import { QrCode } from 'lucide-react-native'
 import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { NumberedStepsPanel } from '../components/list/NumberedStepsPanel'
 import { OrcaLogo } from '../components/icons/OrcaLogo'
@@ -10,6 +10,7 @@ import { colors, radii, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { MobileHomeAppMoveBanner } from './MobileHomeAppMoveBanner'
+import { EdgeScrollView } from '../layout/edge-scroll-view'
 
 function onboardingSteps(t: Translate) {
   return [
@@ -50,7 +51,7 @@ export function MobileHomeEmptyState(props: {
   useMobileColorScheme()
   // Scrolls because a phone in landscape is shorter than the hero and the steps together.
   return (
-    <ScrollView
+    <EdgeScrollView
       contentContainerStyle={[
         styles.container,
         { paddingBottom: props.bottomInset },
@@ -78,7 +79,7 @@ export function MobileHomeEmptyState(props: {
         <NumberedStepsPanel steps={onboardingSteps(t)} />
         <PairDesktopButton onPress={props.onPairDesktop} />
       </View>
-    </ScrollView>
+    </EdgeScrollView>
   )
 }
 

@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { ArrowDown } from 'lucide-react-native'
+import { useEdgeScrollBar } from '../layout/edge-scroll-view'
 import * as Clipboard from 'expo-clipboard'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle, spacing } from '../theme/mobile-theme'
@@ -68,6 +69,7 @@ export function JarvisTranscript({
   useMobileColorScheme()
   const t = useMobileTranslation()
   const list = useRef<FlatList<TranscriptListItem>>(null)
+  const edgeBar = useEdgeScrollBar()
   // Keys already drawn: null until the first lines load, so what's there on opening never slides in.
   const seen = useRef<Set<string> | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -131,6 +133,7 @@ export function JarvisTranscript({
       onLayout={(event: LayoutChangeEvent) => setHeight(event.nativeEvent.layout.height)}
     >
       <Animated.FlatList
+        {...edgeBar}
         ref={list}
         data={items}
         keyExtractor={(item) => item.key}

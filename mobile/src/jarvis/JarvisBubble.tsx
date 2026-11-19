@@ -8,7 +8,7 @@ import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
-import { headerOrbPlace, micOrbPlace, usePageAnchors } from './page-anchors'
+import { micOrbPlace, plusOrbPlace, usePageAnchors } from './page-anchors'
 
 const BUBBLE_SIZE = 56
 // Beside the small orb in a session, the desktop's name has the composer's empty middle to itself.
@@ -19,7 +19,7 @@ export function JarvisBubble() {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const { header: headerButton, mic, question } = usePageAnchors()
+  const { plus, mic, question } = usePageAnchors()
   const screen = useWindowDimensions()
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
@@ -27,12 +27,12 @@ export function JarvisBubble() {
   if (sheetOpen || (view === 'chat' && question)) {
     return null
   }
-  if (!view && headerButton && column?.extended) {
-    // The host list full screen: beside its header's menu, in the room the page made for it (page-anchors).
-    const place = headerOrbPlace(headerButton)
+  if (!view && plus) {
+    // The host list: just right of its + button, in the room its bar made (page-anchors).
+    const place = plusOrbPlace(plus)
     return (
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <View style={[styles.header, { left: place.left, top: place.top }]}>
+        <View style={[styles.anchored, { left: place.left, top: place.top }]}>
           <JarvisTalkControl size={place.size} />
         </View>
       </View>
@@ -103,5 +103,5 @@ export function JarvisBubble() {
 const styles = StyleSheet.create({
   corner: { position: 'absolute', alignItems: 'center', gap: spacing.xs },
   row: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  header: { position: 'absolute' }
+  anchored: { position: 'absolute' }
 })

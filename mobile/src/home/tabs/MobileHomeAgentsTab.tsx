@@ -8,7 +8,7 @@ import {
   WifiOff
 } from 'lucide-react-native'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ActivityIndicator, ScrollView, Text, View, type HostInstance } from 'react-native'
+import { ActivityIndicator, Text, View, type HostInstance } from 'react-native'
 import {
   AGENT_LIST_GROUP_BY_CHOICES,
   agentListRowsIn,
@@ -37,6 +37,7 @@ import { MobileHomeSectionHeading } from '../MobileHomeSectionHeading'
 import type { MobileHomeData } from '../use-mobile-home-data'
 import { AgentsDesktopFilter } from './MobileHomeAgentsDesktopFilter'
 import { MobileHomeTabHeader, MobileHomeTabHeaderButton } from './MobileHomeTabHeader'
+import { EdgeScrollView } from '../../layout/edge-scroll-view'
 
 /** Every agent on every paired desktop, grouped the way the user picked. */
 export function MobileHomeAgentsTab(props: {
@@ -268,7 +269,7 @@ export function MobileHomeAgentsTab(props: {
           />
         </View>
       ) : null}
-      <ScrollView
+      <EdgeScrollView
         contentContainerStyle={[
           styles.content,
           { paddingBottom: props.bottomInset },
@@ -278,7 +279,7 @@ export function MobileHomeAgentsTab(props: {
         keyboardDismissMode="on-drag"
       >
         {body}
-      </ScrollView>
+      </EdgeScrollView>
       <PullDownMenu
         visible={menu !== 'closed'}
         anchorRef={optionsRef}

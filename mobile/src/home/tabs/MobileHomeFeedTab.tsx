@@ -1,4 +1,3 @@
-import { ScrollView } from 'react-native'
 import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { useResponsiveLayout } from '../../layout/responsive-layout'
 import { spacing } from '../../theme/mobile-theme'
@@ -13,6 +12,7 @@ import { MobileHomeActiveAgents } from '../MobileHomeActiveAgents'
 import { MobileHomeTasksSection } from '../MobileHomeTasksSection'
 import type { MobileHomeData } from '../use-mobile-home-data'
 import { MobileHomeTabHeader } from './MobileHomeTabHeader'
+import { EdgeScrollView } from '../../layout/edge-scroll-view'
 
 /** Home's first tab: agents that need you or are working, the desktops, and Tasks. */
 export function MobileHomeFeedTab(props: {
@@ -47,7 +47,7 @@ export function MobileHomeFeedTab(props: {
   return (
     <>
       {title}
-      <ScrollView
+      <EdgeScrollView
         contentContainerStyle={[
           styles.content,
           { paddingBottom: props.bottomInset },
@@ -78,7 +78,7 @@ export function MobileHomeFeedTab(props: {
         />
         <MobileHomeTasksSection connectedHosts={data.connectedHosts} onOpen={props.onOpenTasks} />
         <MobileHomeAppUpdateCard />
-      </ScrollView>
+      </EdgeScrollView>
     </>
   )
 }

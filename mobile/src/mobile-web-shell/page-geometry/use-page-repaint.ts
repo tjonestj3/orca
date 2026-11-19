@@ -7,7 +7,7 @@ import { useMobileColorScheme } from '../../theme/use-mobile-color-scheme'
 import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { useSideColumn } from '../../layout/side-rail'
 import { PAGE_MODAL_WATCH } from '../../jarvis/page-modal'
-import { HEADER_ORB, HEADER_ORB_GAP, pageAnchorsScript } from '../../jarvis/page-anchors'
+import { PLUS_ORB_ROOM, pageAnchorsScript } from '../../jarvis/page-anchors'
 import { PAGE_SCROLL_PIN } from './page-scroll-pin'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 
@@ -17,7 +17,7 @@ const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
  * The script the shell runs in Orca's pages: the app's theme, font and inline code colour over Orca's, the watch
  * that tells Xeno's orb when the page has a sheet open (jarvis/page-modal), the keyboard scroll pin, and the
  * buttons the orb goes beside (jarvis/page-anchors): a session's mic, or on another page (`headerClear`) its
- * header's menu, the header kept clear of the folded Duo's camera with room for the orb; and in a session, more
+ * + button, its header kept clear of the folded Duo's camera; and in a session, more
  * room for an agent's question (page-question-room).
  */
 export function usePageRepaint(options: { headerClear: boolean }): string {
@@ -28,6 +28,7 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
   const column = useSideColumn()
   const themed = scheme === 'dark' && theme !== 'orca' ? DARK_THEMES[theme].colours : null
   const header = t('hostScreen.hostScreenHeader.moreActions', 'More actions')
+  const plus = t('hostScreen.hostBottomBar.newWorkspace', 'New workspace')
   const mic = [
     t('dictation.controls.start', 'Dictate'),
     t('dictation.controls.starting', 'Starting dictation'),
@@ -35,14 +36,18 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
     t('dictation.controls.finishing', 'Finishing dictation'),
     t('dictation.controls.retry', 'Retry dictation')
   ].join('\n')
-  const pad =
-    options.headerClear && column?.extended ? column.width + HEADER_ORB + HEADER_ORB_GAP * 2 : 0
+  const pad = options.headerClear && column?.extended ? column.width : 0
+  // Room beside the + for Xeno's orb, wherever the orb floats rather than sitting in the folded Duo's rail.
+  const plusRoom = options.headerClear && (!column || column.extended) ? PLUS_ORB_ROOM : 0
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
     const anchors = pageAnchorsScript(
       options.headerClear
-        ? [{ name: 'header', labels: [header], near: 'top', pad }]
+        ? [
+            { name: 'header', labels: [header], near: 'top', pad },
+            { name: 'plus', labels: [plus], near: 'bottom', pad: plusRoom }
+          ]
         : [
             { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: 0 },
             {
@@ -56,5 +61,5 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
     )
     const sessionOnly = options.headerClear ? [] : [PAGE_QUESTION_ROOM]
     return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, ...sessionOnly].join('\n')
-  }, [themed, monospace, options.headerClear, header, mic, pad])
+  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom])
 }

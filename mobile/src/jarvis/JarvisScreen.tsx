@@ -181,26 +181,6 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           {statusLine(state, t)}
         </Text>
       </View>
-      {heard || state.said ? (
-        <Pressable
-          onPress={openTranscript}
-          style={({ pressed }) => [styles.captions, pressed && pressedStyle]}
-          accessibilityRole="button"
-          accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
-          accessibilityLiveRegion="polite"
-        >
-          {heard ? (
-            <Text style={styles.heard} numberOfLines={state.dictating ? 3 : 1}>
-              {t('jarvis.screen.youSaid', 'You: {{text}}', { text: heard })}
-            </Text>
-          ) : null}
-          {state.said ? (
-            <Text style={styles.said} numberOfLines={2}>
-              {state.said}
-            </Text>
-          ) : null}
-        </Pressable>
-      ) : null}
       <JarvisWorktreePanel
         cards={state.cards}
         worktrees={worktrees}
@@ -209,7 +189,8 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         onAsk={ask}
         onOpen={openInOrca}
         messages={messages}
-        hearing={live ? state.heard : ''}
+        // What you're saying, dictation included, shows in the Conversation tab as you say it.
+        hearing={live ? heard : ''}
         onReplay={replay}
         imageUrl={(id) => (host ? jarvisImageUrl(host.endpoint, id) : null)}
       />
@@ -344,19 +325,6 @@ const styles = themedStyleSheet(() => ({
   },
   status: { color: colors.textSecondary, fontSize: typography.bodySize, letterSpacing: 0.3 },
   statusError: { color: colors.statusRed, textAlign: 'center', paddingHorizontal: spacing.xl },
-  captions: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    gap: spacing.xs,
-    justifyContent: 'flex-start'
-  },
-  heard: { color: colors.textSecondary, fontSize: typography.metaSize, textAlign: 'center' },
-  said: {
-    color: colors.textPrimary,
-    fontSize: typography.bodySize,
-    textAlign: 'center',
-    lineHeight: 20
-  },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',

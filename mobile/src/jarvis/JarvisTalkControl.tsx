@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Pressable, View } from 'react-native'
-import { Ear, X } from 'lucide-react-native'
+import { Ear } from 'lucide-react-native'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, pressedStyle } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
@@ -10,7 +10,11 @@ import { jarvisOrbPhase } from './jarvis-call-types'
 import { JarvisOrb } from './JarvisOrb'
 import { useJarvis } from './jarvis-context'
 
-// Jarvis as a small live orb: hold to talk, tap to open the Jarvis screen, ✕ to hang up. Used by the bubble and the rail.
+// Room around the orb that still counts as pressing it.
+const GRAB_SLOP = 8
+
+// Jarvis as a small live orb: hold to talk, tap to open the Jarvis screen (which hangs up). Used by the bubble, the
+// rail, the tab bar and beside a session's mic. No ✕ on it: holding it to talk, a thumb found the ✕ and hung up.
 export function JarvisTalkControl({ size }: { readonly size: number }) {
   useMobileColorScheme()
   const t = useMobileTranslation()
@@ -43,6 +47,8 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
         onPress={pickHost ?? undefined}
         onPressIn={pickHost ? undefined : press.pressIn}
         onPressOut={pickHost ? undefined : press.pressOut}
+        // Easier to catch than the orb itself, which can be small beside the mic.
+        hitSlop={GRAB_SLOP}
         style={({ pressed }) => [styles.orb, { borderRadius: size / 2 }, pressed && pressedStyle]}
         accessibilityRole="button"
         accessibilityLabel={
@@ -56,19 +62,10 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
         <JarvisOrb call={call} phase={jarvisOrbPhase(state)} size={size} />
       </Pressable>
       {live ? (
-        <Pressable
-          onPress={() => call.hangUp()}
-          hitSlop={8}
-          style={({ pressed }) => [styles.badge, styles.hangUp, pressed && pressedStyle]}
-          accessibilityRole="button"
-          accessibilityLabel={t('jarvis.bubble.hangUp', 'Hang up Xeno')}
-        >
-          <X size={11} color={colors.onAccent} />
-        </Pressable>
-      ) : null}
-      {live ? (
         <View
           style={[styles.badge, styles.listening]}
+          // A press on the badge is a press on the orb.
+          pointerEvents="none"
           accessible
           accessibilityLabel={t('jarvis.bubble.listeningForName', 'Listening for “Hey Xeno”')}
         >
@@ -89,6 +86,5 @@ const styles = themedStyleSheet(() => ({
     alignItems: 'center',
     justifyContent: 'center'
   },
-  hangUp: { top: -4, left: -4, backgroundColor: colors.statusRed },
   listening: { bottom: -4, right: -4, backgroundColor: colors.accentBlue }
 }))

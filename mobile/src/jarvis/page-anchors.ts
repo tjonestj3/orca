@@ -6,20 +6,23 @@ import { useSyncExternalStore } from 'react'
  *
  * - `header`: the host list's "More actions", near the page's top. Full screen on the folded Duo, that page's header
  *   only keeps below the top inset, so instead of pushing it down the camera's height the script pads the bar it's
- *   in clear of the column (the camera tops it) plus room for the orb, which sits beside the button.
+ *   in clear of the column, which the camera tops.
+ * - `plus`: the host list's "New workspace" button, bottom right. The script pads its bar on the right (the search
+ *   field gives up the room) and the orb sits just right of the button.
  * - `mic`: a session composer's mic, near the page's bottom; the orb sits just left of it. A tab without a
  *   composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over the page.
  * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
  *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
-export type PageAnchorName = 'header' | 'mic' | 'question'
+export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus'
 export type PageAnchor = { x: number; y: number; width: number; height: number }
 
 export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
 
-/** Xeno's orb in the host list's header and the gaps either side of it. */
-export const HEADER_ORB = 32
-export const HEADER_ORB_GAP = 6
+/** Xeno's orb beside the host list's + button, the gap between them, and the room the bar makes for both. */
+export const PLUS_ORB = 40
+const PLUS_ORB_GAP = 8
+export const PLUS_ORB_ROOM = PLUS_ORB + PLUS_ORB_GAP * 2
 const MIC_ORB_GAP = 8
 
 export type PageAnchorWatch = {
@@ -27,7 +30,7 @@ export type PageAnchorWatch = {
   /** Found by any of these labels, or (`selector`) by what it is. */
   readonly labels: readonly string[]
   readonly selector?: string
-  /** Look in the page's top band (the header), or its bottom half (the composer). */
+  /** Look in the page's top band (the header), or for the lowest match below it (the composer). */
   readonly near: 'top' | 'bottom'
   /** Pad the full-width bar holding it by this much more on the right; 0 puts it back. */
   readonly pad: number
@@ -47,13 +50,18 @@ function bar(button) {
   return el;
 }
 function find(watch) {
-  var found = null;
+  // Top: the first match in the page's top band. Bottom: the lowest match below it; the keyboard lifts the
+  // composer above the page's middle, so 'the bottom half' would lose it while typing.
+  var found = null, foundTop = -Infinity;
   document.querySelectorAll(watch.selector || '[aria-label]').forEach(function (el) {
-    if (found || (!watch.selector && watch.labels.indexOf(el.getAttribute('aria-label')) < 0)) return;
+    if (!watch.selector && watch.labels.indexOf(el.getAttribute('aria-label')) < 0) return;
     var r = el.getBoundingClientRect();
     if (!(r.width > 0)) return;
-    var near = watch.near === 'top' ? r.top >= 0 && r.top < ${TOP_REACH} : r.top > window.innerHeight / 2;
-    if (near) found = el;
+    if (watch.near === 'top') {
+      if (!found && r.top >= 0 && r.top < ${TOP_REACH}) found = el;
+    } else if (r.top >= ${TOP_REACH} && r.top > foundTop) {
+      found = el; foundTop = r.top;
+    }
   });
   return found;
 }
@@ -69,7 +77,8 @@ function check() {
   state.pending = false;
   state.watches.forEach(function (watch) {
     var button = find(watch);
-    if (watch.near === 'top') pad(watch.name, button ? bar(button) : null, watch.pad);
+    // Only a bar asked to make room is touched; padding is put back when it's no longer asked for.
+    if (watch.pad > 0 || state.rows[watch.name]) pad(watch.name, button ? bar(button) : null, watch.pad);
     var r = button && button.getBoundingClientRect();
     var at = r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(',') : '';
     if (at === state.at[watch.name]) return;
@@ -110,7 +119,10 @@ export function readPageAnchorMessage(
     !('type' in parsed) ||
     parsed.type !== PAGE_ANCHOR_MESSAGE ||
     !('name' in parsed) ||
-    (parsed.name !== 'header' && parsed.name !== 'mic' && parsed.name !== 'question') ||
+    (parsed.name !== 'header' &&
+      parsed.name !== 'mic' &&
+      parsed.name !== 'question' &&
+      parsed.name !== 'plus') ||
     !('at' in parsed) ||
     typeof parsed.at !== 'string'
   ) {
@@ -134,12 +146,12 @@ export function readPageAnchorMessage(
   return { name: parsed.name, at: { x, y, width, height } }
 }
 
-/** Beside the host list's menu: just right of it, centred on it, in window points. */
-export function headerOrbPlace(button: PageAnchor): { left: number; top: number; size: number } {
+/** Just right of the host list's + button, centred on it, in window points. */
+export function plusOrbPlace(plus: PageAnchor): { left: number; top: number; size: number } {
   return {
-    left: button.x + button.width + HEADER_ORB_GAP,
-    top: button.y + (button.height - HEADER_ORB) / 2,
-    size: HEADER_ORB
+    left: plus.x + plus.width + PLUS_ORB_GAP,
+    top: plus.y + (plus.height - PLUS_ORB) / 2,
+    size: PLUS_ORB
   }
 }
 

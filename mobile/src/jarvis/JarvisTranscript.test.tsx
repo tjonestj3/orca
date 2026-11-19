@@ -2,6 +2,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { JarvisMessage } from './jarvis-history'
 
+vi.mock('../layout/edge-scroll-view', () => ({ useEdgeScrollBar: () => ({}) }))
 vi.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',

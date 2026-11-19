@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import { Linking, ScrollView } from 'react-native'
+import { Linking } from 'react-native'
 import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { PendingCredentialCleanupCard } from '../../settings/pending-credential-cleanup-card'
 import { SettingsAppUpdateSection } from '../../settings/settings-app-update-section'
@@ -7,6 +7,7 @@ import { SettingsMenuSections } from '../../settings/settings-menu-screen'
 import { spacing } from '../../theme/mobile-theme'
 import { themedStyleSheet } from '../../theme/themed-styles'
 import { MobileHomeTabHeader } from './MobileHomeTabHeader'
+import { EdgeScrollView } from '../../layout/edge-scroll-view'
 
 /** The Settings menu as Home's last tab; its rows push the same settings screens as before. */
 export function MobileHomeSettingsTab(props: { bottomInset: number }) {
@@ -15,7 +16,7 @@ export function MobileHomeSettingsTab(props: { bottomInset: number }) {
   return (
     <>
       <MobileHomeTabHeader title={t('common.settings', 'Settings')} />
-      <ScrollView
+      <EdgeScrollView
         contentContainerStyle={[styles.content, { paddingBottom: props.bottomInset }]}
         showsVerticalScrollIndicator={false}
       >
@@ -26,7 +27,7 @@ export function MobileHomeSettingsTab(props: { bottomInset: number }) {
           <SettingsAppUpdateSection />
           <PendingCredentialCleanupCard />
         </SettingsMenuSections>
-      </ScrollView>
+      </EdgeScrollView>
     </>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronRight, MessageCircle, Send, SquareArrowOutUpRight } from 'lucide-react-native'
+import { useEdgeScrollBar } from '../layout/edge-scroll-view'
 import { ActionSheetModal } from '../components/sheets/ActionSheetModal'
 import { MobileSegmentedControl } from '../components/controls/MobileSegmentedControl'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
@@ -80,6 +81,7 @@ export function JarvisWorktreePanel({
   const t = useMobileTranslation()
   const [held, setHeld] = useState<JarvisWorktree | null>(null)
   const [tab, setTab] = useState<Tab>('worktrees')
+  const edgeBar = useEdgeScrollBar()
 
   return (
     <>
@@ -137,7 +139,7 @@ export function JarvisWorktreePanel({
           imageUrl={imageUrl}
         />
       ) : (
-        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+        <ScrollView {...edgeBar} style={styles.list} contentContainerStyle={styles.listContent}>
           {worktrees.length === 0 ? (
             <Text style={styles.empty}>
               {reachable === false
