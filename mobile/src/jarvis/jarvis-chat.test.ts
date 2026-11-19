@@ -23,6 +23,23 @@ describe('sendJarvisChat', () => {
     expect(JSON.parse(String(init.body))).toEqual({ text: 'status?', viewing: 'wt-1' })
   })
 
+  it('posts attached images as base64 data, with or without text', async () => {
+    const fetcher = replying(200, {
+      message: { id: 10, kind: 'you', text: '', via: 'typed', images: ['ab'.repeat(16)], rev: 4 }
+    })
+    const result = await sendJarvisChat(URL, '', null, fetcher, [
+      { base64: 'AAAA', uri: 'file:///a.jpg' },
+      { base64: 'BBBB' }
+    ])
+    expect(result.ok && result.message.images).toEqual(['ab'.repeat(16)])
+    const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({
+      text: '',
+      viewing: null,
+      images: [{ data: 'AAAA' }, { data: 'BBBB' }]
+    })
+  })
+
   it('tells a refusal from an unreachable desktop', async () => {
     expect(await sendJarvisChat(URL, 'hi', null, replying(400, { error: 'no' }))).toEqual({
       ok: false,

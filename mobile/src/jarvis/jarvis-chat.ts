@@ -10,11 +10,21 @@ export type JarvisChatSend =
   | { readonly ok: true; readonly message: JarvisMessage }
   | { readonly ok: false; readonly error: 'unreachable' | 'refused' }
 
-const TIMEOUT_MS = 6000
+// An image picked to send: its bytes as base64 (no data: prefix), and where it is on the phone, for its thumbnail.
+export type JarvisChatImage = { readonly base64: string; readonly uri?: string }
 
-async function post(fetcher: Fetcher, url: string, body?: object): Promise<Response> {
+const TIMEOUT_MS = 6000
+// A phone photo is megabytes: over a slow connection it takes a while to reach the desktop.
+const IMAGES_TIMEOUT_MS = 60_000
+
+async function post(
+  fetcher: Fetcher,
+  url: string,
+  body?: object,
+  timeoutMs = TIMEOUT_MS
+): Promise<Response> {
   const abort = new AbortController()
-  const timer = setTimeout(() => abort.abort(), TIMEOUT_MS)
+  const timer = setTimeout(() => abort.abort(), timeoutMs)
   try {
     return await fetcher(url, {
       method: 'POST',
@@ -31,11 +41,20 @@ export async function sendJarvisChat(
   url: string,
   text: string,
   viewing: string | null,
-  fetcher: Fetcher = xenoFetch
+  fetcher: Fetcher = xenoFetch,
+  images: readonly JarvisChatImage[] = []
 ): Promise<JarvisChatSend> {
   let response: Response
   try {
-    response = await post(fetcher, url, { text, viewing })
+    response =
+      images.length > 0
+        ? await post(
+            fetcher,
+            url,
+            { text, viewing, images: images.map((image) => ({ data: image.base64 })) },
+            IMAGES_TIMEOUT_MS
+          )
+        : await post(fetcher, url, { text, viewing })
   } catch {
     return { ok: false, error: 'unreachable' }
   }

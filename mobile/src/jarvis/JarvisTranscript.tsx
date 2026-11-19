@@ -43,6 +43,8 @@ type Props = {
   readonly onReplay: (id: number) => void
   // Changes when the person sends something: the conversation goes to its newest line, however far up they were.
   readonly followKey?: number
+  // Where Xeno serves the images you sent it.
+  readonly imageUrl?: (id: string) => string | null
 }
 
 function Gap() {
@@ -58,7 +60,8 @@ export function JarvisTranscript({
   enabled,
   working = false,
   onReplay,
-  followKey
+  followKey,
+  imageUrl
 }: Props) {
   useMobileColorScheme()
   const t = useMobileTranslation()
@@ -110,6 +113,7 @@ export function JarvisTranscript({
           t={t}
           onReplay={onReplay}
           onCopy={copy}
+          imageUrl={imageUrl}
         />
       )}
     </Animated.View>

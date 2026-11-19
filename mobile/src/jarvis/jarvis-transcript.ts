@@ -19,6 +19,8 @@ export type TranscriptEntry = {
   readonly growing: boolean
   // A typed reply, written for the screen: rendered as markdown.
   readonly markdown: boolean
+  // Images typed with your message (server ids).
+  readonly images: readonly string[]
 }
 
 function who(kind: JarvisMessage['kind']): TranscriptEntry['who'] {
@@ -49,7 +51,8 @@ export function transcriptEntries(
       pending: false,
       spoken: message.kind === 'you' && message.via === 'voice',
       growing: !message.done,
-      markdown: message.kind === 'reply' && message.via === 'typed'
+      markdown: message.kind === 'reply' && message.via === 'typed',
+      images: message.images ?? []
     }
   })
   const heard = hearing.trim()
@@ -66,7 +69,8 @@ export function transcriptEntries(
       pending: true,
       spoken: true,
       growing: false,
-      markdown: false
+      markdown: false,
+      images: []
     })
   }
   return entries

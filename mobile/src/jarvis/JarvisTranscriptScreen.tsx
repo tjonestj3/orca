@@ -12,13 +12,19 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import { newJarvisConversation, sendJarvisChat, stopJarvisChat } from './jarvis-chat'
+import {
+  newJarvisConversation,
+  sendJarvisChat,
+  stopJarvisChat,
+  type JarvisChatImage
+} from './jarvis-chat'
 import { useJarvis } from './jarvis-context'
 import {
   jarvisChatNewUrl,
   jarvisChatStopUrl,
   jarvisChatUrl,
-  jarvisHistoryUrl
+  jarvisHistoryUrl,
+  jarvisImageUrl
 } from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
 import { openInClaude } from './jarvis-open-in-claude'
@@ -65,12 +71,12 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     }
   }
 
-  const send = async (text: string): Promise<boolean> => {
+  const send = async (text: string, images: readonly JarvisChatImage[]): Promise<boolean> => {
     if (!chatUrl) {
       return false
     }
     // Typed from here, the person is looking at the conversation, not a worktree.
-    const result = await sendJarvisChat(chatUrl, text, null)
+    const result = await sendJarvisChat(chatUrl, text, null, undefined, images)
     refresh()
     if (result.ok) {
       setFollowKey((key) => key + 1)
@@ -135,6 +141,7 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
           enabled={offerUrl != null}
           working={working}
           followKey={followKey}
+          imageUrl={(id) => (endpoint ? jarvisImageUrl(endpoint, id) : null)}
           onReplay={(id) => {
             if (offerUrl) {
               call.replay(id, offerUrl, voice)

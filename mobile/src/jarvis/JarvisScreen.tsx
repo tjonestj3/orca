@@ -24,7 +24,12 @@ import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { jarvisOrbPhase, type JarvisCallSnapshot } from './jarvis-call-types'
 import { useJarvis } from './jarvis-context'
-import { jarvisHistoryUrl, jarvisVoicesUrl, jarvisWorktreesUrl } from './jarvis-endpoint'
+import {
+  jarvisHistoryUrl,
+  jarvisImageUrl,
+  jarvisVoicesUrl,
+  jarvisWorktreesUrl
+} from './jarvis-endpoint'
 import { useJarvisHistory } from './jarvis-history'
 import { JarvisOrb } from './JarvisOrb'
 import { stageOrbSize } from './jarvis-screen-layout'
@@ -193,6 +198,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         messages={messages}
         hearing={live ? state.heard : ''}
         onReplay={replay}
+        imageUrl={(id) => (host ? jarvisImageUrl(host.endpoint, id) : null)}
       />
       <View style={styles.controls}>
         <View style={styles.sideControl}>

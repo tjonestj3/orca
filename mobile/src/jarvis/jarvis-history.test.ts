@@ -161,3 +161,23 @@ describe('artifacts Xeno opened from typed chat', () => {
     expect(takeArtifactsToOpen([spoken], { seen: new Set(), firstLoad: false, now })).toEqual([])
   })
 })
+
+describe('images on messages', () => {
+  const id = 'ab'.repeat(16)
+
+  it('keeps the ids of images typed with a message, and a message that is only images', () => {
+    const message = readJarvisMessage({ id: 1, kind: 'you', text: '', images: [id], via: 'typed' })
+    expect(message?.images).toEqual([id])
+    expect(message?.text).toBe('')
+  })
+
+  it('drops anything that is not an image id', () => {
+    const message = readJarvisMessage({ id: 1, kind: 'you', text: 'look', images: [id, '../x', 7] })
+    expect(message?.images).toEqual([id])
+    expect(readJarvisMessage({ id: 2, kind: 'you', text: 'hi' })).not.toHaveProperty('images')
+  })
+
+  it('still drops an empty message with no images', () => {
+    expect(readJarvisMessage({ id: 3, kind: 'you', text: '', images: ['nope'] })).toBeNull()
+  })
+})

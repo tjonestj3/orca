@@ -5199,7 +5199,10 @@
       "copyHint": "Touch and hold to copy.",
       "copied": "Copied",
       "title": "Conversation",
-      "newConversation": "New conversation"
+      "newConversation": "New conversation",
+      "latest": "Go to the latest message",
+      "openImage": "Open image",
+      "closeImage": "Close image"
     },
     "picker": {
       "title": "Talk to Xeno on…"
@@ -5213,7 +5216,12 @@
       "new": "New conversation",
       "newConfirmTitle": "Start a new conversation?",
       "newConfirmBody": "Xeno forgets this conversation. The messages stay here.",
-      "working": "Xeno is working…"
+      "working": "Xeno is working…",
+      "attach": "Attach images",
+      "photoLibrary": "Photo Library",
+      "camera": "Take Photo",
+      "attachFailed": "Couldn't attach that image.",
+      "removeImage": "Remove image"
     }
   }
 }

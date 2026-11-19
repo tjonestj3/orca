@@ -5,6 +5,7 @@ import type { Translate } from '../i18n/mobile-i18n'
 import { colors, pressedStyle, radii, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import type { TranscriptEntry } from './jarvis-transcript'
+import { JarvisImageThumbs } from './JarvisImageThumbs'
 
 type Props = {
   readonly entry: TranscriptEntry
@@ -13,6 +14,8 @@ type Props = {
   readonly t: Translate
   readonly onReplay: (id: number) => void
   readonly onCopy: (entry: TranscriptEntry) => void
+  // Where Xeno serves the images you sent it.
+  readonly imageUrl?: (id: string) => string | null
 }
 
 // The Claude app's reading size: 17 pt prose, set from markdown's 13 pt base.
@@ -26,7 +29,15 @@ function timeOf(at: number): string {
 
 // One line of the conversation, drawn the way Orca's own Claude chat draws it: your messages in a bubble on the
 // right, Xeno's answers as plain text across the page, tools as quiet one-line rows.
-export function JarvisTranscriptRow({ entry, enabled, copied, t, onReplay, onCopy }: Props) {
+export function JarvisTranscriptRow({
+  entry,
+  enabled,
+  copied,
+  t,
+  onReplay,
+  onCopy,
+  imageUrl
+}: Props) {
   const time = entry.showTime ? <Text style={styles.time}>{timeOf(entry.at)}</Text> : null
   const copiedNote = copied ? (
     <Text style={styles.copied}>{t('jarvis.transcript.copied', 'Copied')}</Text>
@@ -62,24 +73,29 @@ export function JarvisTranscriptRow({ entry, enabled, copied, t, onReplay, onCop
     return (
       <View style={styles.entry}>
         {time}
-        <Pressable
-          onLongPress={() => onCopy(entry)}
-          disabled={entry.pending}
-          style={({ pressed }) => [
-            styles.bubble,
-            entry.pending && styles.pending,
-            pressed && pressedStyle
-          ]}
-          accessibilityRole="text"
-          accessibilityLabel={`${t('jarvis.transcript.you', 'You')}: ${entry.text}`}
-          accessibilityHint={t('jarvis.transcript.copyHint', 'Touch and hold to copy.')}
-        >
-          <View style={styles.yourLine}>
-            {entry.spoken ? <Mic size={15} color={colors.textMuted} style={styles.mic} /> : null}
-            <Text style={styles.yourText}>{entry.text}</Text>
-          </View>
-          {copiedNote}
-        </Pressable>
+        {entry.images.length > 0 ? (
+          <JarvisImageThumbs ids={entry.images} imageUrl={imageUrl} t={t} />
+        ) : null}
+        {entry.text ? (
+          <Pressable
+            onLongPress={() => onCopy(entry)}
+            disabled={entry.pending}
+            style={({ pressed }) => [
+              styles.bubble,
+              entry.pending && styles.pending,
+              pressed && pressedStyle
+            ]}
+            accessibilityRole="text"
+            accessibilityLabel={`${t('jarvis.transcript.you', 'You')}: ${entry.text}`}
+            accessibilityHint={t('jarvis.transcript.copyHint', 'Touch and hold to copy.')}
+          >
+            <View style={styles.yourLine}>
+              {entry.spoken ? <Mic size={15} color={colors.textMuted} style={styles.mic} /> : null}
+              <Text style={styles.yourText}>{entry.text}</Text>
+            </View>
+            {copiedNote}
+          </Pressable>
+        ) : null}
       </View>
     )
   }

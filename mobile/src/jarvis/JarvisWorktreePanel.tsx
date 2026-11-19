@@ -29,6 +29,8 @@ type Props = {
   // What Jarvis is hearing right now, shown until the server keeps it.
   readonly hearing: string
   readonly onReplay: (id: number) => void
+  // Where Xeno serves the images typed to it in the chat.
+  readonly imageUrl?: (id: string) => string | null
 }
 
 type Tab = 'worktrees' | 'conversation'
@@ -71,7 +73,8 @@ export function JarvisWorktreePanel({
   onOpen,
   messages,
   hearing,
-  onReplay
+  onReplay,
+  imageUrl
 }: Props) {
   useMobileColorScheme()
   const t = useMobileTranslation()
@@ -131,6 +134,7 @@ export function JarvisWorktreePanel({
           hearing={hearing}
           enabled={enabled}
           onReplay={onReplay}
+          imageUrl={imageUrl}
         />
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>

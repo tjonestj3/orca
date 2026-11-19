@@ -4,6 +4,7 @@ import {
   jarvisChatStopUrl,
   jarvisChatUrl,
   jarvisHistoryUrl,
+  jarvisImageUrl,
   jarvisOfferUrl,
   jarvisPairUrl,
   jarvisPingUrl,
@@ -59,5 +60,12 @@ describe('the typed chat', () => {
     expect(jarvisPairUrl('ws://192.168.86.22:6768')).toBe(
       'http://192.168.86.22:7860/api/jarvis/pair'
     )
+  })
+
+  it('points an image typed to Xeno at its server address', () => {
+    expect(jarvisImageUrl('ws://100.126.129.22:6768', 'ab'.repeat(16))).toBe(
+      `http://100.126.129.22:7860/api/jarvis/images/${'ab'.repeat(16)}`
+    )
+    expect(jarvisImageUrl('ws://100.126.129.22:6768', '../history')).toBeNull()
   })
 })

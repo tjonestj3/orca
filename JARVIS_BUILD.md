@@ -89,7 +89,15 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    says it is, not only by its own route. The Xeno bubble goes by the same, so it keeps above a session's
    composer there instead of landing on its buttons. Going in and out of full screen eases: the screen widens or
    narrows over a quarter second, the rail fades in, and the clock fades rather than snapping.
-19. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+19. `feat(jarvis): the Xeno chat scrolls like the Claude app` — the transcript is an inverted list: new text
+   pushes the conversation up while you're at the bottom, a reader further up stays put, and an arrow goes back
+   to the newest line; sending goes there too. The composer rides on the keyboard (the app's own keyboard
+   events) instead of a KeyboardAvoidingView whose offset left it out of place. Works with any brain.
+20. `feat(jarvis): send Xeno images` — a + in the composer attaches up to 4 photos from the library or the
+   camera; Xeno sees them and can hand them to an agent (`send_to_agent` gives the agent their saved paths), and
+   your messages show them, loaded with the phone's key. Needs the brain from `a57a324` (image chat and
+   `/api/jarvis/images/<id>`); an older brain refuses image-only messages and ignores images sent with text.
+21. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

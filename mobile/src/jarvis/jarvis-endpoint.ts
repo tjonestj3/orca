@@ -36,6 +36,12 @@ export function jarvisChatUrl(endpoint: string): string | null {
   return base && `${base}/api/jarvis/chat`
 }
 
+// An image typed with a message, by the id the server keeps it under.
+export function jarvisImageUrl(endpoint: string, id: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && /^[0-9a-f]{32}$/.test(id) ? `${base}/api/jarvis/images/${id}` : null
+}
+
 export function jarvisChatStopUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)
   return base && `${base}/api/jarvis/chat/stop`

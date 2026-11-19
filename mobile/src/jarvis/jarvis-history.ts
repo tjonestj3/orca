@@ -15,6 +15,8 @@ export type JarvisMessage = {
   readonly rev: number
   // A typed open_artifact's line carries the artifact, for the app to open as it arrives (a call opens its own).
   readonly open?: JarvisArtifact | null
+  // Images typed with your message: ids the server serves them by.
+  readonly images?: readonly string[]
 }
 
 export type JarvisHistory = {
@@ -29,6 +31,7 @@ const POLL_MS = 5000
 const QUICK_POLL_MS = 400
 const FETCH_TIMEOUT_MS = 4000
 const KINDS = new Set<JarvisMessage['kind']>(['you', 'reply', 'update', 'tool', 'new'])
+const IMAGE_ID = /^[0-9a-f]{32}$/
 const VIAS = new Set<NonNullable<JarvisMessage['via']>>(['voice', 'typed', 'tap'])
 
 export function readJarvisMessage(raw: unknown): JarvisMessage | null {
@@ -38,8 +41,11 @@ export function readJarvisMessage(raw: unknown): JarvisMessage | null {
   }
   const done = entry.done !== false
   const text = entry.text.trim()
-  // An empty line is only kept while it's a reply still being written.
-  if (!text && done) {
+  const images = Array.isArray(entry.images)
+    ? entry.images.filter((id): id is string => typeof id === 'string' && IMAGE_ID.test(id))
+    : []
+  // An empty line is only kept while it's a reply still being written, or when it's images you sent.
+  if (!text && done && images.length === 0) {
     return null
   }
   const kind = KINDS.has(entry.kind as JarvisMessage['kind'])
@@ -57,7 +63,8 @@ export function readJarvisMessage(raw: unknown): JarvisMessage | null {
     via,
     done,
     rev: typeof entry.rev === 'number' ? entry.rev : 0,
-    ...(open ? { open } : {})
+    ...(open ? { open } : {}),
+    ...(images.length > 0 ? { images } : {})
   }
 }
 

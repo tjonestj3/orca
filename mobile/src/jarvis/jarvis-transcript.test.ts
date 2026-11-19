@@ -126,3 +126,12 @@ describe('animatesIn', () => {
     expect(animatesIn('2', seen)).toBe(false)
   })
 })
+
+describe('images in the transcript', () => {
+  it('carries the images typed with your message', () => {
+    const id = 'cd'.repeat(16)
+    const [entry] = transcriptEntries([line(1, 'you', '', at, { images: [id], via: 'typed' })], '')
+    expect(entry.images).toEqual([id])
+    expect(transcriptEntries([you(2, 'hi')], '')[0].images).toEqual([])
+  })
+})
