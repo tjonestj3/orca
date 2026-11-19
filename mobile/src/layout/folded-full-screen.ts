@@ -133,7 +133,7 @@ export function columnToggleSlot(s: {
  * out full width with its keys in the bottom row, and the column's top as a cutout. A session's header
  * pads itself out of a cutout that tall, which keeps it clear of the camera and the toggle. Other pages'
  * headers (the host list's) only keep below the top inset, so `raiseTop` false leaves it as it is rather
- * than push them down the camera's height; the shell clears their header's right instead (page-header-clear).
+ * than push them down the camera's height; the shell clears their header's right instead (jarvis/page-anchors).
  */
 export function pageOverColumn(s: {
   insets: Insets

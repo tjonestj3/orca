@@ -3,31 +3,39 @@ import type { NativeSyntheticEvent } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import type { MobileWebShellBridgeMessagePayload } from '../../modules/orca-mobile-web-shell/src/index'
 import { pageModals, readPageModalMessage } from './page-modal'
-import { pageHeaders, readPageHeaderMessage, type PageHeaderButton } from './page-header'
+import {
+  pageAnchors,
+  readPageAnchorMessage,
+  type PageAnchor,
+  type PageAnchorName
+} from './page-anchors'
 
 type BridgeMessage = NativeSyntheticEvent<MobileWebShellBridgeMessagePayload>
 
 /**
- * Reads the page's notes for Xeno's orb (a sheet open, where its header's button is) and hands every other message
- * on to Orca's bridge. The header's button counts only while this screen is the one showing.
+ * Reads the page's notes for Xeno's orb (a sheet open, where its anchors are) and hands every other message on to
+ * Orca's bridge. The anchors count only while this screen is the one showing.
  */
 export function usePageModalWatch(
   page: string | null,
   forward: (event: BridgeMessage) => void
 ): (event: BridgeMessage) => void {
-  const header = useRef<PageHeaderButton | null>(null)
+  const anchors = useRef<Partial<Record<PageAnchorName, PageAnchor>>>({})
   const focused = useRef(false)
   useEffect(() => (page === null ? undefined : () => pageModals.forget(page)), [page])
+  useEffect(() => {
+    anchors.current = {} // a new page reports its own
+  }, [page])
   useFocusEffect(
     useCallback(() => {
       focused.current = true
       if (page !== null) {
-        pageHeaders.set(page, header.current)
+        pageAnchors.show(page, anchors.current)
       }
       return () => {
         focused.current = false
         if (page !== null) {
-          pageHeaders.forget(page)
+          pageAnchors.forget(page)
         }
       }
     }, [page])
@@ -36,15 +44,16 @@ export function usePageModalWatch(
     (event: BridgeMessage) => {
       const json = event.nativeEvent.json
       const open = readPageModalMessage(json)
-      const button = open === null ? readPageHeaderMessage(json) : undefined
-      if (open === null && button === undefined) {
+      const anchor = open === null ? readPageAnchorMessage(json) : null
+      if (open === null && anchor === null) {
         forward(event)
       } else if (page !== null && open !== null) {
         pageModals.set(page, open)
-      } else if (page !== null && button !== undefined) {
-        header.current = button
+      } else if (page !== null && anchor !== null) {
+        const next = { ...anchors.current, [anchor.name]: anchor.at ?? undefined }
+        anchors.current = next
         if (focused.current) {
-          pageHeaders.set(page, button)
+          pageAnchors.show(page, next)
         }
       }
     },

@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
 import { useSideColumn } from '../layout/side-rail'
@@ -8,7 +8,7 @@ import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
-import { headerOrbPlace, usePageHeaderButton } from './page-header'
+import { headerOrbPlace, micOrbPlace, usePageAnchors } from './page-anchors'
 
 const BUBBLE_SIZE = 56
 // Beside the small orb in a session, the desktop's name has the composer's empty middle to itself.
@@ -19,13 +19,14 @@ export function JarvisBubble() {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const headerButton = usePageHeaderButton()
+  const { header: headerButton, mic } = usePageAnchors()
+  const screen = useWindowDimensions()
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it.
   if (usePageModalOpen()) {
     return null
   }
   if (!view && headerButton && column?.extended) {
-    // The host list full screen: beside its header's menu, in the room the page made for it (page-header).
+    // The host list full screen: beside its header's menu, in the room the page made for it (page-anchors).
     const place = headerOrbPlace(headerButton)
     return (
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -36,7 +37,7 @@ export function JarvisBubble() {
     )
   }
   if (view) {
-    // In a session Xeno is a small orb by the page's own controls, its desktop's name to its left.
+    // In a session Xeno is a small orb by the page's own controls, its desktop's name beside it.
     const place = sessionOrbPlace({
       view,
       insetsBottom: insets.bottom,
@@ -44,6 +45,34 @@ export function JarvisBubble() {
       // Full screen, the page reaches the screen's edge over the column, which the inset still counts.
       rightEdge: column?.extended && column.side === 'right' ? 0 : insets.right
     })
+    if (view === 'chat' && mic) {
+      // Just left of the composer's mic, wherever the page has it (page-anchors).
+      const at = micOrbPlace(mic)
+      return (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View
+            style={[
+              styles.row,
+              { top: at.middle - place.size / 2, right: screen.width - at.right }
+            ]}
+          >
+            <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} />
+            <JarvisTalkControl size={place.size} />
+          </View>
+        </View>
+      )
+    }
+    if (view === 'chat') {
+      // A tab without a composer (a file, a browser): the bottom corner its controls leave free, not over the page.
+      return (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View style={[styles.row, { bottom: place.bottom, left: insets.left + spacing.lg }]}>
+            <JarvisTalkControl size={place.size} />
+            <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} initials />
+          </View>
+        </View>
+      )
+    }
     return (
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
         <View style={[styles.row, { bottom: place.bottom, right: place.right }]}>
