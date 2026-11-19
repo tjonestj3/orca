@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 import { AppState, Appearance } from 'react-native'
 import { applyMobileColorScheme, applyMobileDarkTheme, type MobileDarkTheme } from './mobile-theme'
 import { isDarkThemeId } from './dark-themes'
+import { isOrbThemeId, type OrbThemeId } from '../jarvis/orb-themes/orb-themes'
 
 // Same choices as desktop's theme setting; System follows the phone.
 export type MobileAppearancePreference = 'system' | 'light' | 'dark'
@@ -64,6 +65,14 @@ export function startMobileAppearance(): Promise<void> {
         }
       })
       .catch(() => undefined),
+    AsyncStorage.getItem(ORB_THEME_KEY)
+      .then((stored) => {
+        if (isOrbThemeId(stored) && orbTheme === 'classic') {
+          orbTheme = stored
+          notifyPreferences()
+        }
+      })
+      .catch(() => undefined),
     AsyncStorage.getItem(SESSION_MONOSPACE_KEY)
       .then((stored) => {
         if (stored === 'on' && !sessionMonospace) {
@@ -80,8 +89,11 @@ export function startMobileAppearance(): Promise<void> {
 const DARK_THEME_KEY = 'orca:darkTheme'
 // Sessions in a monospaced font, as Moshi's chat is.
 const SESSION_MONOSPACE_KEY = 'orca:sessionMonospace'
+// Xeno's orb (jarvis/orb-themes): Classic, or one of the drawn themes.
+const ORB_THEME_KEY = 'orca:orbTheme'
 let darkTheme: MobileDarkTheme = 'orca'
 let sessionMonospace = false
+let orbTheme: OrbThemeId = 'classic'
 
 function notifyPreferences(): void {
   for (const listener of preferenceListeners) {
@@ -112,6 +124,16 @@ export function setSessionMonospace(on: boolean): Promise<void> {
 
 export function useSessionMonospace(): boolean {
   return useSyncExternalStore(subscribePreference, () => sessionMonospace)
+}
+
+export function setOrbTheme(next: OrbThemeId): Promise<void> {
+  orbTheme = next
+  notifyPreferences()
+  return AsyncStorage.setItem(ORB_THEME_KEY, next)
+}
+
+export function useOrbTheme(): OrbThemeId {
+  return useSyncExternalStore(subscribePreference, () => orbTheme)
 }
 
 export function setMobileAppearancePreference(next: MobileAppearancePreference): Promise<void> {

@@ -16,6 +16,7 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { DARK_THEMES, DARK_THEME_IDS } from '../theme/dark-themes'
 import { SettingsScreen, SettingsSection } from './settings-screen-frame'
 import { UiLanguageSettingsSection } from './ui-language-settings-section'
+import { OrbThemeSettingsSection } from './orb-theme-settings-section'
 
 function appearanceOptions(t: Translate): { value: MobileAppearancePreference; label: string }[] {
   return [
@@ -110,6 +111,8 @@ export default function AppearanceSettingsScreen() {
           }}
         />
       </SettingsSection>
+
+      <OrbThemeSettingsSection />
 
       <UiLanguageSettingsSection />
     </SettingsScreen>
