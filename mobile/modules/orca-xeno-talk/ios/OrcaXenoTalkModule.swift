@@ -56,6 +56,65 @@ func callAudio(enabled: Bool, activate: Bool) -> Bool {
   return true
 }
 
+// Music from other apps through a call (on the Xeno screen): WebRTC's audio configuration, applied as its audio
+// starts, mixes with other audio and keeps Bluetooth headphones in music quality (A2DP out, the phone's own
+// microphone in) instead of call quality. Off, it goes back to WebRTC's own: a call stops other audio, as a phone
+// call does. False when WebRTC's configuration class isn't there.
+private var webRTCOptions: UInt?
+let hfpOption: UInt = 0x4  // allowBluetooth, renamed allowBluetoothHFP in iOS 26
+
+func musicMixing(_ on: Bool) -> Bool {
+  let getter = NSSelectorFromString("webRTCConfiguration")
+  let setter = NSSelectorFromString("setWebRTCConfiguration:")
+  guard let type: AnyClass = NSClassFromString("RTCAudioSessionConfiguration"),
+        let get = class_getClassMethod(type, getter),
+        let set = class_getClassMethod(type, setter)
+  else {
+    return false
+  }
+  typealias GetConfig = @convention(c) (AnyObject, Selector) -> Unmanaged<AnyObject>
+  typealias PutConfig = @convention(c) (AnyObject, Selector, AnyObject) -> Void
+  let config = unsafeBitCast(method_getImplementation(get), to: GetConfig.self)(type as AnyObject, getter)
+    .takeUnretainedValue()
+  guard let object = config as? NSObject,
+        let current = (object.value(forKey: "categoryOptions") as? NSNumber)?.uintValue
+  else {
+    return false
+  }
+  let original = webRTCOptions ?? current
+  webRTCOptions = original
+  let mixing = (original & ~hfpOption) | AVAudioSession.CategoryOptions.mixWithOthers.rawValue
+    | AVAudioSession.CategoryOptions.allowBluetoothA2DP.rawValue
+  object.setValue(NSNumber(value: on ? mixing : original), forKey: "categoryOptions")
+  unsafeBitCast(method_getImplementation(set), to: PutConfig.self)(type as AnyObject, setter, object)
+  return true
+}
+
+// Turns other audio down under Xeno, or back up. Ducking ends only once the session is activated again with the
+// option gone, so that happens on the way back up. Says what iOS did, for Xeno's server log.
+func duckOtherAudio(_ on: Bool) -> [String: Any] {
+  let session = AVAudioSession.sharedInstance()
+  var options = session.categoryOptions
+  guard options.contains(.mixWithOthers) else {
+    return ["on": on, "ok": false, "why": "not mixing"]
+  }
+  if on {
+    options.insert(.duckOthers)
+  } else {
+    options.remove(.duckOthers)
+  }
+  do {
+    try session.setCategory(session.category, mode: session.mode, options: options)
+    if !on {
+      try session.setActive(true)
+    }
+    return ["on": on, "ok": true, "otherAudio": session.isOtherAudioPlaying,
+            "silenceHint": session.secondaryAudioShouldBeSilencedHint]
+  } catch {
+    return ["on": on, "ok": false, "why": error.localizedDescription]
+  }
+}
+
 public class OrcaXenoTalkModule: Module {
   private var observer: NSObjectProtocol?
   private var deviceObservers: [NSObjectProtocol] = []
@@ -97,6 +156,19 @@ public class OrcaXenoTalkModule: Module {
     // activate is false when the call is ending: the flags go back, but nothing reactivates the audio session.
     Function("resumeCallAudio") { (activate: Bool) -> Bool in
       callAudio(enabled: true, activate: activate)
+    }
+
+    // Before a call starts: whether music from other apps keeps playing through it.
+    Function("setMusicMixing") { (on: Bool) -> Bool in
+      musicMixing(on)
+    }
+
+    Function("duckMusic") { (on: Bool) -> Bool in
+      var note = duckOtherAudio(on)
+      note["kind"] = "music-duck"
+      note["at"] = Date().timeIntervalSince1970 * 1000
+      self.sendEvent("onDevice", note)
+      return note["ok"] as? Bool ?? false
     }
   }
 

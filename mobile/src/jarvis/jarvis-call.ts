@@ -1,9 +1,6 @@
 import { AppState, Platform } from 'react-native'
-import { mediaDevices, RTCPeerConnection, type MediaStream } from 'react-native-webrtc'
-import {
-  preferSpeakerForCallIOS,
-  requestMicrophonePermissionsAsync
-} from '@orca/expo-two-way-audio'
+import { RTCPeerConnection, type MediaStream } from 'react-native-webrtc'
+import { preferSpeakerForCallIOS } from '@orca/expo-two-way-audio'
 import { nativeMicrophoneScreenLock } from '../platform/audio-capture/native-audio-device'
 import { reduceJarvisMessage, RTVI_LABEL } from './jarvis-call-state'
 import {
@@ -24,6 +21,7 @@ import {
 import { JarvisLevelMeter } from './jarvis-call-levels'
 import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 import { CallDictation } from './jarvis-call-dictation'
+import { CallMusic, openCallMicrophone } from './jarvis-call-music'
 import type { PhoneDictation } from './jarvis-phone-dictation'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
@@ -36,6 +34,7 @@ export class JarvisCall {
   private snapshot: JarvisCallSnapshot = IDLE_SNAPSHOT
   private readonly meter = new JarvisLevelMeter((note) => this.reportDevice(note))
   private readonly listeners = new Set<() => void>()
+  private readonly music = new CallMusic()
   private pc: RTCPeerConnection | null = null
   private mic: MediaStream | null = null
   private channel: DataChannel | null = null
@@ -176,14 +175,8 @@ export class JarvisCall {
     const generation = ++this.generation
     this.set({ ...this.idleKeepingChoices(), phase: 'connecting' })
 
-    const permission = await requestMicrophonePermissionsAsync().catch(() => null)
-    if (!permission?.granted) {
-      return this.fail(generation, 'microphone')
-    }
-    let mic: MediaStream
-    try {
-      mic = await mediaDevices.getUserMedia({ audio: true, video: false })
-    } catch {
+    const mic = await openCallMicrophone(this.music)
+    if (mic === null) {
       return this.fail(generation, 'microphone')
     }
     if (generation !== this.generation) {
@@ -239,6 +232,7 @@ export class JarvisCall {
       if (pc.connectionState === 'connected') {
         if (Platform.OS === 'ios') {
           preferSpeakerForCallIOS(true)
+          this.reportDevice(this.music.note())
         }
         if (this.snapshot.phase === 'connecting') {
           this.set({ ...this.snapshot, phase: 'listening' })
@@ -313,6 +307,7 @@ export class JarvisCall {
 
   private teardown(): void {
     this.phone.stop()
+    this.music.stop()
     this.timers.forEach(clearInterval)
     this.timers = []
     const { pc, mic } = this
@@ -339,6 +334,7 @@ export class JarvisCall {
 
   private set(next: JarvisCallSnapshot): void {
     this.snapshot = next
+    this.music.follow(next)
     this.listeners.forEach((listener) => listener())
   }
 }

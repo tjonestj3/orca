@@ -21,6 +21,10 @@ declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
   pauseCallAudio?(): boolean
   /** Starts the call's audio again after dictation; activate is false when the call is ending anyway. */
   resumeCallAudio?(activate: boolean): boolean
+  /** Before a call: music from other apps keeps playing through it (and headphones stay in music quality). */
+  setMusicMixing?(on: boolean): boolean
+  /** Turns music from other apps down under Xeno, or back up; false if iOS wouldn't. */
+  duckMusic?(on: boolean): boolean
 }
 
 /** Null on Android, the web and in a binary built before the module existed. */

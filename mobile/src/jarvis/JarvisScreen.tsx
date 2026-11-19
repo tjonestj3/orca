@@ -9,6 +9,7 @@ import {
   Ear,
   MessagesSquare,
   Mic,
+  Music,
   PhoneOff,
   Play,
   Smartphone
@@ -24,6 +25,7 @@ import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { jarvisOrbPhase, type JarvisCallSnapshot } from './jarvis-call-types'
 import { useJarvis } from './jarvis-context'
+import { musicUnderXeno, useMusicUnderXeno } from './jarvis-music'
 import {
   jarvisHistoryUrl,
   jarvisImageUrl,
@@ -87,6 +89,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const host = useHostProfile(hostId)
   // The app-wide call: leaving this screen or the app keeps it going.
   const { call, offerUrl, voice, setVoice, phoneDictation, setPhoneDictation } = useJarvis()
+  const music = useMusicUnderXeno()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const openMic = state.wake
   // The voice menu: the desktop's voices, asked for once the screen knows the desktop.
@@ -284,6 +287,24 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             {phoneDictation
               ? t('jarvis.screen.phoneDictationOn', 'iPhone dictation')
               : t('jarvis.screen.phoneDictationOff', 'Desktop dictation')}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => musicUnderXeno.set(!music)}
+          style={({ pressed }) => [styles.voiceButton, pressed && pressedStyle]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: music }}
+          accessibilityLabel={t(
+            'jarvis.screen.music',
+            'Keep music playing during calls, turned down while Xeno talks'
+          )}
+          testID="jarvis-music"
+        >
+          <Music size={16} color={music ? colors.statusGreen : colors.textSecondary} />
+          <Text style={styles.voiceLabel} numberOfLines={1}>
+            {music
+              ? t('jarvis.screen.musicOn', 'Music plays on')
+              : t('jarvis.screen.musicOff', 'Music stops')}
           </Text>
         </Pressable>
       </View>
