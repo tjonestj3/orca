@@ -20,16 +20,19 @@ describe('openingClientMessages', () => {
   it('tells Jarvis what is on screen and that the talk button is already held', () => {
     expect(openingClientMessages({ viewing: 'repo::/w/a', holding: true, wake: false })).toEqual([
       ['jarvis-context', { worktreeId: 'repo::/w/a' }],
-      ['jarvis-ptt', { state: 'down' }]
+      ['jarvis-ptt', { state: 'down' }],
+      ['jarvis-wake', { on: false }]
     ])
-    expect(openingClientMessages({ viewing: null, holding: false, wake: false })).toEqual([])
   })
 })
 
 describe('openingClientMessages with "Hey Xeno"', () => {
-  it('tells Xeno to wait for its name', () => {
+  it('tells Xeno to wait for its name, or with push to talk that it needn\u2019t', () => {
     expect(openingClientMessages({ viewing: null, holding: false, wake: true })).toEqual([
       ['jarvis-wake', { on: true }]
+    ])
+    expect(openingClientMessages({ viewing: null, holding: false, wake: false })).toEqual([
+      ['jarvis-wake', { on: false }]
     ])
   })
 })

@@ -21,6 +21,8 @@ declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
   pauseCallAudio?(): boolean
   /** Starts the call's audio again after dictation; activate is false when the call is ending anyway. */
   resumeCallAudio?(activate: boolean): boolean
+  /** For the Talk to Xeno shortcut: whether a call is live (it then toggles talking without opening the app). */
+  setTalkState?(live: boolean, holding: boolean): void
   /** Before a call: music from other apps keeps playing through it (and headphones stay in music quality). */
   setMusicMixing?(on: boolean): boolean
   /** Turns music from other apps down under Xeno, or back up; false if iOS wouldn't. */

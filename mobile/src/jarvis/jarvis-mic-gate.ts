@@ -1,5 +1,5 @@
 // Whether the call's microphone track sends audio: never before the call connects, then while listening for
-// "Hey Xeno" (always, now) or while held.
+// "Hey Xeno" (unless switched off for push to talk) or while held.
 export function micShouldBeOpen(gate: {
   wake: boolean
   holding: boolean
@@ -22,8 +22,7 @@ export function openingClientMessages(s: {
   if (s.holding) {
     messages.push(['jarvis-ptt', { state: 'down' }])
   }
-  if (s.wake) {
-    messages.push(['jarvis-wake', { on: true }])
-  }
+  // Said either way: off, Xeno answers whatever it's sent (only held talk reaches it), with no name needed.
+  messages.push(['jarvis-wake', { on: s.wake }])
   return messages
 }

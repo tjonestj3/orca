@@ -20,6 +20,7 @@ import {
   savePhoneDictation
 } from './jarvis-dictation-preference'
 import { phoneDictation as phoneDictationDevice } from './jarvis-phone-dictation-device'
+import { useHeyXeno } from './jarvis-wake-preference'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
@@ -55,7 +56,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [picking, setPicking] = useState(false)
   const [voice, setVoiceState] = useState<JarvisVoice>(DEFAULT_JARVIS_VOICE)
   const [phoneDictation, setPhoneDictationState] = useState(DEFAULT_PHONE_DICTATION)
-  const { phase, opening } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const { phase, opening, holding } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
   const routeHostId = hostIdFromPath(pathname)
@@ -112,6 +113,13 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     void loadPhoneDictation().then(setPhoneDictationState)
   }, [])
   useEffect(() => call.setPhoneDictation(phoneDictation), [call, phoneDictation])
+  // "Hey Xeno", or push to talk (the Xeno screen's switch), live as it changes.
+  const wake = useHeyXeno()
+  useEffect(() => call.setWake(wake), [call, wake])
+  // The Talk to Xeno shortcut runs without opening the app while a call is live; it reads this to know.
+  useEffect(() => {
+    OrcaXenoTalk?.setTalkState?.(live, holding)
+  }, [live, holding])
   useEffect(() => call.setViewing(viewingTarget(pathname, hostId)), [call, pathname, hostId])
   useEffect(() => onDictationStarting(() => call.endFor('dictation')), [call])
 

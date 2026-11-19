@@ -9,6 +9,7 @@ import {
   Ear,
   MessagesSquare,
   Mic,
+  EarOff,
   Music,
   PhoneOff,
   Play,
@@ -29,6 +30,7 @@ import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { jarvisOrbPhase, type JarvisCallSnapshot } from './jarvis-call-types'
 import { useJarvis } from './jarvis-context'
 import { musicUnderXeno, useMusicUnderXeno } from './jarvis-music'
+import { heyXeno, useHeyXeno } from './jarvis-wake-preference'
 import {
   jarvisHistoryUrl,
   jarvisImageUrl,
@@ -96,6 +98,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   // The app-wide call: leaving this screen or the app keeps it going.
   const { call, offerUrl, voice, setVoice, phoneDictation, setPhoneDictation } = useJarvis()
   const music = useMusicUnderXeno()
+  const wakeOn = useHeyXeno()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const openMic = state.wake
   // The voice menu: the desktop's voices, asked for once the screen knows the desktop.
@@ -278,6 +281,28 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             {phoneDictation
               ? t('jarvis.screen.phoneDictationOn', 'iPhone dictation')
               : t('jarvis.screen.phoneDictationOff', 'Desktop dictation')}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => heyXeno.set(!wakeOn)}
+          style={({ pressed }) => [styles.voiceButton, pressed && pressedStyle]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: wakeOn }}
+          accessibilityLabel={t(
+            'jarvis.screen.heyXeno',
+            'Hey Xeno: the mic stays open in a call. Off, it opens only while you hold to talk'
+          )}
+          testID="jarvis-hey-xeno"
+        >
+          {wakeOn ? (
+            <Ear size={16} color={colors.statusGreen} />
+          ) : (
+            <EarOff size={16} color={colors.textSecondary} />
+          )}
+          <Text style={styles.voiceLabel} numberOfLines={1}>
+            {wakeOn
+              ? t('jarvis.screen.heyXenoOn', 'Hey Xeno')
+              : t('jarvis.screen.heyXenoOff', 'Push to talk')}
           </Text>
         </Pressable>
         <Pressable

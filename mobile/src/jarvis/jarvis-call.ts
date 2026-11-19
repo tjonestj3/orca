@@ -65,6 +65,13 @@ export class JarvisCall {
     this.phone.on = on
   }
 
+  // "Hey Xeno" on: the mic stays open and Xeno answers when named. Off: push to talk, the mic only while held.
+  setWake(on: boolean): void {
+    this.set({ ...this.snapshot, wake: on })
+    this.applyMic()
+    this.sendClientMessage('jarvis-wake', { on })
+  }
+
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
@@ -281,8 +288,8 @@ export class JarvisCall {
   }
 
   private idleKeepingChoices(): JarvisCallSnapshot {
-    const { holding } = this.snapshot
-    return { ...IDLE_SNAPSHOT, holding }
+    const { holding, wake } = this.snapshot
+    return { ...IDLE_SNAPSHOT, holding, wake }
   }
 
   private micOpen(): boolean {

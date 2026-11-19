@@ -8,6 +8,13 @@ import UIKit
 let xenoTalkRequested = Notification.Name("OrcaXenoTalkRequested")
 let xenoTalkPendingKey = "orca.xenoTalkPending"
 
+// Whether a Xeno call is live, and the talk button held, for the Talk to Xeno App Intent: while a call is live it
+// runs without opening the app (the app is already running, its call audio active) and just toggles talking.
+// Stamped with this process, so a record left from before the app was closed doesn't count as a live call.
+let xenoCallLiveKey = "orca.xenoCallLive"
+let xenoCallHoldingKey = "orca.xenoCallHolding"
+let xenoCallProcessKey = "orca.xenoCallProcess"
+
 func takeXenoTalkPress() -> Bool {
   let defaults = UserDefaults.standard
   guard defaults.bool(forKey: xenoTalkPendingKey) else { return false }
@@ -156,6 +163,13 @@ public class OrcaXenoTalkModule: Module {
     // activate is false when the call is ending: the flags go back, but nothing reactivates the audio session.
     Function("resumeCallAudio") { (activate: Bool) -> Bool in
       callAudio(enabled: true, activate: activate)
+    }
+
+    Function("setTalkState") { (live: Bool, holding: Bool) in
+      let defaults = UserDefaults.standard
+      defaults.set(live, forKey: xenoCallLiveKey)
+      defaults.set(holding, forKey: xenoCallHoldingKey)
+      defaults.set(Int(ProcessInfo.processInfo.processIdentifier), forKey: xenoCallProcessKey)
     }
 
     // Before a call starts: whether music from other apps keeps playing through it.
