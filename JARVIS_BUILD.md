@@ -80,7 +80,12 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
 17. `fix(jarvis): artifacts open from typed chat, and the keyboard goes away` — open_artifact in typed chat opens
    the artifact (needs brain aa8cd18, which puts its link on the tool line; a call still opens it through the
    call). The Xeno composer puts the keyboard away after a send and has a button to hide it while typing.
-18. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+18. `fix(mobile): sessions go full screen too, and the Xeno chat has no bubble over its composer` — a session
+   is the desktop's page (the official Orca, without this fork's code), so the app does it from outside: it
+   asks for the column while a session shows, tells the page there's no side inset and that the column's top
+   is a cutout (the page's header already pads out of cutouts, so it keeps clear of the camera), and draws
+   the full-screen button in the column itself, under the camera, or heading the rail when the column is back.
+19. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable

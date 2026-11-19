@@ -20,6 +20,7 @@ vi.mock('react-native-safe-area-context', () => ({
 }))
 vi.mock('./reserved-regions', () => ({ useReservedRegions: () => state.geometry.regions }))
 vi.mock('../platform/keyboard-occlusion', () => ({ useKeyboardOcclusion: () => 0 }))
+vi.mock('./column-toggle', () => ({ ColumnToggle: 'ColumnToggle' }))
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: { getItem: async () => null, setItem: async () => undefined }
 }))
@@ -73,12 +74,18 @@ function SessionScreen() {
   return null
 }
 
-function render(geometry: Geometry, session = true) {
+/** A session: the desktop's page, whose header the app doesn't draw, so the column holds its toggle. */
+function SessionPage() {
+  useSideColumnFullScreen(true, { columnToggle: true })
+  return null
+}
+
+function render(geometry: Geometry, session: boolean | 'page' = true) {
   state.geometry = geometry
   act(() => {
     const app = (
       <SideRailProvider>
-        {session ? <SessionScreen /> : null}
+        {session === 'page' ? <SessionPage /> : session ? <SessionScreen /> : null}
         <Probe />
       </SideRailProvider>
     )
@@ -89,6 +96,9 @@ function render(geometry: Geometry, session = true) {
     }
   })
 }
+
+const toggles = () =>
+  tree!.root.findAll((node) => (node.type as unknown) === 'ColumnToggle').map((node) => node.props)
 
 afterEach(async () => {
   act(() => tree?.unmount())
@@ -142,6 +152,24 @@ describe('full screen when folded', () => {
     render(DUO_WIDE)
     expect(seen?.strip).toBeNull()
     expect(seen?.column).toMatchObject({ side: 'right', extended: true })
+  })
+
+  it("draws a session page's toggle in the column, under the camera, while extended", async () => {
+    await act(() => foldedFullScreen.setDefault(true))
+    render(DUO_FOLDED, 'page')
+    expect(toggles()).toEqual([{ slot: { side: 'right', width: 84, top: 72 }, extended: true }])
+  })
+
+  it('heads the rail with it while the column is back, and the rail starts below it', () => {
+    render(DUO_FOLDED, 'page')
+    expect(toggles()).toEqual([{ slot: { side: 'right', width: 84, top: 174 }, extended: false }])
+    expect(seen?.strip).toMatchObject({ top: 174 + 44, height: 470 - 44 })
+  })
+
+  it('leaves the toggle to a screen with its own header', async () => {
+    await act(() => foldedFullScreen.setDefault(true))
+    render(DUO_FOLDED)
+    expect(toggles()).toEqual([])
   })
 
   it('leaves a phone without a status column alone', async () => {

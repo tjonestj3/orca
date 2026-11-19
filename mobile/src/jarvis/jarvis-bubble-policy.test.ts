@@ -17,7 +17,7 @@ describe('classifyBubbleRelease', () => {
 })
 
 describe('bubbleVisible', () => {
-  const away = { onJarvisScreen: false, railAvailable: false }
+  const away = { onJarvisScreen: false, onXenoChat: false, railAvailable: false }
 
   it('stays up during a live call even when the list check fails', () => {
     expect(bubbleVisible({ live: true, reachable: false, ...away })).toBe(true)
@@ -30,12 +30,14 @@ describe('bubbleVisible', () => {
   })
 
   it('never shows on the Jarvis screen or when the folded rail holds Jarvis', () => {
-    expect(
-      bubbleVisible({ live: true, reachable: true, onJarvisScreen: true, railAvailable: false })
-    ).toBe(false)
-    expect(
-      bubbleVisible({ live: true, reachable: true, onJarvisScreen: false, railAvailable: true })
-    ).toBe(false)
+    expect(bubbleVisible({ live: true, reachable: true, ...away, onJarvisScreen: true })).toBe(
+      false
+    )
+    expect(bubbleVisible({ live: true, reachable: true, ...away, railAvailable: true })).toBe(false)
+  })
+
+  it('never shows over the Xeno chat, whose composer has its own call button', () => {
+    expect(bubbleVisible({ live: true, reachable: true, ...away, onXenoChat: true })).toBe(false)
   })
 })
 

@@ -45,6 +45,7 @@ import { ShellStateScreen } from './ShellStateScreen'
 import { useReportedShellOverlayLoad, type ShellOverlayLoad } from './shell-overlay-load'
 import { pageSafeAreaInsets, usePublishedSafeAreaInsets } from './page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-fold-division'
+import { useSessionFullScreen } from '../session/side-column-full-screen'
 import { usePublishedShellKeyRail, useShellKeyRail } from './use-shell-key-rail'
 import { hostProfileUnreadableLine, pageFaultLine } from './shell-lifecycle-log'
 import { recordShellLifecycleLine } from './shell-lifecycle-line-recorder'
@@ -125,6 +126,9 @@ export function MobileWebShellScreen({
     updateNotice !== null && state.kind === 'ready' && noticeDismissedFor !== state.sessionId
   // Edge-to-edge disables adjustResize and zeroes WebView IME insets, so visualViewport never shrinks; publish native keyboard height to the page.
   const keyboardInset = Math.max(0, useKeyboardOcclusion())
+  // A session takes the folded Duo's status column, as the Xeno chat does. The page is the desktop's,
+  // which has no full-screen button, so the column holds it.
+  useSessionFullScreen({ enabled: route.pathname.includes('/session/'), columnToggle: true })
   const pageFold = usePageFoldDivision()
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,

@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  COLUMN_HEADER_BAND,
+  COLUMN_TOGGLE_SLOT,
+  COLUMN_TOGGLE_TOP,
   columnClearance,
+  columnToggleSlot,
   createFoldedFullScreenStore,
-  extendedColumnSide
+  extendedColumnSide,
+  pageOverColumn
 } from './folded-full-screen'
+import { topChromeSpace } from './top-chrome-space'
 
 function memoryStorage(initial: string | null = null) {
   const saved = { value: initial }
@@ -88,5 +94,75 @@ describe('the room a header leaves for the camera', () => {
     })
     expect(columnClearance({ side: 'right', width: 84, extended: false })).toBeNull()
     expect(columnClearance(null)).toBeNull()
+  })
+})
+
+// The iPhone Duo cover screen: its camera reaches 66 pt down the status column.
+const RIGHT_COLUMN = { side: 'right' as const, width: 84, extended: true }
+const RAIL = { side: 'right' as const, width: 84, top: 174, bottom: 34, height: 470 }
+
+describe("the column's own toggle, for a screen whose header is not the app's", () => {
+  it('sits under the camera while the screen extends over the column', () => {
+    expect(columnToggleSlot({ wanted: true, column: RIGHT_COLUMN, strip: null })).toEqual({
+      side: 'right',
+      width: 84,
+      top: COLUMN_TOGGLE_TOP
+    })
+    expect(COLUMN_TOGGLE_TOP).toBeGreaterThan(66)
+  })
+
+  it('heads the rail while the column is back', () => {
+    expect(
+      columnToggleSlot({ wanted: true, column: { ...RIGHT_COLUMN, extended: false }, strip: RAIL })
+    ).toEqual({ side: 'right', width: 84, top: 174 })
+  })
+
+  it('is left out where nothing asks for it, or the rail has no room for it', () => {
+    expect(columnToggleSlot({ wanted: false, column: RIGHT_COLUMN, strip: null })).toBeNull()
+    expect(columnToggleSlot({ wanted: true, column: null, strip: null })).toBeNull()
+    expect(
+      columnToggleSlot({
+        wanted: true,
+        column: { ...RIGHT_COLUMN, extended: false },
+        strip: { ...RAIL, height: COLUMN_TOGGLE_SLOT }
+      })
+    ).toBeNull()
+  })
+})
+
+describe('what a session page extending over the column is told', () => {
+  const told = pageOverColumn({
+    insets: { top: 0, right: 84, bottom: 34, left: 0 },
+    occlusions: [],
+    column: RIGHT_COLUMN,
+    windowWidth: 466
+  })
+
+  it('has no inset on the column side, so it lays out full width with its keys at the bottom', () => {
+    expect(told.insets).toMatchObject({ right: 0, bottom: 34, left: 0 })
+  })
+
+  it("keeps its header clear of the column's top, the camera and the toggle under it", () => {
+    expect(told.occlusions).toContainEqual({ x: 382, y: 0, width: 84, height: COLUMN_HEADER_BAND })
+    expect(COLUMN_HEADER_BAND).toBeGreaterThanOrEqual(COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_SLOT)
+    // The page's header (the desktop's own code) pads itself out of a cutout at the top like this.
+    const header = { x: 0, y: 0, width: 466, height: 96 }
+    expect(topChromeSpace(header, told.insets.top, told.occlusions)).toEqual({
+      left: 0,
+      right: 84,
+      minHeight: COLUMN_HEADER_BAND
+    })
+  })
+
+  it('is told nothing new while the column is not extended', () => {
+    const insets = { top: 0, right: 84, bottom: 34, left: 0 }
+    expect(
+      pageOverColumn({
+        insets,
+        occlusions: [],
+        column: { ...RIGHT_COLUMN, extended: false },
+        windowWidth: 466
+      })
+    ).toEqual({ insets, occlusions: [] })
   })
 })

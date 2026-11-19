@@ -231,6 +231,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     live,
     reachable: needsPick || reachable,
     onJarvisScreen,
+    onXenoChat: pathname.endsWith('/jarvis-transcript'),
     railAvailable: railOrb !== null
   })
   return (

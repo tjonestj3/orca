@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useWindowDimensions, type LayoutChangeEvent, type View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useSideRailStrip, useSideRailDirectionPadAvailable } from '../layout/side-rail'
+import {
+  useSideColumn,
+  useSideRailStrip,
+  useSideRailDirectionPadAvailable
+} from '../layout/side-rail'
+import { pageOverColumn } from '../layout/folded-full-screen'
 import { pageOcclusions, type BridgePageGeometry } from './bridge/bridge-page-geometry'
 import { getFoldSplit } from '../layout/fold-division'
 import { useReservedRegions } from '../layout/reserved-regions'
@@ -69,6 +74,18 @@ export function usePageFoldDivision(): {
     insets.top,
     windowSafeArea
   ])
+  // A session full screen on the folded Duo: the page takes the column, its header clear of the camera.
+  const column = useSideColumn()
+  const overColumn = useMemo(
+    () =>
+      pageOverColumn({
+        insets: measuredPageSafeAreaInsets(windowSafeArea, frame, insets),
+        occlusions,
+        column,
+        windowWidth: windowSize.width
+      }),
+    [windowSafeArea, frame, insets, occlusions, column, windowSize.width]
+  )
   const split = frame === null ? null : getFoldSplit(divisions, frame)
   const axis = split?.axis
   const start = split?.start
@@ -82,14 +99,11 @@ export function usePageFoldDivision(): {
     () => ({
       sideRail,
       directionPadAvailable,
-      occlusions: pageOcclusions(occlusions, frame)
+      occlusions: pageOcclusions(overColumn.occlusions, frame)
     }),
-    [frame, occlusions, sideRail, directionPadAvailable]
+    [frame, overColumn.occlusions, sideRail, directionPadAvailable]
   )
-  const safeAreaInsets = useMemo(
-    () => measuredPageSafeAreaInsets(windowSafeArea, frame, insets),
-    [windowSafeArea, frame, insets]
-  )
+  const safeAreaInsets = overColumn.insets
   return { division, geometry, safeAreaInsets, rootRef, onRootLayout: measure, onShellLayout }
 }
 

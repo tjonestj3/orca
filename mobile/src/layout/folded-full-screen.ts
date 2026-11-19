@@ -89,3 +89,60 @@ export function columnClearance(
   }
   return column.side === 'right' ? { paddingRight: column.width } : { paddingLeft: column.width }
 }
+
+type Side = 'left' | 'right'
+type Column = { side: Side; width: number; extended: boolean }
+type Insets = { top: number; right: number; bottom: number; left: number }
+type Rect = { x: number; y: number; width: number; height: number }
+
+/** The Duo's camera reaches 66 pt down its status column; the column's own toggle sits just under it. */
+export const COLUMN_TOGGLE_TOP = 72
+/** A nav bar button and the gap below it. */
+export const COLUMN_TOGGLE_SLOT = 44
+/** How far down the column a page extending over it keeps its header clear: the camera and the toggle. */
+export const COLUMN_HEADER_BAND = COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_SLOT
+
+/**
+ * Where the column's own full-screen toggle goes, for a screen whose header the app doesn't draw (a
+ * session is the desktop's page): under the camera while extended over, else heading the rail.
+ */
+export function columnToggleSlot(s: {
+  wanted: boolean
+  column: Column | null
+  strip: { side: Side; width: number; top: number; height: number } | null
+}): { side: Side; width: number; top: number } | null {
+  if (!s.wanted || !s.column) {
+    return null
+  }
+  if (s.column.extended) {
+    return { side: s.column.side, width: s.column.width, top: COLUMN_TOGGLE_TOP }
+  }
+  if (!s.strip || s.strip.height < COLUMN_TOGGLE_SLOT * 2) {
+    return null
+  }
+  return { side: s.strip.side, width: s.strip.width, top: s.strip.top }
+}
+
+/**
+ * What a page extending over the column is told, in window points: no inset on that side, so it lays
+ * out full width with its keys in the bottom row, and the column's top as a cutout, which the page's
+ * header already pads itself out of. Its header then keeps clear of the camera and the toggle.
+ */
+export function pageOverColumn(s: {
+  insets: Insets
+  occlusions: readonly Rect[]
+  column: Column | null
+  windowWidth: number
+}): { insets: Insets; occlusions: readonly Rect[] } {
+  if (!s.column?.extended) {
+    return { insets: s.insets, occlusions: s.occlusions }
+  }
+  const { side, width } = s.column
+  return {
+    insets: { ...s.insets, [side]: 0, top: Math.max(s.insets.top, COLUMN_HEADER_BAND) },
+    occlusions: [
+      ...s.occlusions,
+      { x: side === 'right' ? s.windowWidth - width : 0, y: 0, width, height: COLUMN_HEADER_BAND }
+    ]
+  }
+}

@@ -18,7 +18,14 @@ import {
   type SideRailStrip
 } from './side-rail-strip'
 import { createRailStore } from './side-rail-store'
-import { extendedColumnSide, foldedFullScreen, useFoldedFullScreen } from './folded-full-screen'
+import {
+  COLUMN_TOGGLE_SLOT,
+  columnToggleSlot,
+  extendedColumnSide,
+  foldedFullScreen,
+  useFoldedFullScreen
+} from './folded-full-screen'
+import { ColumnToggle } from './column-toggle'
 
 type RailStore = ReturnType<typeof createRailStore>
 
@@ -35,8 +42,13 @@ const SideRailContext = createContext<{
   store: RailStore
   column: SideColumn | null
   /** Each screen asking to extend over the column holds one; returns its release. */
-  requestFullScreen: () => () => void
+  requestFullScreen: (options: FullScreenOptions) => () => void
 } | null>(null)
+
+type FullScreenOptions = {
+  /** The screen's header isn't the app's (a session is the desktop's page), so the column holds its toggle. */
+  columnToggle?: boolean
+}
 
 /**
  * The status column's side and width once seen. iOS stops reporting it while the status bar is hidden
@@ -53,21 +65,22 @@ function useRememberedColumn(strip: SideRailStrip | null) {
 }
 
 function useFullScreenRequests() {
-  const [count, setCount] = useState(0)
+  const [counts, setCounts] = useState({ all: 0, toggle: 0 })
   const request = useMemo(
-    () => () => {
-      setCount((n) => n + 1)
+    () => (options: FullScreenOptions) => {
+      const toggle = options.columnToggle ? 1 : 0
+      setCounts((n) => ({ all: n.all + 1, toggle: n.toggle + toggle }))
       let released = false
       return () => {
         if (!released) {
           released = true
-          setCount((n) => n - 1)
+          setCounts((n) => ({ all: n.all - 1, toggle: n.toggle - toggle }))
         }
       }
     },
     []
   )
-  return [count > 0, request] as const
+  return [counts.all > 0, counts.toggle > 0, request] as const
 }
 
 /**
@@ -94,7 +107,7 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
     hasFoldDivision === true || hasTerminalDirectionPadSpace(unoccludedStrip)
   useEffect(() => void foldedFullScreen.load(), [])
   const remembered = useRememberedColumn(unoccludedStrip)
-  const [requested, requestFullScreen] = useFullScreenRequests()
+  const [requested, toggleWanted, requestFullScreen] = useFullScreenRequests()
   const extendedSide = extendedColumnSide({
     requested,
     fullScreen: useFoldedFullScreen(),
@@ -111,21 +124,37 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
         : null,
     [remembered, unoccludedStrip, extendedSide]
   )
+  const toggleSlot = columnToggleSlot({ wanted: toggleWanted, column, strip })
   // Extended, no screen draws in the column: the keys go back to the bottom row and Xeno to its bubble.
+  // Otherwise a toggle heading the rail takes its top, and the rail starts below it.
+  const railStrip = useMemo(
+    () =>
+      extendedSide || !strip
+        ? null
+        : toggleSlot
+          ? {
+              ...strip,
+              top: strip.top + COLUMN_TOGGLE_SLOT,
+              height: strip.height - COLUMN_TOGGLE_SLOT
+            }
+          : strip,
+    [extendedSide, strip, toggleSlot]
+  )
   const value = useMemo(
     () => ({
-      strip: extendedSide ? null : strip,
+      strip: railStrip,
       directionPadAvailable,
       store,
       column,
       requestFullScreen
     }),
-    [extendedSide, strip, directionPadAvailable, store, column, requestFullScreen]
+    [railStrip, directionPadAvailable, store, column, requestFullScreen]
   )
   return (
     <SideRailContext.Provider value={value}>
       {children}
       <SideRailOutlet />
+      {toggleSlot && column ? <ColumnToggle slot={toggleSlot} extended={column.extended} /> : null}
     </SideRailContext.Provider>
   )
 }
@@ -164,9 +193,13 @@ export function useSideColumn(): SideColumn | null {
 }
 
 /** Asks for the folded Duo's status column while `active`, when full screen when folded is on. */
-export function useSideColumnFullScreen(active: boolean): void {
+export function useSideColumnFullScreen(active: boolean, options: FullScreenOptions = {}): void {
   const request = useContext(SideRailContext)?.requestFullScreen
-  useEffect(() => (active && request ? request() : undefined), [active, request])
+  const columnToggle = options.columnToggle === true
+  useEffect(
+    () => (active && request ? request({ columnToggle }) : undefined),
+    [active, request, columnToggle]
+  )
 }
 
 /** The side strip this window has to draw in; null for a window without one, or one extended over. */

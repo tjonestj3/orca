@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react-native'
-import { NavBarButton } from '../components/nav-bar/NavBarButton'
-import { foldedFullScreen } from '../layout/folded-full-screen'
+import { ColumnToggleButton } from '../layout/column-toggle'
 import { useSideColumn, useSideColumnFullScreen } from '../layout/side-rail'
-import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
-/** While this session screen is the one showing, it may take the folded Duo's status column. */
-export function useSessionFullScreen(): void {
+/**
+ * While this screen is the one showing, it may take the folded Duo's status column. A screen whose
+ * header the app doesn't draw (a session is the desktop's page) gets the column's own toggle.
+ */
+export function useSessionFullScreen(options: { enabled?: boolean; columnToggle?: boolean } = {}) {
   const [focused, setFocused] = useState(false)
   useFocusEffect(
     useCallback(() => {
@@ -15,36 +15,16 @@ export function useSessionFullScreen(): void {
       return () => setFocused(false)
     }, [])
   )
-  useSideColumnFullScreen(focused)
+  useSideColumnFullScreen(focused && options.enabled !== false, {
+    columnToggle: options.columnToggle
+  })
 }
 
 /**
- * The session header's button for the folded Duo: full screen, with the keys in the bottom row, or
- * the status column back with the keys and Xeno in it. Settings → Terminal sets which it starts as.
+ * A header's button for the folded Duo: full screen, with the keys in the bottom row, or the status
+ * column back with the keys and Xeno in it. Settings → Terminal sets which it starts as.
  */
 export function SideColumnToggle() {
-  const t = useMobileTranslation()
   const column = useSideColumn()
-  if (!column) {
-    return null
-  }
-  const icon =
-    column.side === 'right'
-      ? column.extended
-        ? PanelRightOpen
-        : PanelRightClose
-      : column.extended
-        ? PanelLeftOpen
-        : PanelLeftClose
-  return (
-    <NavBarButton
-      icon={icon}
-      accessibilityLabel={
-        column.extended
-          ? t('session.header.showSideColumn', 'Show the side keys')
-          : t('session.header.fullScreen', 'Full screen')
-      }
-      onPress={() => foldedFullScreen.toggle()}
-    />
-  )
+  return column ? <ColumnToggleButton side={column.side} extended={column.extended} /> : null
 }
