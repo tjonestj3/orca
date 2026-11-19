@@ -15,10 +15,12 @@ import { useSyncExternalStore } from 'react'
  *   up the room) and the orb sits just right of the mic.
  * - `copy`: a markdown file's floating Copy button, bottom right of the reader; with no composer there, the orb
  *   sits just left of it, on the same row.
+ * - `approval`: the button row of an agent's permission card ("Allow Bash?"), which also stands where the
+ *   composer was; its row has room after its buttons, and the orb sits at its right end, level with them.
  * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
  *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
-export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus' | 'copy'
+export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus' | 'copy' | 'approval'
 export type PageAnchor = { x: number; y: number; width: number; height: number }
 
 export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
@@ -177,7 +179,8 @@ export function readPageAnchorMessage(
       parsed.name !== 'mic' &&
       parsed.name !== 'question' &&
       parsed.name !== 'plus' &&
-      parsed.name !== 'copy') ||
+      parsed.name !== 'copy' &&
+      parsed.name !== 'approval') ||
     !('at' in parsed) ||
     typeof parsed.at !== 'string'
   ) {
@@ -208,6 +211,11 @@ export function plusOrbPlace(plus: PageAnchor): { left: number; top: number; siz
     top: plus.y + (plus.height - PLUS_ORB) / 2,
     size: PLUS_ORB
   }
+}
+
+/** At the right end of a permission card's button row, level with its buttons, in window points. */
+export function approvalOrbPlace(row: PageAnchor, size: number): { left: number; top: number } {
+  return { left: row.x + row.width - size, top: row.y + (row.height - size) / 2 }
 }
 
 /** Just right of a terminal's mic, centred on it, in window points. */

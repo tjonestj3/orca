@@ -8,6 +8,7 @@ import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
 import {
+  approvalOrbPlace,
   micOrbPlace,
   plusOrbPlace,
   terminalMicOrbPlace,
@@ -24,7 +25,7 @@ export function JarvisBubble() {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const { plus, mic, copy, question } = usePageAnchors()
+  const { plus, mic, copy, question, approval } = usePageAnchors()
   const pageShowing = usePageShowing()
   const screen = useWindowDimensions()
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
@@ -76,6 +77,17 @@ export function JarvisBubble() {
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <View style={[styles.anchored, { left: at.left, top: at.top }]}>
             <JarvisTalkControl size={at.size} />
+          </View>
+        </View>
+      )
+    }
+    if (view === 'chat' && approval) {
+      // A permission card where the composer was: the right end of its button row (page-anchors).
+      const at = approvalOrbPlace(approval, place.size)
+      return (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View style={[styles.anchored, { left: at.left, top: at.top }]}>
+            <JarvisTalkControl size={place.size} />
           </View>
         </View>
       )

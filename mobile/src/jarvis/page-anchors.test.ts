@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   PLUS_ORB,
+  approvalOrbPlace,
   TERMINAL_MIC_ORB,
   micOrbPlace,
   plusOrbPlace,
@@ -44,6 +45,13 @@ describe('where the orb goes', () => {
       left: 648,
       top: 800 + (40 - TERMINAL_MIC_ORB) / 2,
       size: TERMINAL_MIC_ORB
+    })
+  })
+
+  it('at the right end of a permission card’s button row, level with its buttons', () => {
+    expect(approvalOrbPlace({ x: 30, y: 600, width: 380, height: 44 }, 28)).toEqual({
+      left: 382,
+      top: 608
     })
   })
 

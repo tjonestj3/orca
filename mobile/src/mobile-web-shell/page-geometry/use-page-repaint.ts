@@ -79,6 +79,13 @@ export function usePageRepaint(options: {
         : [
             { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
             { name: 'copy', labels: copy.split('\n'), near: 'bottom', pad: 0 },
+            {
+              name: 'approval',
+              labels: [],
+              selector: '[data-testid="native-chat-approval-actions"]',
+              near: 'bottom',
+              pad: 0
+            },
             // The host list's header, when it shows beside the session (unfolded): up into the room it was given
             // for the camera, which is over the session's side.
             { name: 'header', labels: [header], near: 'top', pad: 0, lift: lift },
