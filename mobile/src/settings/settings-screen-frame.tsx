@@ -9,6 +9,9 @@ import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
+import { columnClearance } from '../layout/folded-full-screen'
+import { useSideColumn } from '../layout/side-rail'
+import { SideColumnToggle, useSessionFullScreen } from '../session/side-column-full-screen'
 
 type SettingsNavBarProps = {
   title: string
@@ -17,11 +20,18 @@ type SettingsNavBarProps = {
   trailing?: ReactNode
 }
 
-/** A settings screen's top bar: Back, the centred title, and up to two buttons. */
+/**
+ * A settings screen's top bar: Back, the centred title, and up to two buttons. Every settings screen has one, so
+ * this is also where they take the folded Duo's status column in full screen, as Home does: the bar keeps clear of
+ * the camera and carries the full-screen toggle.
+ */
 export function SettingsNavBar({ title, onBack, trailing }: SettingsNavBarProps) {
   const t = useMobileTranslation()
+  useSessionFullScreen()
+  const column = useSideColumn()
   return (
     <NavBar
+      style={columnClearance(column) ?? undefined}
       leading={
         <NavBarButton
           icon={ChevronLeft}
@@ -30,7 +40,12 @@ export function SettingsNavBar({ title, onBack, trailing }: SettingsNavBarProps)
         />
       }
       title={title}
-      trailing={trailing}
+      trailing={
+        <>
+          {trailing}
+          <SideColumnToggle />
+        </>
+      }
     />
   )
 }
