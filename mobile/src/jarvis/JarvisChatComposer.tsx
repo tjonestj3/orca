@@ -20,15 +20,15 @@ import {
 import { colors, pressedStyle, radii, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
-import type { JarvisChatImage } from './jarvis-chat'
+import type { JarvisChatImage, JarvisChatOutcome } from './jarvis-chat'
 import { chatComposerButton, type ChatComposerButton } from './jarvis-chat-composer'
 import { MAX_XENO_IMAGES, pickXenoImages } from './jarvis-images'
 
 type Props = {
   readonly enabled: boolean
   readonly working: boolean
-  // True once the desktop has the message; the box keeps the text and images otherwise.
-  readonly onSend: (text: string, images: readonly JarvisChatImage[]) => Promise<boolean>
+  // 'sent' once the desktop has the message; the box keeps the text and images otherwise.
+  readonly onSend: (text: string, images: readonly JarvisChatImage[]) => Promise<JarvisChatOutcome>
   readonly onStop: () => void
   // A Xeno call is open; with nothing typed, the button hangs it up instead of starting one.
   readonly calling: boolean
@@ -52,7 +52,8 @@ export function JarvisChatComposer({
   const t = useMobileTranslation()
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  // Why the last send didn't go: Xeno unreachable, or Xeno refusing it (with images, most likely one of them).
+  const [failed, setFailed] = useState<'unreachable' | 'refused' | 'refusedImage' | null>(null)
   const [typing, setTyping] = useState(false)
   const [images, setImages] = useState<readonly JarvisChatImage[]>([])
   const [attachFailed, setAttachFailed] = useState(false)
@@ -97,16 +98,18 @@ export function JarvisChatComposer({
     const typed = text.trim()
     const attached = images
     setSending(true)
-    setFailed(false)
-    const sent = await onSend(typed, attached)
+    setFailed(null)
+    const outcome = await onSend(typed, attached)
     setSending(false)
-    if (sent) {
+    if (outcome === 'sent') {
       setText((now) => (now.trim() === typed ? '' : now))
       setImages((now) => now.filter((image) => !attached.includes(image)))
       // Xeno has it: the keyboard would cover the answer. A failed send keeps it up to try again.
       Keyboard.dismiss()
+    } else if (outcome === 'refused') {
+      setFailed(attached.length > 0 ? 'refusedImage' : 'refused')
     } else {
-      setFailed(true)
+      setFailed('unreachable')
     }
   }
 
@@ -135,7 +138,14 @@ export function JarvisChatComposer({
     <View style={styles.dock}>
       {failed ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
-          {t('jarvis.chat.unreachable', "Couldn't reach Xeno. Your message is still here.")}
+          {failed === 'refusedImage'
+            ? t(
+                'jarvis.chat.refusedImage',
+                "Xeno couldn't take that image. Remove it and try again."
+              )
+            : failed === 'refused'
+              ? t('jarvis.chat.refused', "Xeno couldn't take that message. It's still here.")
+              : t('jarvis.chat.unreachable', "Couldn't reach Xeno. Your message is still here.")}
         </Text>
       ) : null}
       {attachFailed ? (
@@ -159,7 +169,10 @@ export function JarvisChatComposer({
                   accessibilityIgnoresInvertColors
                 />
                 <Pressable
-                  onPress={() => setImages((now) => now.filter((other) => other !== image))}
+                  onPress={() => {
+                    setImages((now) => now.filter((other) => other !== image))
+                    setFailed(null)
+                  }}
                   hitSlop={COMPOSER_CONTROL_HIT_SLOP}
                   style={({ pressed }) => [styles.remove, pressed && pressedStyle]}
                   accessibilityRole="button"
@@ -176,7 +189,7 @@ export function JarvisChatComposer({
           value={text}
           onChangeText={(next) => {
             setText(next)
-            setFailed(false)
+            setFailed(null)
           }}
           placeholder={t('jarvis.chat.placeholder', 'Message Xeno')}
           placeholderTextColor={colors.textMuted}

@@ -6,6 +6,10 @@ import { xenoFetch } from './jarvis-key'
 
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
 
+// How a send ended, for the composer to say: refused means Xeno was reached but turned it down (an image it can't
+// read, or an older Xeno that takes no images).
+export type JarvisChatOutcome = 'sent' | 'unreachable' | 'refused'
+
 export type JarvisChatSend =
   | { readonly ok: true; readonly message: JarvisMessage }
   | { readonly ok: false; readonly error: 'unreachable' | 'refused' }

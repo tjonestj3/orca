@@ -30,9 +30,12 @@ export async function pickXenoImages(
   }
   if (source === 'library') {
     const picked: JarvisChatImage[] = []
+    // Each photo is read as it's handed over: stop once there's no more room, so 20 chosen don't mean 20 read
+    // (and one too big past the limit can't sink the ones kept).
     for await (const image of pickMobileImages('library')) {
-      if (picked.length < room) {
-        picked.push({ base64: image.base64, uri: image.uri })
+      picked.push({ base64: image.base64, uri: image.uri })
+      if (picked.length >= room) {
+        break
       }
     }
     return picked

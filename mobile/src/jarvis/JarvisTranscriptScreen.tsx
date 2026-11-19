@@ -16,7 +16,8 @@ import {
   newJarvisConversation,
   sendJarvisChat,
   stopJarvisChat,
-  type JarvisChatImage
+  type JarvisChatImage,
+  type JarvisChatOutcome
 } from './jarvis-chat'
 import { useJarvis } from './jarvis-context'
 import {
@@ -71,9 +72,12 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     }
   }
 
-  const send = async (text: string, images: readonly JarvisChatImage[]): Promise<boolean> => {
+  const send = async (
+    text: string,
+    images: readonly JarvisChatImage[]
+  ): Promise<JarvisChatOutcome> => {
     if (!chatUrl) {
-      return false
+      return 'unreachable'
     }
     // Typed from here, the person is looking at the conversation, not a worktree.
     const result = await sendJarvisChat(chatUrl, text, null, undefined, images)
@@ -81,7 +85,7 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     if (result.ok) {
       setFollowKey((key) => key + 1)
     }
-    return result.ok
+    return result.ok ? 'sent' : result.error
   }
 
   const stop = (): void => {

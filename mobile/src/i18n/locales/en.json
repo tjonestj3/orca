@@ -5221,7 +5221,9 @@
       "photoLibrary": "Photo Library",
       "camera": "Take Photo",
       "attachFailed": "Couldn't attach that image.",
-      "removeImage": "Remove image"
+      "removeImage": "Remove image",
+      "refusedImage": "Xeno couldn't take that image. Remove it and try again.",
+      "refused": "Xeno couldn't take that message. It's still here."
     }
   }
 }

@@ -50,10 +50,13 @@ vi.mock('../i18n/use-mobile-translation', () => ({
 
 const { JarvisChatComposer } = await import('./JarvisChatComposer')
 type JarvisChatImage = { readonly base64: string; readonly uri?: string }
+type JarvisChatOutcome = 'sent' | 'unreachable' | 'refused'
 
 let tree: ReactTestRenderer | undefined
 
-function render(onSend: (text: string, images: readonly JarvisChatImage[]) => Promise<boolean>) {
+function render(
+  onSend: (text: string, images: readonly JarvisChatImage[]) => Promise<JarvisChatOutcome>
+) {
   act(() => {
     tree = create(
       <JarvisChatComposer
@@ -89,17 +92,17 @@ afterEach(() => {
 
 describe('the Xeno composer and the keyboard', () => {
   it('puts the keyboard away once Xeno has the message', async () => {
-    await typeAndSend(render(async () => true))
+    await typeAndSend(render(async (): Promise<JarvisChatOutcome> => 'sent'))
     expect(keyboard.dismiss).toHaveBeenCalledTimes(1)
   })
 
   it('keeps it up when the message did not get through, so it can be sent again', async () => {
-    await typeAndSend(render(async () => false))
+    await typeAndSend(render(async (): Promise<JarvisChatOutcome> => 'unreachable'))
     expect(keyboard.dismiss).not.toHaveBeenCalled()
   })
 
   it('has a button to put it away while typing', () => {
-    const root = render(async () => true)
+    const root = render(async (): Promise<JarvisChatOutcome> => 'sent')
     expect(byLabel(root, 'Hide keyboard')).toHaveLength(0)
     act(() => root.root.findByType('TextInput' as never).props.onFocus())
     const [hide] = byLabel(root, 'Hide keyboard')
@@ -120,7 +123,7 @@ describe('attaching images', () => {
 
   it('shows each picked image, which can be taken off again', async () => {
     picker.pickXenoImages.mockResolvedValue([shot])
-    const root = render(async () => true)
+    const root = render(async (): Promise<JarvisChatOutcome> => 'sent')
     await attach(root)
     expect(picker.pickXenoImages).toHaveBeenCalledWith('library', 4)
     expect(root.root.findAllByType('Image' as never)).toHaveLength(1)
@@ -131,7 +134,7 @@ describe('attaching images', () => {
 
   it('sends the images with nothing typed, and clears them once Xeno has them', async () => {
     picker.pickXenoImages.mockResolvedValue([shot])
-    const onSend = vi.fn(async () => true)
+    const onSend = vi.fn(async (): Promise<JarvisChatOutcome> => 'sent')
     const root = render(onSend)
     await attach(root)
     const [send] = byLabel(root, 'Send')
@@ -142,7 +145,7 @@ describe('attaching images', () => {
 
   it('keeps them when the message did not get through', async () => {
     picker.pickXenoImages.mockResolvedValue([shot])
-    const root = render(async () => false)
+    const root = render(async (): Promise<JarvisChatOutcome> => 'unreachable')
     await attach(root)
     const [send] = byLabel(root, 'Send')
     await act(async () => send.props.onPress())
@@ -151,9 +154,37 @@ describe('attaching images', () => {
 
   it('says so when an image could not be attached', async () => {
     picker.pickXenoImages.mockRejectedValue(new Error('too big'))
-    const root = render(async () => true)
+    const root = render(async (): Promise<JarvisChatOutcome> => 'sent')
     await attach(root)
     const texts = root.root.findAllByType('Text' as never).map((node) => node.props.children)
     expect(texts).toContain("Couldn't attach that image.")
+  })
+})
+
+describe('when Xeno can be reached but refuses the message', () => {
+  const texts = (root: ReactTestRenderer) =>
+    root.root.findAllByType('Text' as never).map((node) => node.props.children)
+
+  it('says the image could not be sent, not that Xeno is unreachable', async () => {
+    picker.pickXenoImages.mockResolvedValue([{ base64: 'AAAA', uri: 'file:///bad.jpg' }])
+    const root = render(async (): Promise<JarvisChatOutcome> => 'refused')
+    const [plus] = byLabel(root, 'Attach images')
+    await act(async () => plus.props.onPress())
+    const [send] = byLabel(root, 'Send')
+    await act(async () => send.props.onPress())
+    expect(texts(root)).toContain("Xeno couldn't take that image. Remove it and try again.")
+    expect(texts(root)).not.toContain("Couldn't reach Xeno. Your message is still here.")
+  })
+
+  it('says the message was refused when there was no image', async () => {
+    const root = render(async (): Promise<JarvisChatOutcome> => 'refused')
+    await typeAndSend(root)
+    expect(texts(root)).toContain("Xeno couldn't take that message. It's still here.")
+  })
+
+  it('still says Xeno is unreachable when it is', async () => {
+    const root = render(async (): Promise<JarvisChatOutcome> => 'unreachable')
+    await typeAndSend(root)
+    expect(texts(root)).toContain("Couldn't reach Xeno. Your message is still here.")
   })
 })
