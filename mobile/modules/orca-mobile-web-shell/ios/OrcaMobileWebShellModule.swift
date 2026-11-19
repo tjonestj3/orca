@@ -101,6 +101,10 @@ public class OrcaMobileWebShellModule: Module {
         view.setBackEdgeSwipe(value)
       }
 
+      Prop("pageRepaint") { (view: OrcaMobileWebShellView, value: String) in
+        view.setPageRepaint(value)
+      }
+
       AsyncFunction("postBridgeMessage") {
         (view: OrcaMobileWebShellView, json: String, promise: Promise) in
         try view.postBridgeMessage(json, promise: promise)

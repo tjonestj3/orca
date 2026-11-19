@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useSyncExternalStore } from 'react'
 import { AppState, Appearance } from 'react-native'
-import { applyMobileColorScheme } from './mobile-theme'
+import { applyMobileColorScheme, applyMobileDarkTheme, type MobileDarkTheme } from './mobile-theme'
 
 // Same choices as desktop's theme setting; System follows the phone.
 export type MobileAppearancePreference = 'system' | 'light' | 'dark'
@@ -48,14 +48,69 @@ export function startMobileAppearance(): Promise<void> {
       applyAppearance()
     }
   })
-  started = AsyncStorage.getItem(APPEARANCE_KEY)
-    .then((stored) => {
-      if (!chosenThisLaunch && isAppearancePreference(stored) && stored !== preference) {
-        adoptPreference(stored)
-      }
-    })
-    .catch(() => undefined)
+  started = Promise.all([
+    AsyncStorage.getItem(APPEARANCE_KEY)
+      .then((stored) => {
+        if (!chosenThisLaunch && isAppearancePreference(stored) && stored !== preference) {
+          adoptPreference(stored)
+        }
+      })
+      .catch(() => undefined),
+    AsyncStorage.getItem(DARK_THEME_KEY)
+      .then((stored) => {
+        if (stored === 'mocha' && darkTheme === 'orca') {
+          adoptDarkTheme('mocha')
+        }
+      })
+      .catch(() => undefined),
+    AsyncStorage.getItem(SESSION_MONOSPACE_KEY)
+      .then((stored) => {
+        if (stored === 'on' && !sessionMonospace) {
+          sessionMonospace = true
+          notifyPreferences()
+        }
+      })
+      .catch(() => undefined)
+  ]).then(() => undefined)
   return started
+}
+
+// Orca's own dark colours or Catppuccin Mocha's, on the app's screens and, repainted, Orca's session page.
+const DARK_THEME_KEY = 'orca:darkTheme'
+// Sessions in a monospaced font, as Moshi's chat is.
+const SESSION_MONOSPACE_KEY = 'orca:sessionMonospace'
+let darkTheme: MobileDarkTheme = 'orca'
+let sessionMonospace = false
+
+function notifyPreferences(): void {
+  for (const listener of preferenceListeners) {
+    listener()
+  }
+}
+
+function adoptDarkTheme(next: MobileDarkTheme): void {
+  darkTheme = next
+  applyMobileDarkTheme(next)
+  notifyPreferences()
+}
+
+export function setMobileDarkTheme(next: MobileDarkTheme): Promise<void> {
+  adoptDarkTheme(next)
+  return AsyncStorage.setItem(DARK_THEME_KEY, next)
+}
+
+export function useMobileDarkTheme(): MobileDarkTheme {
+  return useSyncExternalStore(subscribePreference, () => darkTheme)
+}
+
+export function setSessionMonospace(on: boolean): Promise<void> {
+  sessionMonospace = on
+  notifyPreferences()
+  return AsyncStorage.setItem(SESSION_MONOSPACE_KEY, on ? 'on' : 'off')
+}
+
+export function useSessionMonospace(): boolean {
+  return useSyncExternalStore(subscribePreference, () => sessionMonospace)
 }
 
 export function setMobileAppearancePreference(next: MobileAppearancePreference): Promise<void> {

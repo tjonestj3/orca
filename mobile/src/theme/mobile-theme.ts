@@ -1,4 +1,5 @@
 import { codeFontFamily } from './mobile-code-font'
+import { mochaPalette } from './mocha-theme'
 
 // Desktop's main.css tokens per scheme; keep mobile on these instead of introducing inline colors.
 
@@ -178,11 +179,28 @@ export function paletteForScheme(scheme: MobileColorScheme): MobilePalette {
 // Live object rewritten in place on a scheme change; read it at render time, never copy at module scope.
 export const colors: MobilePalette = { ...darkColors }
 
+/** Orca's own dark colours, or Catppuccin Mocha's (Settings → Appearance); light mode keeps its own. */
+export type MobileDarkTheme = 'orca' | 'mocha'
+const mochaColors = mochaPalette(darkColors)
+
 let currentScheme: MobileColorScheme = 'dark'
+let currentDarkTheme: MobileDarkTheme = 'orca'
 const schemeListeners = new Set<() => void>()
 
 export function getMobileColorScheme(): MobileColorScheme {
   return currentScheme
+}
+
+/** Which palette is painted: the scheme, or the dark theme while it's dark. Styles are built once per key. */
+export function getMobilePaletteKey(): MobileColorScheme | 'mocha' {
+  return currentScheme === 'dark' && currentDarkTheme === 'mocha' ? 'mocha' : currentScheme
+}
+
+function repaint(): void {
+  Object.assign(colors, getMobilePaletteKey() === 'mocha' ? mochaColors : palettes[currentScheme])
+  for (const listener of schemeListeners) {
+    listener()
+  }
 }
 
 export function applyMobileColorScheme(scheme: MobileColorScheme): void {
@@ -190,10 +208,15 @@ export function applyMobileColorScheme(scheme: MobileColorScheme): void {
     return
   }
   currentScheme = scheme
-  Object.assign(colors, palettes[scheme])
-  for (const listener of schemeListeners) {
-    listener()
+  repaint()
+}
+
+export function applyMobileDarkTheme(theme: MobileDarkTheme): void {
+  if (theme === currentDarkTheme) {
+    return
   }
+  currentDarkTheme = theme
+  repaint()
 }
 
 export function subscribeMobileColorScheme(listener: () => void): () => void {

@@ -1,7 +1,7 @@
 import type { RootContent } from 'mdast'
 import type { ReactNode } from 'react'
 import { getMobileUiRevision } from '../../../i18n/mobile-i18n'
-import { getMobileColorScheme } from '../../../theme/mobile-theme'
+import { getMobilePaletteKey } from '../../../theme/mobile-theme'
 import type { MarkdownBlockContext, ParagraphText } from './mobile-markdown-blocks'
 
 type DrawnBlock = {
@@ -74,7 +74,7 @@ export function drawnBlock(
     return render()
   }
   const drawn = drawnBlocks.get(node)
-  const look = `${getMobileColorScheme()}:${getMobileUiRevision()}`
+  const look = `${getMobilePaletteKey()}:${getMobileUiRevision()}`
   if (
     drawn?.look === look &&
     drawn.text.selectable === text.selectable &&

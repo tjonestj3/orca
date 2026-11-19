@@ -1,18 +1,18 @@
 import { StyleSheet, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native'
-import { getMobileColorScheme, radii, type MobileColorScheme } from './mobile-theme'
+import { getMobilePaletteKey, radii } from './mobile-theme'
 
 // RN 0.88's generated types dropped StyleSheet.NamedStyles; this mapped constraint keeps literal inference.
 type NamedStyles<T> = { [P in keyof T]: ViewStyle | TextStyle | ImageStyle }
 
 // Module-scope styles that read `colors`: built once per scheme, and every key reads the current scheme's copy.
 export function themedStyles<T extends Record<string, unknown>>(create: () => T): T {
-  const built = new Map<MobileColorScheme, T>()
+  const built = new Map<string, T>()
   const current = (): T => {
-    const scheme = getMobileColorScheme()
-    let styles = built.get(scheme)
+    const palette = getMobilePaletteKey()
+    let styles = built.get(palette)
     if (styles === undefined) {
       styles = create()
-      built.set(scheme, styles)
+      built.set(palette, styles)
     }
     return styles
   }

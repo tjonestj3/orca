@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Linking, View } from 'react-native'
+import { Linking, Platform, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useNavigationContainerRef, useRouter } from 'expo-router'
 import { OrcaMobileWebShellView } from '../../modules/orca-mobile-web-shell/src/index'
@@ -53,6 +53,7 @@ import {
   usePublishedSafeAreaInsets
 } from './page-geometry/page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/page-fold-division'
+import { usePageRepaint } from './page-geometry/use-page-repaint'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
 import { useShowsSession } from '../session/showing-session'
 import { pageShowsSession } from './page-shows-session'
@@ -144,6 +145,7 @@ export function MobileWebShellScreen({
   useSessionFullScreen({ enabled: showsSession, columnToggle: true })
 
   const pageFold = usePageFoldDivision()
+  const pageRepaint = usePageRepaint()
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,
     topCovered: noticeShown
@@ -392,6 +394,7 @@ export function MobileWebShellScreen({
         onBridgeMessage={bridge.onBridgeMessage}
         backEdgeSwipe={backClaimed}
         onBackEdgeSwipe={bridge.sendBack}
+        pageRepaint={Platform.OS === 'ios' ? pageRepaint : undefined}
         onExternalNavigation={(event) => {
           const target = cancelledShellNavigationTarget(event.nativeEvent.url)
           if (target === null) {

@@ -31,6 +31,9 @@ export type OrcaMobileWebShellViewProps = ViewProps & {
   // iOS only: a left-edge swipe fires onBackEdgeSwipe instead of reaching the page. Android has the hardware key.
   backEdgeSwipe?: boolean
   onBackEdgeSwipe?: () => void
+  // iOS only: a script run in the page now and as each page finishes loading (the app's theme over Orca's); empty
+  // runs nothing.
+  pageRepaint?: string
 }
 
 /** What a ref on the view carries. Expo puts the view's functions on the component prototype. */

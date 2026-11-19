@@ -112,6 +112,12 @@ final class OrcaMobileWebShellView: ExpoView, MobileWebShellDocumentSink,
     bridgeEnabled = value
   }
 
+  private var pageRepaint = ""
+
+  func setPageRepaint(_ value: String) {
+    pageRepaint = value
+  }
+
   func propsDidUpdate() {
     let document = self.document ?? hostDocument()
     self.document = document
@@ -120,6 +126,7 @@ final class OrcaMobileWebShellView: ExpoView, MobileWebShellDocumentSink,
       sessionId: sessionId,
       bridgeEnabled: bridgeEnabled
     )
+    document.setRepaint(pageRepaint)
   }
 
   func postBridgeMessage(_ json: String, promise: Promise) throws {

@@ -603,6 +603,22 @@ final class MobileWebShellDocument: NSObject, WKNavigationDelegate, WKUIDelegate
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     MobileWebShellWarmUp.release()
     emit(loadState.finished())
+    runRepaint()
+  }
+
+  /// The app's theme over Orca's page: a script the page runs now and as each page finishes loading. Turning it
+  /// off leaves what's painted until the page loads again; the script itself drops the font when asked to.
+  private var repaint = ""
+
+  func setRepaint(_ source: String) {
+    guard source != repaint else { return }
+    repaint = source
+    runRepaint()
+  }
+
+  private func runRepaint() {
+    guard !repaint.isEmpty, !destroyed else { return }
+    webView.evaluateJavaScript(repaint, completionHandler: nil)
   }
 
   func webView(
