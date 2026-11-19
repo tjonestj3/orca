@@ -7,16 +7,21 @@ import { useShowingSession } from '../session/showing-session'
 import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
+import { usePageModalOpen } from './page-modal'
 
 const BUBBLE_SIZE = 56
-// Beside the small orb in a session, the desktop's name has the composer's empty middle to itself.
-const SESSION_LABEL_WIDTH = 150
+// Beside the small orb in a session, the desktop's initials.
+const SESSION_LABEL_WIDTH = 48
 
 export function JarvisBubble() {
   const insets = useSafeAreaInsets()
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
+  // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it.
+  if (usePageModalOpen()) {
+    return null
+  }
   if (view) {
     // In a session Xeno is a small orb by the page's own controls, its desktop's name to its left.
     const place = sessionOrbPlace({
@@ -28,7 +33,7 @@ export function JarvisBubble() {
     return (
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
         <View style={[styles.row, { bottom: place.bottom, right: place.right }]}>
-          <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} />
+          <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} initials />
           <JarvisTalkControl size={place.size} />
         </View>
       </View>
@@ -44,7 +49,7 @@ export function JarvisBubble() {
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <View style={[styles.corner, { bottom, right }]}>
         <JarvisTalkControl size={BUBBLE_SIZE} />
-        <JarvisHostLabel maxWidth={BUBBLE_SIZE + spacing.xl} />
+        <JarvisHostLabel maxWidth={BUBBLE_SIZE + spacing.xl} initials />
       </View>
     </View>
   )

@@ -54,6 +54,7 @@ import {
 } from './page-geometry/page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/page-fold-division'
 import { usePageRepaint } from './page-geometry/use-page-repaint'
+import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
 import { useShowsSession } from '../session/showing-session'
 import { pageShowsSession } from './page-shows-session'
@@ -311,6 +312,8 @@ export function MobileWebShellScreen({
   // paneKey changes keep the session mounted; the host deduplicates routes and preserves in-flight frames.
   useShellPageStorageRefresh(refreshStorage, bridge.publishStorage)
   useEffect(() => bridge.publishRoute(pageRoute), [bridge.publishRoute, pageRoute])
+  // The page's sheets and menus can't cover Xeno's orb, which the app draws over it; it hides while one is open.
+  const onBridgeMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage)
 
   usePublishedSafeAreaInsets(bridge.publishSafeAreaInsets, pageInsets)
   const publishKeyboardInset = bridge.publishKeyboardInset
@@ -391,7 +394,7 @@ export function MobileWebShellScreen({
         generationDirectory={state.generationDirectory}
         sessionId={state.sessionId}
         bridgeEnabled={bridge.bridgeEnabled}
-        onBridgeMessage={bridge.onBridgeMessage}
+        onBridgeMessage={onBridgeMessage}
         backEdgeSwipe={backClaimed}
         onBackEdgeSwipe={bridge.sendBack}
         pageRepaint={Platform.OS === 'ios' ? pageRepaint : undefined}

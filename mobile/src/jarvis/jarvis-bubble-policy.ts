@@ -141,3 +141,16 @@ export function sessionOrbPlace(s: {
   const right = s.rightEdge + (s.view === 'chat' ? CHAT_ORB_RIGHT : TERMINAL_ORB_RIGHT)
   return { bottom, right, size: SESSION_ORB }
 }
+
+/** A desktop's name as initials, for the small labels beside the orb: "Xeno Laptop" is "XL", "pop-os" "PO". */
+export function hostInitials(name: string): string {
+  const words = name.split(/[\s._-]+/).filter((word) => /[\p{L}\p{N}]/u.test(word))
+  if (words.length === 0) {
+    return name.trim()
+  }
+  return words
+    .slice(0, 3)
+    .map((word) => Array.from(word.replace(/^[^\p{L}\p{N}]+/u, ''))[0] ?? '')
+    .join('')
+    .toUpperCase()
+}
