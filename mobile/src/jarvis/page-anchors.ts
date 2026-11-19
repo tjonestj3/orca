@@ -9,8 +9,10 @@ import { useSyncExternalStore } from 'react'
  *   in clear of the column, which the camera tops.
  * - `plus`: the host list's "New workspace" button, bottom right. The script pads its bar on the right (the search
  *   field gives up the room) and the orb sits just right of the button.
- * - `mic`: a session composer's mic, near the page's bottom; the orb sits just left of it. A tab without a
- *   composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over the page.
+ * - `mic`: a session's mic, near the page's bottom. In chat the composer has room and the orb sits just left of it;
+ *   a tab without a composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over
+ *   the page. In a terminal the live input row is full, so the script pads it on the right (the input field gives
+ *   up the room) and the orb sits just right of the mic.
  * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
  *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
@@ -23,6 +25,10 @@ export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
 export const PLUS_ORB = 40
 const PLUS_ORB_GAP = 8
 export const PLUS_ORB_ROOM = PLUS_ORB + PLUS_ORB_GAP * 2
+const MIC_ORB_GAP_ROOM = 8
+/** Xeno's orb beside a terminal's mic, and the room its live input row makes for it. */
+export const TERMINAL_MIC_ORB = 32
+export const TERMINAL_MIC_ROOM = TERMINAL_MIC_ORB + MIC_ORB_GAP_ROOM * 2
 const MIC_ORB_GAP = 8
 
 export type PageAnchorWatch = {
@@ -44,10 +50,17 @@ export function pageAnchorsScript(watches: readonly PageAnchorWatch[]): string {
   return String.raw`(function () {
 var state = window.__xenoAnchors || (window.__xenoAnchors = { rows: {}, at: {} });
 state.watches = ${JSON.stringify(watches)};
+// The bar to make room in: the nearest row at least half the page wide. Not simply the first full-width box: on the
+// unfolded Duo a session shares the page with the host list, and that box is the whole page.
 function bar(button) {
   var el = button.parentElement;
-  while (el && el.getBoundingClientRect().width < window.innerWidth - 2) el = el.parentElement;
-  return el;
+  while (el && el !== document.body) {
+    if (el.getBoundingClientRect().width >= window.innerWidth * 0.5 && getComputedStyle(el).flexDirection === 'row') {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
 }
 function find(watch) {
   // Top: the first match in the page's top band. Bottom: the lowest match below it; the keyboard lifts the
@@ -152,6 +165,15 @@ export function plusOrbPlace(plus: PageAnchor): { left: number; top: number; siz
     left: plus.x + plus.width + PLUS_ORB_GAP,
     top: plus.y + (plus.height - PLUS_ORB) / 2,
     size: PLUS_ORB
+  }
+}
+
+/** Just right of a terminal's mic, centred on it, in window points. */
+export function terminalMicOrbPlace(mic: PageAnchor): { left: number; top: number; size: number } {
+  return {
+    left: mic.x + mic.width + MIC_ORB_GAP_ROOM,
+    top: mic.y + (mic.height - TERMINAL_MIC_ORB) / 2,
+    size: TERMINAL_MIC_ORB
   }
 }
 

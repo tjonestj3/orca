@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { PLUS_ORB, micOrbPlace, plusOrbPlace, readPageAnchorMessage } from './page-anchors'
+import {
+  PLUS_ORB,
+  TERMINAL_MIC_ORB,
+  micOrbPlace,
+  plusOrbPlace,
+  readPageAnchorMessage,
+  terminalMicOrbPlace
+} from './page-anchors'
 
 describe('an anchor message', () => {
   it('says where the button is, or that it’s gone', () => {
@@ -29,6 +36,14 @@ describe('where the orb goes', () => {
       left: 340 + 44 + 8,
       top: 790 + (44 - PLUS_ORB) / 2,
       size: PLUS_ORB
+    })
+  })
+
+  it('just right of a terminal’s mic, centred on it', () => {
+    expect(terminalMicOrbPlace({ x: 600, y: 800, width: 40, height: 40 })).toEqual({
+      left: 648,
+      top: 800 + (40 - TERMINAL_MIC_ORB) / 2,
+      size: TERMINAL_MIC_ORB
     })
   })
 

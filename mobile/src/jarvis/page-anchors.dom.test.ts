@@ -25,7 +25,7 @@ function listen() {
 it('makes room on the right of the header’s bar, says where its menu is, and puts it back', () => {
   const posted = listen()
   document.body.innerHTML =
-    '<div id="bar" style="padding-right: 8px"><div><div id="more" aria-label="More actions"></div></div></div>' +
+    '<div id="bar" style="display: flex; flex-direction: row; padding-right: 8px"><div><div id="more" aria-label="More actions"></div></div></div>' +
     '<div><div id="queued" aria-label="More actions"></div></div>'
   const bar = document.getElementById('bar')!
   place(bar, { left: 0, top: 0, width: window.innerWidth, height: 44 })
@@ -92,4 +92,33 @@ it('finds an agent’s question by its options, whatever they say', () => {
     name: 'question',
     at: { x: 20, y: height - 300, width: 360, height: 120 }
   })
+})
+
+it('in a split view makes room in the mic’s own row, not the whole page around it', () => {
+  listen()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="page" style="display: flex; flex-direction: row">' +
+    '<div id="hosts"></div>' +
+    '<div id="session"><div id="input" style="display: flex; flex-direction: row">' +
+    '<div id="field"></div><div><div id="mic" aria-label="Dictate"></div></div>' +
+    '</div></div></div>'
+  place(document.getElementById('page')!, { left: 0, top: 0, width, height })
+  place(document.getElementById('input')!, {
+    left: width * 0.3,
+    top: height - 80,
+    width: width * 0.7,
+    height: 60
+  })
+  place(document.getElementById('mic')!, {
+    left: width - 60,
+    top: height - 70,
+    width: 40,
+    height: 40
+  })
+  const mic = [{ name: 'mic' as const, labels: ['Dictate'], near: 'bottom' as const, pad: 48 }]
+  new Function(pageAnchorsScript(mic))()
+  expect(document.getElementById('input')!.style.getPropertyValue('padding-right')).toBe('48px')
+  expect(document.getElementById('page')!.style.getPropertyValue('padding-right')).toBe('')
 })

@@ -8,7 +8,7 @@ import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
-import { micOrbPlace, plusOrbPlace, usePageAnchors } from './page-anchors'
+import { micOrbPlace, plusOrbPlace, terminalMicOrbPlace, usePageAnchors } from './page-anchors'
 
 const BUBBLE_SIZE = 56
 // Beside the small orb in a session, the desktop's name has the composer's empty middle to itself.
@@ -60,6 +60,17 @@ export function JarvisBubble() {
           >
             <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} />
             <JarvisTalkControl size={place.size} />
+          </View>
+        </View>
+      )
+    }
+    if (view === 'terminal' && mic) {
+      // Just right of the live input row's mic, in the room the row made (page-anchors).
+      const at = terminalMicOrbPlace(mic)
+      return (
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+          <View style={[styles.anchored, { left: at.left, top: at.top }]}>
+            <JarvisTalkControl size={at.size} />
           </View>
         </View>
       )

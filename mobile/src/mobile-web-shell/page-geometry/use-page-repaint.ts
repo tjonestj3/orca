@@ -7,7 +7,7 @@ import { useMobileColorScheme } from '../../theme/use-mobile-color-scheme'
 import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { useSideColumn } from '../../layout/side-rail'
 import { PAGE_MODAL_WATCH } from '../../jarvis/page-modal'
-import { PLUS_ORB_ROOM, pageAnchorsScript } from '../../jarvis/page-anchors'
+import { PLUS_ORB_ROOM, TERMINAL_MIC_ROOM, pageAnchorsScript } from '../../jarvis/page-anchors'
 import { PAGE_SCROLL_PIN } from './page-scroll-pin'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 
@@ -20,7 +20,7 @@ const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
  * + button, its header kept clear of the folded Duo's camera; and in a session, more
  * room for an agent's question (page-question-room).
  */
-export function usePageRepaint(options: { headerClear: boolean }): string {
+export function usePageRepaint(options: { headerClear: boolean; terminal?: boolean }): string {
   const scheme = useMobileColorScheme()
   const theme = useMobileDarkTheme()
   const monospace = useSessionMonospace()
@@ -39,6 +39,8 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
   const pad = options.headerClear && column?.extended ? column.width : 0
   // Room beside the + for Xeno's orb, wherever the orb floats rather than sitting in the folded Duo's rail.
   const plusRoom = options.headerClear && (!column || column.extended) ? PLUS_ORB_ROOM : 0
+  // In a terminal the live input row makes room beside its mic, wherever the orb isn't in the folded Duo's rail.
+  const micRoom = options.terminal && (!column || column.extended) ? TERMINAL_MIC_ROOM : 0
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
@@ -49,7 +51,7 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
             { name: 'plus', labels: [plus], near: 'bottom', pad: plusRoom }
           ]
         : [
-            { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: 0 },
+            { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
             {
               name: 'question',
               labels: [],
@@ -61,5 +63,5 @@ export function usePageRepaint(options: { headerClear: boolean }): string {
     )
     const sessionOnly = options.headerClear ? [] : [PAGE_QUESTION_ROOM]
     return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, ...sessionOnly].join('\n')
-  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom])
+  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom, micRoom])
 }

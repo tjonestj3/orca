@@ -148,7 +148,6 @@ export function MobileWebShellScreen({
 
   // Only a session's header steps around the camera; others keep their top (see pageOverColumn).
   const pageFold = usePageFoldDivision({ raiseTop: showsSession })
-  const pageRepaint = usePageRepaint({ headerClear: !showsSession })
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,
     topCovered: noticeShown
@@ -157,6 +156,10 @@ export function MobileWebShellScreen({
   const keyRail = useShellKeyRail({ sessionId: readySessionId, overlay, routeGrants })
   // Xeno's small orb sits by the session's own controls: the composer's mic, or the terminal's last line.
   useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
+  const pageRepaint = usePageRepaint({
+    headerClear: !showsSession,
+    terminal: showsSession && keyRail.terminalShowing
+  })
   const {
     snapshot,
     unreadable,
