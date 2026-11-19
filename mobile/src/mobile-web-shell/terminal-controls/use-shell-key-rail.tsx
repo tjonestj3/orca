@@ -27,6 +27,8 @@ export function useShellKeyRail(args: {
   inputOwner: string | undefined
   toolbar: BridgeTerminalToolbar | undefined
   reportClaim: (claimed: boolean, inputOwner?: string, toolbar?: BridgeTerminalToolbar) => void
+  /** A terminal and its key row are on screen: the page claims the rail only then. */
+  terminalShowing: boolean
 } {
   const { sessionId } = args
   const height = useSideRailStrip()?.height ?? null
@@ -68,7 +70,13 @@ export function useShellKeyRail(args: {
       }),
     [sessionId]
   )
-  return { keys, inputOwner: claim?.inputOwner, toolbar: claim?.toolbar, reportClaim }
+  return {
+    keys,
+    inputOwner: claim?.inputOwner,
+    toolbar: claim?.toolbar,
+    reportClaim,
+    terminalShowing: took
+  }
 }
 
 /** Draws the rail and tells the page which keys it holds, so the page drops just those. */

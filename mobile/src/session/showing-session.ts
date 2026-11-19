@@ -1,30 +1,31 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { useFocusEffect } from 'expo-router'
 
+export type SessionView = 'chat' | 'terminal'
+
 /**
- * Whether a session is the screen showing. A session can live inside the host list's page as well as on its
- * own route, so the route alone doesn't say; each screen showing one holds it while it does.
+ * Which session view is the screen showing, if any. A session can live inside the host list's page as well as
+ * on its own route, so the route alone doesn't say; each screen showing one holds it while it does.
  */
 export function createShowingSessionStore() {
-  let holders = 0
+  let holders: { view: SessionView }[] = []
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
   return {
-    read: () => holders > 0,
+    read: (): SessionView | null => holders.at(-1)?.view ?? null,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
         listeners.delete(listener)
       }
     },
-    show(): () => void {
-      holders += 1
+    show(view: SessionView): () => void {
+      const holder = { view }
+      holders = [...holders, holder]
       notify()
-      let released = false
       return () => {
-        if (!released) {
-          released = true
-          holders -= 1
+        if (holders.includes(holder)) {
+          holders = holders.filter((held) => held !== holder)
           notify()
         }
       }
@@ -34,8 +35,8 @@ export function createShowingSessionStore() {
 
 const showingSession = createShowingSessionStore()
 
-/** Holds "a session is showing" while this screen is focused and `active`. */
-export function useShowsSession(active: boolean): void {
+/** Holds which session view shows while this screen is focused and shows one (`view` null: none). */
+export function useShowsSession(view: SessionView | null): void {
   const [focused, setFocused] = useState(false)
   useFocusEffect(
     useCallback(() => {
@@ -43,9 +44,9 @@ export function useShowsSession(active: boolean): void {
       return () => setFocused(false)
     }, [])
   )
-  useEffect(() => (active && focused ? showingSession.show() : undefined), [active, focused])
+  useEffect(() => (view && focused ? showingSession.show(view) : undefined), [view, focused])
 }
 
-export function useIsShowingSession(): boolean {
+export function useShowingSession(): SessionView | null {
   return useSyncExternalStore(showingSession.subscribe, showingSession.read)
 }

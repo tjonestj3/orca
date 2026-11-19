@@ -142,8 +142,7 @@ export function MobileWebShellScreen({
   const [pageHref, setPageHref] = useState<string | null>(null)
   const showsSession = pageShowsSession(route.pathname, pageHref)
   useSessionFullScreen({ enabled: showsSession, columnToggle: true })
-  // The Xeno bubble keeps above a session's composer or keys, wherever the session lives.
-  useShowsSession(showsSession)
+
   const pageFold = usePageFoldDivision()
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,
@@ -151,6 +150,8 @@ export function MobileWebShellScreen({
   })
   const readySessionId = state.kind === 'ready' ? state.sessionId : null
   const keyRail = useShellKeyRail({ sessionId: readySessionId, overlay, routeGrants })
+  // Xeno's small orb sits by the session's own controls: the composer's mic, or the terminal's last line.
+  useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
   const {
     snapshot,
     unreadable,

@@ -112,3 +112,32 @@ export function actionButtonPress(s: {
   }
   return s.canTalk ? 'press' : null
 }
+
+/** The small Xeno orb in a session, beside the controls Orca's page draws (measured on the iPhone Duo). */
+const SESSION_ORB = 28
+// Chat: the composer's bottom row sits 8 pt above the home inset (or the keyboard), its mic centred 33 pt up from
+// there and 91 pt in from the right; the orb goes just left of the mic.
+const COMPOSER_GAP = 8
+const COMPOSER_ROW_CENTRE = 33
+const CHAT_ORB_RIGHT = 115
+// Terminal: Claude Code's status line, the terminal's last, ends 127 pt above the home inset, over the keys and
+// the input row; the orb ends it.
+const TERMINAL_ORB_BOTTOM = 113
+const TERMINAL_ORB_RIGHT = 8
+
+export function sessionOrbPlace(s: {
+  view: 'chat' | 'terminal'
+  insetsBottom: number
+  /** How much of the screen's bottom the keyboard covers; 0 while it's down. */
+  keyboard: number
+  /** Where the screen's content ends on the right: a side inset, or 0 over the folded Duo's column. */
+  rightEdge: number
+}): { bottom: number; right: number; size: number } {
+  const floor = s.keyboard > 0 ? s.keyboard : s.insetsBottom
+  const bottom =
+    s.view === 'chat'
+      ? floor + COMPOSER_GAP + COMPOSER_ROW_CENTRE - SESSION_ORB / 2
+      : floor + TERMINAL_ORB_BOTTOM
+  const right = s.rightEdge + (s.view === 'chat' ? CHAT_ORB_RIGHT : TERMINAL_ORB_RIGHT)
+  return { bottom, right, size: SESSION_ORB }
+}

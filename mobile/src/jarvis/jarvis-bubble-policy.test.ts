@@ -5,7 +5,8 @@ import {
   bubbleVisible,
   classifyBubbleRelease,
   railOrbSize,
-  railOrbVisible
+  railOrbVisible,
+  sessionOrbPlace
 } from './jarvis-bubble-policy'
 
 describe('classifyBubbleRelease', () => {
@@ -127,5 +128,31 @@ describe('actionButtonPress', () => {
   it('asks which desktop first when several run Xeno, and does nothing with none', () => {
     expect(actionButtonPress({ holding: false, canPick: true, canTalk: false })).toBe('pick')
     expect(actionButtonPress({ holding: false, canPick: false, canTalk: false })).toBeNull()
+  })
+})
+
+describe('the small Xeno orb in a session', () => {
+  // The iPhone Duo's cover screen, from screenshots: 34 pt home inset, the composer's mic 91 pt from the right edge
+  // and 75 pt up, the terminal's last line (Claude Code's status) 161 pt up.
+  const at = { insetsBottom: 34, keyboard: 0, rightEdge: 0 }
+
+  it('sits in the chat composer, just left of the mic, with the desktop name to its left', () => {
+    expect(sessionOrbPlace({ ...at, view: 'chat' })).toEqual({ bottom: 61, right: 115, size: 28 })
+  })
+
+  it('rides up with the keyboard, as the composer does', () => {
+    expect(sessionOrbPlace({ ...at, keyboard: 300, view: 'chat' }).bottom).toBe(327)
+  })
+
+  it('ends the terminal’s last line, clear of the keys and the input below it', () => {
+    expect(sessionOrbPlace({ ...at, view: 'terminal' })).toEqual({
+      bottom: 147,
+      right: 8,
+      size: 28
+    })
+  })
+
+  it('keeps to the screen beside a side inset', () => {
+    expect(sessionOrbPlace({ ...at, rightEdge: 47, view: 'chat' }).right).toBe(162)
   })
 })
