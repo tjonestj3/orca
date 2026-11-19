@@ -158,7 +158,9 @@ export function MobileWebShellScreen({
   useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
   const pageRepaint = usePageRepaint({
     headerClear: !showsSession,
-    terminal: showsSession && keyRail.terminalShowing
+    terminal: showsSession && keyRail.terminalShowing,
+    // Unfolded, the host list beside a session shares the raised top; its header gives the camera's room back.
+    hostHeaderLift: showsSession ? pageFold.raisedBy : 0
   })
   const {
     snapshot,

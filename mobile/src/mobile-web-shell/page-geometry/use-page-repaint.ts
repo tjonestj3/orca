@@ -20,7 +20,11 @@ const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
  * + button, its header kept clear of the folded Duo's camera; and in a session, more
  * room for an agent's question (page-question-room).
  */
-export function usePageRepaint(options: { headerClear: boolean; terminal?: boolean }): string {
+export function usePageRepaint(options: {
+  headerClear: boolean
+  terminal?: boolean
+  hostHeaderLift?: number
+}): string {
   const scheme = useMobileColorScheme()
   const theme = useMobileDarkTheme()
   const monospace = useSessionMonospace()
@@ -41,6 +45,7 @@ export function usePageRepaint(options: { headerClear: boolean; terminal?: boole
   const plusRoom = options.headerClear && (!column || column.extended) ? PLUS_ORB_ROOM : 0
   // In a terminal the live input row makes room beside its mic, wherever the orb isn't in the folded Duo's rail.
   const micRoom = options.terminal && (!column || column.extended) ? TERMINAL_MIC_ROOM : 0
+  const lift = Math.round(options.hostHeaderLift ?? 0)
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
@@ -52,6 +57,9 @@ export function usePageRepaint(options: { headerClear: boolean; terminal?: boole
           ]
         : [
             { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
+            // The host list's header, when it shows beside the session (unfolded): up into the room it was given
+            // for the camera, which is over the session's side.
+            { name: 'header', labels: [header], near: 'top', pad: 0, lift: lift },
             {
               name: 'question',
               labels: [],
@@ -63,5 +71,5 @@ export function usePageRepaint(options: { headerClear: boolean; terminal?: boole
     )
     const sessionOnly = options.headerClear ? [] : [PAGE_QUESTION_ROOM]
     return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, ...sessionOnly].join('\n')
-  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom, micRoom])
+  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom, micRoom, lift])
 }

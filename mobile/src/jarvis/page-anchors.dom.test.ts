@@ -41,7 +41,7 @@ it('makes room on the right of the header’s bar, says where its menu is, and p
   expect(posted).toEqual([{ name: 'header', at: { x: 300, y: 0, width: 44, height: 44 } }])
 
   new Function(pageAnchorsScript(header(0)))() // the column back
-  expect(bar.style.getPropertyValue('padding-right')).toBe('')
+  expect(bar.style.getPropertyValue('padding-right')).toBe('8px') // as the page had it
 })
 
 it('finds the composer’s mic in the page’s bottom half, whichever state its label says, and its going', () => {
@@ -121,4 +121,18 @@ it('in a split view makes room in the mic’s own row, not the whole page around
   new Function(pageAnchorsScript(mic))()
   expect(document.getElementById('input')!.style.getPropertyValue('padding-right')).toBe('48px')
   expect(document.getElementById('page')!.style.getPropertyValue('padding-right')).toBe('')
+})
+
+it('gives the host list’s header back the camera’s room when it shows beside a session, and puts it back', () => {
+  listen()
+  document.body.innerHTML =
+    '<div id="safe" style="padding-top: 67px"><div id="bar"><div id="more" aria-label="More actions"></div></div></div>'
+  place(document.getElementById('more')!, { left: 250, top: 75, width: 44, height: 44 })
+  const header = (lift: number) => [
+    { name: 'header' as const, labels: ['More actions'], near: 'top' as const, pad: 0, lift }
+  ]
+  new Function(pageAnchorsScript(header(67)))()
+  expect(document.getElementById('safe')!.style.getPropertyValue('padding-top')).toBe('0px')
+  new Function(pageAnchorsScript(header(0)))() // folded again: the session alone
+  expect(document.getElementById('safe')!.style.getPropertyValue('padding-top')).toBe('67px')
 })

@@ -40,6 +40,8 @@ export type PageAnchorWatch = {
   readonly near: 'top' | 'bottom'
   /** Pad the full-width bar holding it by this much more on the right; 0 puts it back. */
   readonly pad: number
+  /** Take this much off the top padding of the box above it that has at least that much; 0 puts it back. */
+  readonly lift?: number
 }
 
 // The top band: a header's button sits under the top inset at most.
@@ -48,7 +50,8 @@ const TOP_REACH = 140
 /** The script for the page: report each anchor (or that it's gone) as it moves, padding bars as asked. */
 export function pageAnchorsScript(watches: readonly PageAnchorWatch[]): string {
   return String.raw`(function () {
-var state = window.__xenoAnchors || (window.__xenoAnchors = { rows: {}, at: {} });
+var state = window.__xenoAnchors || (window.__xenoAnchors = { rows: {}, lifts: {}, at: {} });
+state.lifts = state.lifts || {};
 state.watches = ${JSON.stringify(watches)};
 // The bar to make room in: the nearest row at least half the page wide. Not simply the first full-width box: on the
 // unfolded Duo a session shares the page with the host list, and that box is the whole page.
@@ -78,13 +81,35 @@ function find(watch) {
   });
   return found;
 }
+// A style the script set, put back as the page had it (its own inline value, if any) when no longer wanted.
+function hold(el, prop) {
+  return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop),
+           base: parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0 };
+}
+function restore(held) {
+  if (held.inline) held.el.style.setProperty(held.prop, held.inline, held.priority);
+  else held.el.style.removeProperty(held.prop);
+}
 function pad(name, row, extra) {
   var held = state.rows[name];
-  if (held && held.row !== row) { held.row.style.removeProperty('padding-right'); held = state.rows[name] = null; }
-  if (!row) return;
-  if (!held) held = state.rows[name] = { row: row, base: parseFloat(getComputedStyle(row).paddingRight) || 0 };
-  if (extra > 0) row.style.setProperty('padding-right', (held.base + extra) + 'px', 'important');
-  else row.style.removeProperty('padding-right');
+  if (held && (held.el !== row || !(extra > 0))) { restore(held); held = state.rows[name] = null; }
+  if (!row || !(extra > 0)) return;
+  if (!held) held = state.rows[name] = hold(row, 'padding-right');
+  row.style.setProperty('padding-right', (held.base + extra) + 'px', 'important');
+}
+// The box over a header holding the page's top inset: the nearest one above the button padded at least that much.
+function lifted(name, button, by) {
+  var held = state.lifts[name];
+  var box = null;
+  if (button && by > 0) {
+    box = button.parentElement;
+    while (box && box !== document.body && !(parseFloat(getComputedStyle(box).paddingTop) >= by - 0.5)) box = box.parentElement;
+    if (box === document.body) box = null;
+  }
+  if (held && held.el !== box) { restore(held); held = state.lifts[name] = null; }
+  if (!box) return;
+  if (!held) held = state.lifts[name] = hold(box, 'padding-top');
+  box.style.setProperty('padding-top', Math.max(0, held.base - by) + 'px', 'important');
 }
 function check() {
   state.pending = false;
@@ -92,6 +117,7 @@ function check() {
     var button = find(watch);
     // Only a bar asked to make room is touched; padding is put back when it's no longer asked for.
     if (watch.pad > 0 || state.rows[watch.name]) pad(watch.name, button ? bar(button) : null, watch.pad);
+    if (watch.lift > 0 || state.lifts[watch.name]) lifted(watch.name, button, watch.lift || 0);
     var r = button && button.getBoundingClientRect();
     var at = r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(',') : '';
     if (at === state.at[watch.name]) return;

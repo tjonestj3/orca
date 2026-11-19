@@ -28,6 +28,7 @@ export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
   division: BridgeFoldDivision | null
   geometry: BridgePageGeometry
   safeAreaInsets: BridgeSafeAreaInsets
+  raisedBy: number
   rootRef: RefObject<HostInstance | null>
   onRootLayout: () => void
   onShellLayout: (event: LayoutChangeEvent) => void
@@ -79,16 +80,20 @@ export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
   ])
   // A session full screen on the folded Duo: the page takes the column, its header clear of the camera.
   const column = useSideColumn()
+  const measuredInsets = useMemo(
+    () => measuredPageSafeAreaInsets(windowSafeArea, frame, insets),
+    [windowSafeArea, frame, insets]
+  )
   const overColumn = useMemo(
     () =>
       pageOverColumn({
-        insets: measuredPageSafeAreaInsets(windowSafeArea, frame, insets),
+        insets: measuredInsets,
         occlusions,
         column,
         windowWidth: windowSize.width,
         raiseTop: options.raiseTop
       }),
-    [windowSafeArea, frame, insets, occlusions, column, windowSize.width, options.raiseTop]
+    [measuredInsets, occlusions, column, windowSize.width, options.raiseTop]
   )
   const split = frame === null ? null : getFoldSplit(divisions, frame)
   const axis = split?.axis
@@ -108,7 +113,17 @@ export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
     [frame, overColumn.occlusions, sideRail, directionPadAvailable]
   )
   const safeAreaInsets = overColumn.insets
-  return { division, geometry, safeAreaInsets, rootRef, onRootLayout: measure, onShellLayout }
+  // How far the top was raised to clear the camera, which a header beside a session's gives back (page-anchors).
+  const raisedBy = Math.max(0, overColumn.insets.top - measuredInsets.top)
+  return {
+    division,
+    geometry,
+    safeAreaInsets,
+    raisedBy,
+    rootRef,
+    onRootLayout: measure,
+    onShellLayout
+  }
 }
 
 /** Hands a moved fold to the page over the re-sent `init`, as the insets are. */
