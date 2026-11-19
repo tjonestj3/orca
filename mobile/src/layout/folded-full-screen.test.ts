@@ -144,7 +144,7 @@ describe('what a session page extending over the column is told', () => {
 
   it("keeps its header clear of the column's top, the camera and the toggle under it", () => {
     expect(told.occlusions).toContainEqual({ x: 382, y: 0, width: 84, height: COLUMN_HEADER_BAND })
-    expect(COLUMN_HEADER_BAND).toBeGreaterThanOrEqual(COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_SLOT)
+    expect(COLUMN_HEADER_BAND).toBeGreaterThanOrEqual(COLUMN_TOGGLE_TOP + 36) // the button under the camera
     // The page's header (the desktop's own code) pads itself out of a cutout at the top like this.
     const header = { x: 0, y: 0, width: 466, height: 96 }
     expect(topChromeSpace(header, told.insets.top, told.occlusions)).toEqual({
@@ -152,6 +152,11 @@ describe('what a session page extending over the column is told', () => {
       right: 84,
       minHeight: COLUMN_HEADER_BAND
     })
+  })
+
+  it('keeps its header about as tall as beside the column, so leaving full screen barely moves it', () => {
+    // Beside the column the session header (title row and tabs) is 96 pt; it was held at 116 over it.
+    expect(COLUMN_HEADER_BAND).toBeLessThanOrEqual(104)
   })
 
   it('is told nothing new while the column is not extended', () => {

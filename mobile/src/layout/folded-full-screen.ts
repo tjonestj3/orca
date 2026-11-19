@@ -96,11 +96,14 @@ type Insets = { top: number; right: number; bottom: number; left: number }
 type Rect = { x: number; y: number; width: number; height: number }
 
 /** The Duo's camera reaches 66 pt down its status column; the column's own toggle sits just under it. */
-export const COLUMN_TOGGLE_TOP = 72
+export const COLUMN_TOGGLE_TOP = 68
 /** A nav bar button and the gap below it. */
 export const COLUMN_TOGGLE_SLOT = 44
-/** How far down the column a page extending over it keeps its header clear: the camera and the toggle. */
-export const COLUMN_HEADER_BAND = COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_SLOT
+/**
+ * How far down the column a page extending over it keeps its header clear: the camera and the toggle's button
+ * (36 pt). About the header's own height beside the column (96 pt), so leaving full screen barely moves it.
+ */
+export const COLUMN_HEADER_BAND = COLUMN_TOGGLE_TOP + 36
 
 /**
  * Where the column's own full-screen toggle goes, for a screen whose header the app doesn't draw (a

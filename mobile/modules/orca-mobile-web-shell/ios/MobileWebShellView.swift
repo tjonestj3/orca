@@ -20,6 +20,36 @@ final class OrcaMobileWebShellView: ExpoView, MobileWebShellDocumentSink,
   override func didMoveToWindow() {
     super.didMoveToWindow()
     document?.loadWhenIsolated()
+    scrollBarSweep?.invalidate()
+    scrollBarSweep = nil
+    if window != nil {
+      // The page makes scroll areas as it renders (a tab, a list): look again while it shows.
+      scrollBarSweep = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        self?.keepScrollBarsAtTheEdge()
+      }
+    }
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    keepScrollBarsAtTheEdge()
+  }
+
+  private var scrollBarSweep: Timer?
+
+  /// The page's scroll areas are scroll views iOS insets by the safe area, and on the folded iPhone Duo that keeps
+  /// the status column after its status bar hides: with the page full screen over the column, their scroll bars
+  /// sat at the column's old edge. The page lays itself out from the insets the app gives it, so its scroll bars
+  /// go at its own edge.
+  private func keepScrollBarsAtTheEdge() {
+    guard let webView = document?.webView else { return }
+    var views: [UIView] = [webView]
+    while let view = views.popLast() {
+      if let scroll = view as? UIScrollView, scroll.automaticallyAdjustsScrollIndicatorInsets {
+        scroll.automaticallyAdjustsScrollIndicatorInsets = false
+      }
+      views.append(contentsOf: view.subviews)
+    }
   }
 
   required init(appContext: AppContext? = nil) {
