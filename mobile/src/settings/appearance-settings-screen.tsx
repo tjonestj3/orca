@@ -5,9 +5,11 @@ import {
   setMobileAppearancePreference,
   setMobileDarkTheme,
   setSessionMonospace,
+  setSessionPill,
   useMobileAppearancePreference,
   useMobileDarkTheme,
   useSessionMonospace,
+  useSessionPill,
   type MobileAppearancePreference
 } from '../theme/mobile-appearance'
 import type { MobileDarkTheme } from '../theme/mobile-theme'
@@ -41,6 +43,7 @@ export default function AppearanceSettingsScreen() {
   const preference = useMobileAppearancePreference()
   const darkTheme = useMobileDarkTheme()
   const monospace = useSessionMonospace()
+  const pill = useSessionPill()
 
   return (
     <SettingsScreen
@@ -108,6 +111,30 @@ export default function AppearanceSettingsScreen() {
           selected={monospace}
           onPress={() => {
             void setSessionMonospace(true).catch(() => {})
+          }}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        radioGroup
+        title={t('settings.appearance.sessionHeader.heading', 'SESSION HEADER')}
+        footer={t(
+          'settings.appearance.sessionHeader.description',
+          'Floating sits over the chat as one see-through pill, like Moshi’s; the terminal keeps Orca’s own.'
+        )}
+      >
+        <ListRow
+          title={t('settings.appearance.sessionHeader.floating', 'Floating')}
+          selected={pill}
+          onPress={() => {
+            void setSessionPill(true).catch(() => {})
+          }}
+        />
+        <ListRow
+          title={t('settings.appearance.sessionHeader.standard', 'Standard')}
+          selected={!pill}
+          onPress={() => {
+            void setSessionPill(false).catch(() => {})
           }}
         />
       </SettingsSection>

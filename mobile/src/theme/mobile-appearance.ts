@@ -65,6 +65,14 @@ export function startMobileAppearance(): Promise<void> {
         }
       })
       .catch(() => undefined),
+    AsyncStorage.getItem(SESSION_PILL_KEY)
+      .then((stored) => {
+        if (stored === 'off' && sessionPill) {
+          sessionPill = false
+          notifyPreferences()
+        }
+      })
+      .catch(() => undefined),
     AsyncStorage.getItem(ORB_THEME_KEY)
       .then((stored) => {
         if (isOrbThemeId(stored) && orbTheme === 'classic') {
@@ -94,6 +102,9 @@ const ORB_THEME_KEY = 'orca:orbTheme'
 let darkTheme: MobileDarkTheme = 'orca'
 let sessionMonospace = false
 let orbTheme: OrbThemeId = 'classic'
+// A session's header floating over its chat as one pill, like Moshi's (page-pill-header), or Orca's own.
+const SESSION_PILL_KEY = 'orca:sessionPill'
+let sessionPill = true
 
 function notifyPreferences(): void {
   for (const listener of preferenceListeners) {
@@ -124,6 +135,16 @@ export function setSessionMonospace(on: boolean): Promise<void> {
 
 export function useSessionMonospace(): boolean {
   return useSyncExternalStore(subscribePreference, () => sessionMonospace)
+}
+
+export function setSessionPill(on: boolean): Promise<void> {
+  sessionPill = on
+  notifyPreferences()
+  return AsyncStorage.setItem(SESSION_PILL_KEY, on ? 'on' : 'off')
+}
+
+export function useSessionPill(): boolean {
+  return useSyncExternalStore(subscribePreference, () => sessionPill)
 }
 
 export function setOrbTheme(next: OrbThemeId): Promise<void> {

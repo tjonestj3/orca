@@ -86,6 +86,13 @@ function hold(el, prop) {
   return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop),
            base: parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0 };
 }
+// Written only when it changes: a write, even of the same value, is a change the watch sees, and would run it again
+// every frame.
+function setIfChanged(el, prop, value) {
+  if (el.style.getPropertyValue(prop) !== value || el.style.getPropertyPriority(prop) !== 'important') {
+    el.style.setProperty(prop, value, 'important');
+  }
+}
 function restore(held) {
   if (held.inline) held.el.style.setProperty(held.prop, held.inline, held.priority);
   else held.el.style.removeProperty(held.prop);
@@ -95,7 +102,7 @@ function pad(name, row, extra) {
   if (held && (held.el !== row || !(extra > 0))) { restore(held); held = state.rows[name] = null; }
   if (!row || !(extra > 0)) return;
   if (!held) held = state.rows[name] = hold(row, 'padding-right');
-  row.style.setProperty('padding-right', (held.base + extra) + 'px', 'important');
+  setIfChanged(row, 'padding-right', (held.base + extra) + 'px');
 }
 // The box over a header holding the page's top inset: the nearest one above the button padded at least that much.
 function lifted(name, button, by) {
@@ -109,7 +116,7 @@ function lifted(name, button, by) {
   if (held && held.el !== box) { restore(held); held = state.lifts[name] = null; }
   if (!box) return;
   if (!held) held = state.lifts[name] = hold(box, 'padding-top');
-  box.style.setProperty('padding-top', Math.max(0, held.base - by) + 'px', 'important');
+  setIfChanged(box, 'padding-top', Math.max(0, held.base - by) + 'px');
 }
 function check() {
   state.pending = false;

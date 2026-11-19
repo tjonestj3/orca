@@ -1,5 +1,10 @@
 import { useMemo } from 'react'
-import { useMobileDarkTheme, useSessionMonospace } from '../../theme/mobile-appearance'
+import {
+  useMobileDarkTheme,
+  useSessionMonospace,
+  useSessionPill
+} from '../../theme/mobile-appearance'
+import { colors } from '../../theme/mobile-theme'
 import { DARK_THEMES } from '../../theme/dark-themes'
 import { ORCA_DARK_ROLES, ORCA_RAISED, themePairs } from '../../theme/mocha-theme'
 import { pageRepaintScript } from '../../theme/page-repaint'
@@ -9,6 +14,7 @@ import { useSideColumn } from '../../layout/side-rail'
 import { PAGE_MODAL_WATCH } from '../../jarvis/page-modal'
 import { PLUS_ORB_ROOM, TERMINAL_MIC_ROOM, pageAnchorsScript } from '../../jarvis/page-anchors'
 import { PAGE_SCROLL_PIN } from './page-scroll-pin'
+import { pagePillHeaderScript } from './page-pill-header'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 
 const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
@@ -24,6 +30,8 @@ export function usePageRepaint(options: {
   headerClear: boolean
   terminal?: boolean
   hostHeaderLift?: number
+  /** A chat session's pane: where its header floats as a pill (page-pill-header), or null for Orca's own. */
+  pillAt?: { top: number; left: number; right: number } | null
 }): string {
   const scheme = useMobileColorScheme()
   const theme = useMobileDarkTheme()
@@ -46,6 +54,15 @@ export function usePageRepaint(options: {
   // In a terminal the live input row makes room beside its mic, wherever the orb isn't in the folded Duo's rail.
   const micRoom = options.terminal && (!column || column.extended) ? TERMINAL_MIC_ROOM : 0
   const lift = Math.round(options.hostHeaderLift ?? 0)
+  const pillOn = useSessionPill()
+  const moreLabel = t('session.header.moreActions', 'More session actions')
+  const newTabLabel = t('session.tabStrip.newTab', 'New tab')
+  const pillBackground = colors.bgPanel
+  const at = pillOn ? (options.pillAt ?? null) : null
+  const pillTop = at?.top ?? 0
+  const pillLeft = at?.left ?? 0
+  const pillRight = at?.right ?? 0
+  const pillShown = at !== null
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
@@ -70,6 +87,36 @@ export function usePageRepaint(options: {
           ]
     )
     const sessionOnly = options.headerClear ? [] : [PAGE_QUESTION_ROOM]
-    return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, ...sessionOnly].join('\n')
-  }, [themed, monospace, options.headerClear, header, plus, mic, pad, plusRoom, micRoom, lift])
+    const pill = pagePillHeaderScript(
+      pillShown
+        ? {
+            moreLabel,
+            newTabLabel,
+            top: pillTop,
+            left: pillLeft,
+            right: pillRight,
+            background: pillBackground
+          }
+        : null
+    )
+    return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, pill, ...sessionOnly].join('\n')
+  }, [
+    themed,
+    monospace,
+    options.headerClear,
+    header,
+    plus,
+    mic,
+    pad,
+    plusRoom,
+    micRoom,
+    lift,
+    pillShown,
+    moreLabel,
+    newTabLabel,
+    pillTop,
+    pillLeft,
+    pillRight,
+    pillBackground
+  ])
 }

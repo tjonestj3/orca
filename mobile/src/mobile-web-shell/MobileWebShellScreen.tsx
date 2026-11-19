@@ -54,6 +54,8 @@ import {
 } from './page-geometry/page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/page-fold-division'
 import { usePageRepaint } from './page-geometry/use-page-repaint'
+import { pillPlace } from './page-geometry/page-pill-header'
+import { useSideColumn } from '../layout/side-rail'
 import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
 import { useShowsSession } from '../session/showing-session'
@@ -156,11 +158,13 @@ export function MobileWebShellScreen({
   const keyRail = useShellKeyRail({ sessionId: readySessionId, overlay, routeGrants })
   // Xeno's small orb sits by the session's own controls: the composer's mic, or the terminal's last line.
   useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
+  const sideColumn = useSideColumn()
   const pageRepaint = usePageRepaint({
     headerClear: !showsSession,
     terminal: showsSession && keyRail.terminalShowing,
     // Unfolded, the host list beside a session shares the raised top; its header gives the camera's room back.
-    hostHeaderLift: showsSession ? pageFold.raisedBy : 0
+    hostHeaderLift: showsSession ? pageFold.raisedBy : 0,
+    pillAt: showsSession && !keyRail.terminalShowing ? pillPlace(pageFold, sideColumn) : null
   })
   const {
     snapshot,
