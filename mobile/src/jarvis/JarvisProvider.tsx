@@ -24,7 +24,12 @@ import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
 import { jarvisOfferUrl } from './jarvis-endpoint'
-import { chooseXenoHost, hostIdFromPath } from './jarvis-host-choice'
+import {
+  CALL_FOLLOWS_AFTER_MS,
+  callMoveTarget,
+  chooseXenoHost,
+  hostIdFromPath
+} from './jarvis-host-choice'
 import { JarvisHostPicker } from './JarvisHostPicker'
 import { useXenoHosts } from './use-xeno-hosts'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
@@ -69,6 +74,30 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   useEffect(() => {
     setCallHostId((held) => (live ? (held ?? chosenRef.current) : null))
   }, [live])
+  // Going into another desktop with Xeno running moves a live call there once you've stayed a moment and its Xeno
+  // is only listening: each desktop has its own Xeno, and talking to it while you work there needs the call there.
+  const moveTo = callMoveTarget({ live, phase, callHostId, routeHostId, reachable: xeno.reachable })
+  // Read when the move happens, so refreshing the desktop list or changing the voice doesn't restart the wait.
+  const latest = useRef({ hosts: xeno.hosts, voice })
+  latest.current = { hosts: xeno.hosts, voice }
+  useEffect(() => {
+    if (!moveTo) {
+      return
+    }
+    const to = moveTo
+    const follow = setTimeout(() => {
+      const target = latest.current.hosts.find((profile) => profile.id === to)
+      const url = target ? jarvisOfferUrl(target.endpoint) : null
+      if (!url) {
+        return
+      }
+      setCallHostId(to)
+      setLastHostId(to)
+      void rememberJarvisHost(to)
+      void call.start(url, latest.current.voice)
+    }, CALL_FOLLOWS_AFTER_MS)
+    return () => clearTimeout(follow)
+  }, [call, moveTo])
   // Going into a desktop with Xeno running makes it the one to use from the app's own screens.
   useEffect(() => {
     if (routeHostId && !live && xeno.reachable.has(routeHostId)) {

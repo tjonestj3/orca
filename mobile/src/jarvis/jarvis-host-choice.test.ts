@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chooseXenoHost, hostIdFromPath } from './jarvis-host-choice'
+import { callMoveTarget, chooseXenoHost, hostIdFromPath } from './jarvis-host-choice'
 
 const none = new Set<string>()
 const both = new Set(['laptop', 'pc'])
@@ -49,5 +49,33 @@ describe('chooseXenoHost', () => {
 
   it('has nothing to talk to with no desktop running Xeno', () => {
     expect(chooseXenoHost(base)).toEqual({ hostId: null, needsPick: false })
+  })
+})
+
+describe('callMoveTarget', () => {
+  const both = new Set(['laptop', 'pc'])
+  const onCall = {
+    live: true,
+    phase: 'listening' as const,
+    callHostId: 'laptop',
+    routeHostId: 'pc',
+    reachable: both
+  }
+
+  it('moves a live call to the desktop you went into, whose Xeno answers', () => {
+    expect(callMoveTarget(onCall)).toBe('pc')
+  })
+
+  it('waits while Xeno is talking, thinking or hearing you, and moves once it’s only listening', () => {
+    for (const phase of ['speaking', 'thinking', 'hearing', 'connecting'] as const) {
+      expect(callMoveTarget({ ...onCall, phase }), phase).toBeNull()
+    }
+  })
+
+  it('stays put on its own desktop, the app’s own screens, a desktop whose Xeno is off, or with no call', () => {
+    expect(callMoveTarget({ ...onCall, routeHostId: 'laptop' })).toBeNull()
+    expect(callMoveTarget({ ...onCall, routeHostId: null })).toBeNull()
+    expect(callMoveTarget({ ...onCall, reachable: new Set(['laptop']) })).toBeNull()
+    expect(callMoveTarget({ ...onCall, live: false, phase: 'idle' })).toBeNull()
   })
 })
