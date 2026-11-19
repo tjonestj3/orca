@@ -2,12 +2,10 @@ import { Platform } from 'react-native'
 import { mediaDevices, type MediaStream } from 'react-native-webrtc'
 import { requestMicrophonePermissionsAsync } from '@orca/expo-two-way-audio'
 import { OrcaXenoTalk } from '../../modules/orca-xeno-talk/src'
-import type { JarvisCallSnapshot } from './jarvis-call-types'
-import { MusicDucker, musicUnderXeno } from './jarvis-music'
+import { musicUnderXeno } from './jarvis-music'
 
-/** One call's music from other apps: mixed in when chosen on the Xeno screen, and turned down under Xeno. */
+/** One call's music from other apps: mixed in at its own volume when chosen on the Xeno screen (jarvis-music). */
 export class CallMusic {
-  private readonly ducker = new MusicDucker((on) => OrcaXenoTalk?.duckMusic?.(on))
   /** Whether this call mixes with other apps' audio; set before the microphone opens. */
   mixing = false
 
@@ -22,14 +20,7 @@ export class CallMusic {
     return { kind: 'music-mixing', on: this.mixing }
   }
 
-  follow(call: JarvisCallSnapshot): void {
-    if (this.mixing) {
-      this.ducker.follow(call)
-    }
-  }
-
   stop(): void {
-    this.ducker.stop()
     this.mixing = false
   }
 }

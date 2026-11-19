@@ -287,7 +287,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
           accessibilityState={{ checked: music }}
           accessibilityLabel={t(
             'jarvis.screen.music',
-            'Keep music playing during calls, turned down while Xeno talks'
+            'Keep music playing during calls, with Xeno over it'
           )}
           testID="jarvis-music"
         >

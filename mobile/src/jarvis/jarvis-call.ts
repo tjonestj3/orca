@@ -334,7 +334,6 @@ export class JarvisCall {
 
   private set(next: JarvisCallSnapshot): void {
     this.snapshot = next
-    this.music.follow(next)
     this.listeners.forEach((listener) => listener())
   }
 }
