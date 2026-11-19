@@ -38,6 +38,8 @@ import { MobileHomeFab } from './tabs/MobileHomeFab'
 import { MobileHomeFeedTab } from './tabs/MobileHomeFeedTab'
 import { MobileHomeSettingsTab } from './tabs/MobileHomeSettingsTab'
 import { MobileHomeTabBar } from './tabs/MobileHomeTabBar'
+import { JarvisTabButton } from '../jarvis/JarvisTabButton'
+import { useSessionFullScreen } from '../session/side-column-full-screen'
 import { MobileHomeUsageTab } from './tabs/MobileHomeUsageTab'
 
 // The floating button's height plus its gap above the tab bar.
@@ -49,6 +51,8 @@ export function MobileHomeScreen() {
   const data = useMobileHomeData()
   useHomeSparePage(data.hostCatalogLoaded ? data.sortedHosts.map((host) => host.id) : [])
   const insets = useSafeAreaInsets()
+  // Home takes the folded Duo's status column when full screen is on; Xeno is in its tab bar.
+  useSessionFullScreen()
   const openMobileHostEdit = useOpenMobileHostEdit()
   const openMobileTasks = useOpenMobileTasks()
   const openMobileAutomations = useOpenMobileAutomations()
@@ -239,6 +243,7 @@ export function MobileHomeScreen() {
             bottomInset={insets.bottom}
             agentsBadge={data.agentsNeedingYou.length}
             onSelect={selectTab}
+            trailing={<JarvisTabButton />}
           />
         </View>
         {agentActions.sheet}

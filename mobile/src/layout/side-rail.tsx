@@ -42,12 +42,18 @@ const COLUMN_EASE: LayoutAnimationConfig = {
   update: { type: 'easeInEaseOut' }
 }
 
-/** Animates the layout change the column switching sides of full screen makes; nothing else. */
-function useEasedColumnChange(extendedSide: string | null) {
+/**
+ * Animates the layout change the column switching sides of full screen makes; nothing else. Not while a web page
+ * shows (a session is the desktop's page): its view, eased, is resized every frame and the page lays itself out
+ * again each time, which stutters, so it's resized once.
+ */
+function useEasedColumnChange(extendedSide: string | null, ease: boolean) {
   const [shown, setShown] = useState(extendedSide)
   if (shown !== extendedSide) {
     setShown(extendedSide)
-    LayoutAnimation.configureNext(COLUMN_EASE)
+    if (ease) {
+      LayoutAnimation.configureNext(COLUMN_EASE)
+    }
   }
 }
 
@@ -82,6 +88,8 @@ const SideRailContext = createContext<{
 type FullScreenOptions = {
   /** The screen's header isn't the app's (a session is the desktop's page), so the column holds its toggle. */
   columnToggle?: boolean
+  /** The screen is a web page, which is resized at once rather than eased (see useEasedColumnChange). */
+  snap?: boolean
 }
 
 /**
@@ -99,22 +107,27 @@ function useRememberedColumn(strip: SideRailStrip | null) {
 }
 
 function useFullScreenRequests() {
-  const [counts, setCounts] = useState({ all: 0, toggle: 0 })
+  const [counts, setCounts] = useState({ all: 0, toggle: 0, snap: 0 })
   const request = useMemo(
     () => (options: FullScreenOptions) => {
       const toggle = options.columnToggle ? 1 : 0
-      setCounts((n) => ({ all: n.all + 1, toggle: n.toggle + toggle }))
+      const snap = options.snap ? 1 : 0
+      setCounts((n) => ({ all: n.all + 1, toggle: n.toggle + toggle, snap: n.snap + snap }))
       let released = false
       return () => {
         if (!released) {
           released = true
-          setCounts((n) => ({ all: n.all - 1, toggle: n.toggle - toggle }))
+          // A moment later, so a screen taking over (a session back to Home) asks before this one lets go,
+          // and the column doesn't come back for a frame between them.
+          setTimeout(() =>
+            setCounts((n) => ({ all: n.all - 1, toggle: n.toggle - toggle, snap: n.snap - snap }))
+          )
         }
       }
     },
     []
   )
-  return [counts.all > 0, counts.toggle > 0, request] as const
+  return [counts.all > 0, counts.toggle > 0, counts.snap > 0, request] as const
 }
 
 /**
@@ -141,13 +154,13 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
     hasFoldDivision === true || hasTerminalDirectionPadSpace(unoccludedStrip)
   useEffect(() => void foldedFullScreen.load(), [])
   const remembered = useRememberedColumn(unoccludedStrip)
-  const [requested, toggleWanted, requestFullScreen] = useFullScreenRequests()
+  const [requested, toggleWanted, snapWanted, requestFullScreen] = useFullScreenRequests()
   const extendedSide = extendedColumnSide({
     requested,
     fullScreen: useFoldedFullScreen(),
     column: remembered
   })
-  useEasedColumnChange(extendedSide)
+  useEasedColumnChange(extendedSide, !snapWanted)
   const column = useMemo(
     () =>
       remembered && (unoccludedStrip || extendedSide)
@@ -231,9 +244,10 @@ export function useSideColumn(): SideColumn | null {
 export function useSideColumnFullScreen(active: boolean, options: FullScreenOptions = {}): void {
   const request = useContext(SideRailContext)?.requestFullScreen
   const columnToggle = options.columnToggle === true
+  const snap = options.snap === true
   useEffect(
-    () => (active && request ? request({ columnToggle }) : undefined),
-    [active, request, columnToggle]
+    () => (active && request ? request({ columnToggle, snap }) : undefined),
+    [active, request, columnToggle, snap]
   )
 }
 

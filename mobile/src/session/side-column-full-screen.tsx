@@ -7,7 +7,9 @@ import { useSideColumn, useSideColumnFullScreen } from '../layout/side-rail'
  * While this screen is the one showing, it may take the folded Duo's status column. A screen whose
  * header the app doesn't draw (a session is the desktop's page) gets the column's own toggle.
  */
-export function useSessionFullScreen(options: { enabled?: boolean; columnToggle?: boolean } = {}) {
+export function useSessionFullScreen(
+  options: { enabled?: boolean; columnToggle?: boolean; snap?: boolean } = {}
+) {
   const [focused, setFocused] = useState(false)
   useFocusEffect(
     useCallback(() => {
@@ -16,7 +18,8 @@ export function useSessionFullScreen(options: { enabled?: boolean; columnToggle?
     }, [])
   )
   useSideColumnFullScreen(focused && options.enabled !== false, {
-    columnToggle: options.columnToggle
+    columnToggle: options.columnToggle,
+    snap: options.snap
   })
 }
 

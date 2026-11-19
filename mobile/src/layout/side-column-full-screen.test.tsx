@@ -89,12 +89,27 @@ function SessionPage() {
   return null
 }
 
-function render(geometry: Geometry, session: boolean | 'page' = true) {
+/** A page the shell shows: resized at once, not eased. */
+function WebPage() {
+  useSideColumnFullScreen(true, { columnToggle: true, snap: true })
+  return null
+}
+
+/** A screen letting go of full screen does so a moment later, so the next can ask first. */
+const letGo = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
+function render(geometry: Geometry, session: boolean | 'page' | 'web' = true) {
   state.geometry = geometry
   act(() => {
     const app = (
       <SideRailProvider>
-        {session === 'page' ? <SessionPage /> : session ? <SessionScreen /> : null}
+        {session === 'web' ? (
+          <WebPage />
+        ) : session === 'page' ? (
+          <SessionPage />
+        ) : session ? (
+          <SessionScreen />
+        ) : null}
         <Probe />
       </SideRailProvider>
     )
@@ -187,8 +202,28 @@ describe('full screen when folded', () => {
     render(DUO_FOLDED, 'page')
     expect(layoutAnimation.configureNext).toHaveBeenCalledTimes(1)
     render(DUO_FOLDED, false) // back to the worktree list: the rail returns
+    await letGo()
     expect(seen?.column?.extended).toBe(false)
     expect(layoutAnimation.configureNext).toHaveBeenCalledTimes(2)
+  })
+
+  it('resizes a web page at once, since easing it makes the page lay itself out every frame', async () => {
+    await act(() => foldedFullScreen.setDefault(true))
+    render(DUO_FOLDED, 'web')
+    expect(seen?.column?.extended).toBe(true)
+    act(() => foldedFullScreen.toggle()) // the session's toggle: the column back
+    expect(seen?.column?.extended).toBe(false)
+    expect(layoutAnimation.configureNext).not.toHaveBeenCalled()
+  })
+
+  it('keeps full screen through going from one full-screen screen to another', async () => {
+    await act(() => foldedFullScreen.setDefault(true))
+    render(DUO_FOLDED, 'web')
+    render(DUO_FOLDED, true) // a session back to Home: Home asks before the page lets go
+    expect(seen?.column?.extended).toBe(true)
+    await letGo()
+    expect(seen?.column?.extended).toBe(true)
+    expect(layoutAnimation.configureNext).not.toHaveBeenCalled()
   })
 
   it('animates nothing while the column stays as it is', () => {

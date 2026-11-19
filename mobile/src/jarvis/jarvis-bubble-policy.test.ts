@@ -6,6 +6,7 @@ import {
   classifyBubbleRelease,
   railOrbSize,
   railOrbVisible,
+  xenoTabVisible,
   sessionOrbPlace
 } from './jarvis-bubble-policy'
 
@@ -18,7 +19,7 @@ describe('classifyBubbleRelease', () => {
 })
 
 describe('bubbleVisible', () => {
-  const away = { onJarvisScreen: false, onXenoChat: false, railAvailable: false }
+  const away = { onJarvisScreen: false, onXenoChat: false, onHome: false, railAvailable: false }
 
   it('stays up during a live call even when the list check fails', () => {
     expect(bubbleVisible({ live: true, reachable: false, ...away })).toBe(true)
@@ -39,6 +40,7 @@ describe('bubbleVisible', () => {
 
   it('never shows over the Xeno chat, whose composer has its own call button', () => {
     expect(bubbleVisible({ live: true, reachable: true, ...away, onXenoChat: true })).toBe(false)
+    expect(bubbleVisible({ live: true, reachable: true, ...away, onHome: true })).toBe(false)
   })
 })
 
@@ -111,11 +113,22 @@ describe('railOrbSize', () => {
 })
 
 describe('railOrbVisible', () => {
-  it('shows in the folded rail for a computer, except on the Jarvis screen, which has its own', () => {
-    expect(railOrbVisible({ hasStrip: true, hasHost: true, onJarvisScreen: false })).toBe(true)
-    expect(railOrbVisible({ hasStrip: true, hasHost: true, onJarvisScreen: true })).toBe(false)
-    expect(railOrbVisible({ hasStrip: false, hasHost: true, onJarvisScreen: false })).toBe(false)
-    expect(railOrbVisible({ hasStrip: true, hasHost: false, onJarvisScreen: false })).toBe(false)
+  const rail = { hasStrip: true, hasHost: true, onJarvisScreen: false, onHome: false }
+  it('shows in the folded rail for a computer, except on the Jarvis screen and Home, which have their own', () => {
+    expect(railOrbVisible(rail)).toBe(true)
+    expect(railOrbVisible({ ...rail, onJarvisScreen: true })).toBe(false)
+    expect(railOrbVisible({ ...rail, onHome: true })).toBe(false)
+    expect(railOrbVisible({ ...rail, hasStrip: false })).toBe(false)
+    expect(railOrbVisible({ ...rail, hasHost: false })).toBe(false)
+  })
+})
+
+describe('xenoTabVisible', () => {
+  it('shows Xeno in Home’s tab bar once there’s a computer to talk to', () => {
+    expect(xenoTabVisible({ live: false, reachable: true, canPick: false })).toBe(true)
+    expect(xenoTabVisible({ live: true, reachable: false, canPick: false })).toBe(true)
+    expect(xenoTabVisible({ live: false, reachable: null, canPick: true })).toBe(true)
+    expect(xenoTabVisible({ live: false, reachable: null, canPick: false })).toBe(false)
   })
 })
 

@@ -13,16 +13,18 @@ export function classifyBubbleRelease(heldMs: number): 'tap' | 'talk' {
   return heldMs < TAP_MAX_MS ? 'tap' : 'talk'
 }
 
-// The floating bubble: never over the Jarvis screen or the Xeno chat, which have their own, or when the folded
-// Duo's rail holds Jarvis; otherwise always during a call, and before one once the computer's Jarvis has answered.
+// The floating bubble: never over the Jarvis screen or the Xeno chat, which have their own, on Home, whose tab bar
+// holds Xeno, or when the folded Duo's rail holds Jarvis; otherwise always during a call, and before one once the
+// computer's Jarvis has answered.
 export function bubbleVisible(s: {
   live: boolean
   reachable: boolean | null
   onJarvisScreen: boolean
   onXenoChat: boolean
+  onHome: boolean
   railAvailable: boolean
 }): boolean {
-  if (s.onJarvisScreen || s.onXenoChat || s.railAvailable) {
+  if (s.onJarvisScreen || s.onXenoChat || s.onHome || s.railAvailable) {
     return false
   }
   return s.live || s.reachable === true
@@ -88,13 +90,24 @@ export function bubblePress(actions: {
   }
 }
 
-// The folded Duo's rail orb: for a known computer, on every screen but the Jarvis screen, which has its own.
+// The folded Duo's rail orb: for a known computer, on every screen but the Jarvis screen, which has its own, and
+// Home, whose tab bar holds Xeno.
 export function railOrbVisible(s: {
   hasStrip: boolean
   hasHost: boolean
   onJarvisScreen: boolean
+  onHome: boolean
 }): boolean {
-  return s.hasStrip && s.hasHost && !s.onJarvisScreen
+  return s.hasStrip && s.hasHost && !s.onJarvisScreen && !s.onHome
+}
+
+// Xeno in Home's tab bar: once there's a computer to talk to (one answering, a call on, or several to pick from).
+export function xenoTabVisible(s: {
+  live: boolean
+  reachable: boolean | null
+  canPick: boolean
+}): boolean {
+  return s.live || s.reachable === true || s.canPick
 }
 
 // The Action Button (or "Talk to Xeno" in Shortcuts and Siri): a press starts talking, the next one sends, like

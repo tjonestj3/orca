@@ -6,7 +6,7 @@ import {
   Settings,
   type LucideIcon
 } from 'lucide-react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
@@ -38,6 +38,8 @@ export function MobileHomeTabBar(props: {
   /** Agents that need you; shown on Agents. */
   agentsBadge: number
   onSelect: (tab: HomeTabId) => void
+  /** After the tabs: Xeno (JarvisTabButton). */
+  trailing?: ReactNode
 }) {
   const t = useMobileTranslation()
   useMobileColorScheme()
@@ -65,6 +67,7 @@ export function MobileHomeTabBar(props: {
           onPress={() => props.onSelect(tab)}
         />
       ))}
+      {props.trailing}
     </View>
   )
 }

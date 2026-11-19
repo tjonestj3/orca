@@ -5,16 +5,26 @@ import Animated from 'react-native-reanimated'
 import { colors, radii, spacing } from '../../theme/mobile-theme'
 import { themedStyleSheet } from '../../theme/themed-styles'
 import { useMobileColorScheme } from '../../theme/use-mobile-color-scheme'
+import { columnClearance } from '../../layout/folded-full-screen'
+import { useSideColumn } from '../../layout/side-rail'
+import { SideColumnToggle } from '../../session/side-column-full-screen'
 
-/** A Home tab's title row: the tab's name and at most two icon buttons. */
+/**
+ * A Home tab's title row: the tab's name, at most two icon buttons, and on the folded Duo the full-screen toggle.
+ * Full screen, it keeps out of the column, which the camera tops.
+ */
 export function MobileHomeTabHeader(props: { title: string; trailing?: ReactNode }) {
   useMobileColorScheme()
+  const column = useSideColumn()
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, columnClearance(column)]}>
       <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
         {props.title}
       </Text>
-      {props.trailing ? <View style={styles.actions}>{props.trailing}</View> : null}
+      <View style={styles.actions}>
+        {props.trailing}
+        <SideColumnToggle />
+      </View>
     </View>
   )
 }

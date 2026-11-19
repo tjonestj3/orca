@@ -138,12 +138,13 @@ export function MobileWebShellScreen({
     updateNotice !== null && state.kind === 'ready' && noticeDismissedFor !== state.sessionId
   // Edge-to-edge disables adjustResize and zeroes WebView IME insets, so visualViewport never shrinks; publish native keyboard height to the page.
   const keyboardInset = Math.max(0, useKeyboardOcclusion())
-  // A session takes the folded Duo's status column, as the Xeno chat does. The page is the desktop's,
-  // which has no full-screen button, so the column holds it. The host list's page opens sessions inside
-  // itself, so where it says it is counts, not only this screen's route.
+  // The desktop's pages take the folded Duo's status column, as Home and the Xeno chat do; a session's header
+  // has no full-screen button, so the column holds one beside it (the host list's header sits below the camera,
+  // where the column's would cover its menu). The host list's page opens sessions inside itself, so where it
+  // says it is counts, not only this screen's route. A page is resized at once, not eased (side-rail).
   const [pageHref, setPageHref] = useState<string | null>(null)
   const showsSession = pageShowsSession(route.pathname, pageHref)
-  useSessionFullScreen({ enabled: showsSession, columnToggle: true })
+  useSessionFullScreen({ columnToggle: showsSession, snap: true })
 
   const pageFold = usePageFoldDivision()
   const pageRepaint = usePageRepaint()

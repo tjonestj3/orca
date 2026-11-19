@@ -212,19 +212,21 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   // The rail draws outside this provider, so its orb carries the context with it.
   const strip = useSideRailStrip()
   const onJarvisScreen = pathname.endsWith('/jarvis')
+  const onHome = pathname === '/' // its tab bar holds Xeno (JarvisTabButton)
   const railOrb = useMemo(
     () =>
       strip &&
       railOrbVisible({
         hasStrip: true,
         hasHost: needsPick || live || reachable === true,
-        onJarvisScreen
+        onJarvisScreen,
+        onHome
       }) ? (
         <JarvisContext.Provider value={value}>
           <JarvisRailOrb stripWidth={strip.width} />
         </JarvisContext.Provider>
       ) : null,
-    [strip, needsPick, live, reachable, value, onJarvisScreen]
+    [strip, needsPick, live, reachable, value, onJarvisScreen, onHome]
   )
   useSideRailPinned(railOrb)
   const showBubble = bubbleVisible({
@@ -232,6 +234,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     reachable: needsPick || reachable,
     onJarvisScreen,
     onXenoChat: pathname.endsWith('/jarvis-transcript'),
+    onHome,
     railAvailable: railOrb !== null
   })
   return (
