@@ -54,6 +54,7 @@ import {
 } from './page-geometry/page-safe-area-insets'
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/page-fold-division'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
+import { useShowsSession } from '../session/showing-session'
 import { pageShowsSession } from './page-shows-session'
 import { usePublishedShellKeyRail, useShellKeyRail } from './terminal-controls/use-shell-key-rail'
 import { hostProfileUnreadableLine, pageFaultLine } from './diagnostics/shell-lifecycle-log'
@@ -139,7 +140,10 @@ export function MobileWebShellScreen({
   // which has no full-screen button, so the column holds it. The host list's page opens sessions inside
   // itself, so where it says it is counts, not only this screen's route.
   const [pageHref, setPageHref] = useState<string | null>(null)
-  useSessionFullScreen({ enabled: pageShowsSession(route.pathname, pageHref), columnToggle: true })
+  const showsSession = pageShowsSession(route.pathname, pageHref)
+  useSessionFullScreen({ enabled: showsSession, columnToggle: true })
+  // The Xeno bubble keeps above a session's composer or keys, wherever the session lives.
+  useShowsSession(showsSession)
   const pageFold = usePageFoldDivision()
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,

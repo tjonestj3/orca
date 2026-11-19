@@ -86,7 +86,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    is a cutout (the page's header already pads out of cutouts, so it keeps clear of the camera), and draws
    the full-screen button in the column itself, under the camera, or heading the rail when the column is back. A
    session opened from the host list lives inside the host list's page, so the app goes by where that page
-   says it is, not only by its own route.
+   says it is, not only by its own route. The Xeno bubble goes by the same, so it keeps above a session's
+   composer there instead of landing on its buttons.
 19. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 

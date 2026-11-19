@@ -1,8 +1,8 @@
-import { usePathname } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
 import { useSideColumn } from '../layout/side-rail'
+import { useIsShowingSession } from '../session/showing-session'
 import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 
@@ -12,7 +12,7 @@ const SESSION_BOTTOM_CLEARANCE = 132
 
 export function JarvisBubble() {
   const insets = useSafeAreaInsets()
-  const onSession = usePathname().includes('/session/')
+  const onSession = useIsShowingSession()
   const bottom = insets.bottom + (onSession ? SESSION_BOTTOM_CLEARANCE : spacing.xl)
   // A session full screen on the folded Duo: the bubble keeps to the corner the status column was in.
   const column = useSideColumn()
