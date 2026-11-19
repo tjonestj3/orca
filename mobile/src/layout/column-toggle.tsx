@@ -14,10 +14,12 @@ export function columnToggleIcon(side: 'left' | 'right', extended: boolean) {
 /** Full screen, or the status column back with the keys and Xeno in it. */
 export function ColumnToggleButton({
   side,
-  extended
+  extended,
+  compact = false
 }: {
   side: 'left' | 'right'
   extended: boolean
+  compact?: boolean
 }) {
   const t = useMobileTranslation()
   return (
@@ -29,6 +31,7 @@ export function ColumnToggleButton({
           : t('session.header.fullScreen', 'Full screen')
       }
       onPress={() => foldedFullScreen.toggle()}
+      compact={compact}
     />
   )
 }
@@ -49,7 +52,8 @@ export function ColumnToggle({
         slot.side === 'right' ? { right: 0 } : { left: 0 }
       ]}
     >
-      <ColumnToggleButton side={slot.side} extended={extended} />
+      {/* Under the camera it fits beside the header, inside its height. */}
+      <ColumnToggleButton side={slot.side} extended={extended} compact={extended} />
     </View>
   )
 }
