@@ -115,3 +115,29 @@ it('keeps only icons and words inside the pill: no button or tab fills, no rules
     /#262626|rgb\(38, 38, 38\)/
   ) // as the page had it
 })
+
+it('when it comes off, gives the header back as the page last set it, not as it was when the pill went on', () => {
+  // The page's header before it has measured itself: pushed down the camera's height, full width.
+  document.body.innerHTML =
+    '<div id="pane"><div id="top"><div id="chrome" style="padding-top: 67px">' +
+    '<div><div id="more" aria-label="More session actions"></div></div>' +
+    '<div><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chat'), { top: 0, height: window.innerHeight })
+  new Function(pagePillHeaderScript(PILL))()
+
+  // Measured, the page sets its header beside the camera, under the pill (React writes plain inline styles).
+  const chrome = byId('chrome').style
+  chrome.paddingTop = '0px'
+  chrome.paddingRight = '84px'
+  new Function(pagePillHeaderScript(PILL))()
+  expect(chrome.getPropertyValue('padding-top')).toBe('4px') // still the pill's
+
+  new Function(pagePillHeaderScript(null))() // switched to the terminal
+  expect(chrome.getPropertyValue('padding-top')).toBe('0px')
+  expect(chrome.getPropertyValue('padding-right')).toBe('84px')
+})

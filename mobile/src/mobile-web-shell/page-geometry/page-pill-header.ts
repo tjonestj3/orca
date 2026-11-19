@@ -30,11 +30,21 @@ state.pill = ${JSON.stringify(pill)};
 function hold(el, prop) {
   return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) };
 }
+// Sets a style over the page's own, remembering the page's latest: when the page writes that style while the pill
+// covers it (as Orca does once it has measured its header), that write is what goes back when the pill comes off,
+// not what the page had the moment the pill went on.
 function set(el, prop, value) {
-  if (!state.held.some(function (h) { return h.el === el && h.prop === prop; })) state.held.push(hold(el, prop));
-  if (el.style.getPropertyValue(prop) !== value || el.style.getPropertyPriority(prop) !== 'important') {
-    el.style.setProperty(prop, value, 'important');
+  var held = null;
+  state.held.forEach(function (h) { if (h.el === el && h.prop === prop) held = h; });
+  if (!held) { held = hold(el, prop); state.held.push(held); }
+  var current = el.style.getPropertyValue(prop), priority = el.style.getPropertyPriority(prop);
+  if (current === value && priority === 'important') return;
+  if (held.applied !== undefined && !(current === held.applied && priority === 'important')) {
+    held.inline = current;
+    held.priority = priority;
   }
+  el.style.setProperty(prop, value, 'important');
+  held.applied = value;
 }
 function restoreAll() {
   state.held.forEach(function (h) {

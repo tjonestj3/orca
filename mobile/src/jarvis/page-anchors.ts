@@ -92,10 +92,16 @@ function hold(el, prop) {
 }
 // Written only when it changes: a write, even of the same value, is a change the watch sees, and would run it again
 // every frame.
-function setIfChanged(el, prop, value) {
-  if (el.style.getPropertyValue(prop) !== value || el.style.getPropertyPriority(prop) !== 'important') {
-    el.style.setProperty(prop, value, 'important');
+function setIfChanged(el, prop, value, held) {
+  var current = el.style.getPropertyValue(prop), priority = el.style.getPropertyPriority(prop);
+  if (current === value && priority === 'important') return;
+  // The page wrote this style since (it re-rendered): that is what goes back later, not what it had before.
+  if (held && held.applied !== undefined && !(current === held.applied && priority === 'important')) {
+    held.inline = current;
+    held.priority = priority;
   }
+  el.style.setProperty(prop, value, 'important');
+  if (held) held.applied = value;
 }
 function restore(held) {
   if (held.inline) held.el.style.setProperty(held.prop, held.inline, held.priority);
@@ -106,7 +112,7 @@ function pad(name, row, extra) {
   if (held && (held.el !== row || !(extra > 0))) { restore(held); held = state.rows[name] = null; }
   if (!row || !(extra > 0)) return;
   if (!held) held = state.rows[name] = hold(row, 'padding-right');
-  setIfChanged(row, 'padding-right', (held.base + extra) + 'px');
+  setIfChanged(row, 'padding-right', (held.base + extra) + 'px', held);
 }
 // The box over a header holding the page's top inset: the nearest one above the button padded at least that much.
 function lifted(name, button, by) {
@@ -123,7 +129,7 @@ function lifted(name, button, by) {
   if (held && held.el !== box) { restore(held); held = state.lifts[name] = null; }
   if (!box) return;
   if (!held) held = state.lifts[name] = hold(box, 'padding-top');
-  setIfChanged(box, 'padding-top', Math.max(0, held.base - by) + 'px');
+  setIfChanged(box, 'padding-top', Math.max(0, held.base - by) + 'px', held);
 }
 function check() {
   state.pending = false;
