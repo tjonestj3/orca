@@ -9,8 +9,10 @@ import { useSyncExternalStore } from 'react'
  *   in clear of the column (the camera tops it) plus room for the orb, which sits beside the button.
  * - `mic`: a session composer's mic, near the page's bottom; the orb sits just left of it. A tab without a
  *   composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over the page.
+ * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
+ *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
-export type PageAnchorName = 'header' | 'mic'
+export type PageAnchorName = 'header' | 'mic' | 'question'
 export type PageAnchor = { x: number; y: number; width: number; height: number }
 
 export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
@@ -22,7 +24,9 @@ const MIC_ORB_GAP = 8
 
 export type PageAnchorWatch = {
   readonly name: PageAnchorName
+  /** Found by any of these labels, or (`selector`) by what it is. */
   readonly labels: readonly string[]
+  readonly selector?: string
   /** Look in the page's top band (the header), or its bottom half (the composer). */
   readonly near: 'top' | 'bottom'
   /** Pad the full-width bar holding it by this much more on the right; 0 puts it back. */
@@ -44,8 +48,8 @@ function bar(button) {
 }
 function find(watch) {
   var found = null;
-  document.querySelectorAll('[aria-label]').forEach(function (el) {
-    if (found || watch.labels.indexOf(el.getAttribute('aria-label')) < 0) return;
+  document.querySelectorAll(watch.selector || '[aria-label]').forEach(function (el) {
+    if (found || (!watch.selector && watch.labels.indexOf(el.getAttribute('aria-label')) < 0)) return;
     var r = el.getBoundingClientRect();
     if (!(r.width > 0)) return;
     var near = watch.near === 'top' ? r.top >= 0 && r.top < ${TOP_REACH} : r.top > window.innerHeight / 2;
@@ -106,7 +110,7 @@ export function readPageAnchorMessage(
     !('type' in parsed) ||
     parsed.type !== PAGE_ANCHOR_MESSAGE ||
     !('name' in parsed) ||
-    (parsed.name !== 'header' && parsed.name !== 'mic') ||
+    (parsed.name !== 'header' && parsed.name !== 'mic' && parsed.name !== 'question') ||
     !('at' in parsed) ||
     typeof parsed.at !== 'string'
   ) {

@@ -67,3 +67,29 @@ it('finds the composer’s mic in the page’s bottom half, whichever state its 
   new Function(pageAnchorsScript(mic))()
   expect(posted.at(-1)).toEqual({ name: 'mic', at: null })
 })
+
+it('finds an agent’s question by its options, whatever they say', () => {
+  const posted = listen()
+  const height = window.innerHeight
+  document.body.innerHTML = '<div id="option" role="radio">Phased specs</div>'
+  place(document.getElementById('option')!, {
+    left: 20,
+    top: height - 300,
+    width: 360,
+    height: 120
+  })
+  const question = [
+    {
+      name: 'question' as const,
+      labels: [],
+      selector: '[role="radio"],[role="checkbox"]',
+      near: 'bottom' as const,
+      pad: 0
+    }
+  ]
+  new Function(pageAnchorsScript(question))()
+  expect(posted.at(-1)).toEqual({
+    name: 'question',
+    at: { x: 20, y: height - 300, width: 360, height: 120 }
+  })
+})

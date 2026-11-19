@@ -19,10 +19,12 @@ export function JarvisBubble() {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const { header: headerButton, mic } = usePageAnchors()
+  const { header: headerButton, mic, question } = usePageAnchors()
   const screen = useWindowDimensions()
-  // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it.
-  if (usePageModalOpen()) {
+  // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
+  // agent's question has no room in its footer.
+  const sheetOpen = usePageModalOpen()
+  if (sheetOpen || (view === 'chat' && question)) {
     return null
   }
   if (!view && headerButton && column?.extended) {
