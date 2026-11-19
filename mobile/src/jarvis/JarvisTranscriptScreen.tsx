@@ -1,5 +1,6 @@
-import { useSyncExternalStore } from 'react'
-import { Alert, KeyboardAvoidingView, Platform, View } from 'react-native'
+import { useState, useSyncExternalStore } from 'react'
+import { Alert, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronLeft, RotateCcw } from 'lucide-react-native'
@@ -26,6 +27,7 @@ import { useSideColumn } from '../layout/side-rail'
 import { SideColumnToggle, useSessionFullScreen } from '../session/side-column-full-screen'
 import { JarvisChatComposer } from './JarvisChatComposer'
 import { JarvisTranscript } from './JarvisTranscript'
+import { useKeyboardPadding } from './use-keyboard-padding'
 
 // The whole conversation with Xeno, full screen, and a box to type to it: one conversation with the calls, so
 // what was said aloud shows here and what's typed here is known in the next call. Typed answers are never
@@ -49,6 +51,10 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     openInClaude
   )
   const live = state.phase !== 'idle' && state.phase !== 'error'
+  // The composer rides on the keyboard; the conversation above it shrinks to fit, so nothing is ever covered.
+  const keyboardPadding = useKeyboardPadding(insets.bottom)
+  // Bumped on each send: the conversation goes to the newest line, like the Claude app.
+  const [followKey, setFollowKey] = useState(0)
   const chatUrl = endpoint ? jarvisChatUrl(endpoint) : null
 
   const back = (): void => {
@@ -66,6 +72,9 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
     // Typed from here, the person is looking at the conversation, not a worktree.
     const result = await sendJarvisChat(chatUrl, text, null)
     refresh()
+    if (result.ok) {
+      setFollowKey((key) => key + 1)
+    }
     return result.ok
   }
 
@@ -96,7 +105,7 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <NavBar
         style={columnClearance(column) ?? undefined}
         leading={
@@ -119,16 +128,13 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
           </>
         }
       />
-      <KeyboardAvoidingView
-        style={styles.body}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.top}
-      >
+      <Animated.View style={[styles.body, keyboardPadding]}>
         <JarvisTranscript
           messages={messages}
           hearing={live ? state.heard : ''}
           enabled={offerUrl != null}
           working={working}
+          followKey={followKey}
           onReplay={(id) => {
             if (offerUrl) {
               call.replay(id, offerUrl, voice)
@@ -144,7 +150,7 @@ export function JarvisTranscriptScreen({ hostId }: { readonly hostId: string }) 
           onCall={() => offerUrl && void call.start(offerUrl, voice)}
           onHangUp={() => call.hangUp()}
         />
-      </KeyboardAvoidingView>
+      </Animated.View>
     </View>
   )
 }

@@ -71,3 +71,32 @@ export function transcriptEntries(
   }
   return entries
 }
+
+// The transcript as a list drawn from the bottom up (an inverted list): newest first, with "Xeno is working…"
+// as the newest item until its reply starts to appear.
+export type TranscriptListItem =
+  | { readonly kind: 'entry'; readonly key: string; readonly entry: TranscriptEntry }
+  | { readonly kind: 'working'; readonly key: 'working' }
+
+export function transcriptListItems(
+  entries: readonly TranscriptEntry[],
+  working: boolean
+): TranscriptListItem[] {
+  const items: TranscriptListItem[] = entries
+    .map((entry): TranscriptListItem => ({ kind: 'entry', key: entry.key, entry }))
+    .toReversed()
+  const writing = entries.at(-1)?.growing === true
+  return working && !writing ? [{ kind: 'working', key: 'working' }, ...items] : items
+}
+
+// The "jump to latest" button: once the reader is more than half a screen above the newest line. In an inverted
+// list the scroll offset is the distance from the bottom.
+export function showJumpToLatest(offsetY: number, viewHeight: number): boolean {
+  return offsetY > viewHeight / 2
+}
+
+// Lines slide in as they arrive, but never the ones there when the conversation opened (`seen` is null until the
+// first lines load), and never again when the list redraws one scrolled back into view.
+export function animatesIn(key: string, seen: ReadonlySet<string> | null): boolean {
+  return seen !== null && !seen.has(key)
+}

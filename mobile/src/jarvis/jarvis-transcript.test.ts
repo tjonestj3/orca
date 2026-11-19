@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { JarvisMessage } from './jarvis-history'
-import { transcriptEntries, TRANSCRIPT_TIME_GAP_MS } from './jarvis-transcript'
+import {
+  animatesIn,
+  showJumpToLatest,
+  transcriptEntries,
+  transcriptListItems,
+  TRANSCRIPT_TIME_GAP_MS
+} from './jarvis-transcript'
 
 const at = 1_800_000_000_000
 const line = (
@@ -77,5 +83,46 @@ describe('transcriptEntries', () => {
   it('shows a new conversation as a divider that is never played', () => {
     const entries = transcriptEntries([reply(1, 'Done.'), line(2, 'new', 'New conversation')], '')
     expect(entries.at(-1)).toMatchObject({ who: 'new', playable: false })
+  })
+})
+
+describe('transcriptListItems', () => {
+  const entries = transcriptEntries([you(1, 'status?'), reply(2, 'Auth is done.')], '')
+
+  it('puts the newest first, for a list drawn from the bottom up', () => {
+    expect(transcriptListItems(entries, false).map((item) => item.key)).toEqual(['2', '1'])
+  })
+
+  it('shows Xeno working as the newest item until its reply starts to appear', () => {
+    expect(transcriptListItems(entries, true).map((item) => item.key)).toEqual([
+      'working',
+      '2',
+      '1'
+    ])
+    const writing = transcriptEntries(
+      [you(1, 'status?'), line(2, 'reply', 'Auth', at, { done: false })],
+      ''
+    )
+    expect(transcriptListItems(writing, true).map((item) => item.key)).toEqual(['2', '1'])
+  })
+})
+
+describe('showJumpToLatest', () => {
+  it('shows once the reader is more than half a screen above the newest line', () => {
+    expect(showJumpToLatest(0, 800)).toBe(false)
+    expect(showJumpToLatest(400, 800)).toBe(false)
+    expect(showJumpToLatest(401, 800)).toBe(true)
+  })
+})
+
+describe('animatesIn', () => {
+  it('never animates what was there when the conversation opened', () => {
+    expect(animatesIn('5', null)).toBe(false)
+  })
+
+  it('animates a line that arrives later, once', () => {
+    const seen = new Set(['1', '2'])
+    expect(animatesIn('3', seen)).toBe(true)
+    expect(animatesIn('2', seen)).toBe(false)
   })
 })

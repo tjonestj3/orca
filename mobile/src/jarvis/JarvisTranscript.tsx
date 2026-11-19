@@ -1,15 +1,37 @@
-import { useRef, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View, type ScrollViewInstance } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+  type FlatList,
+  type LayoutChangeEvent,
+  type ListRenderItemInfo,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent
+} from 'react-native'
+import Animated, { FadeInUp } from 'react-native-reanimated'
+import { ArrowDown } from 'lucide-react-native'
 import * as Clipboard from 'expo-clipboard'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
-import { colors, spacing } from '../theme/mobile-theme'
+import { colors, pressedStyle, spacing } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import type { JarvisMessage } from './jarvis-history'
-import { transcriptEntries, type TranscriptEntry } from './jarvis-transcript'
+import {
+  animatesIn,
+  showJumpToLatest,
+  transcriptEntries,
+  transcriptListItems,
+  type TranscriptEntry,
+  type TranscriptListItem
+} from './jarvis-transcript'
 import { JarvisTranscriptRow } from './JarvisTranscriptRow'
 
 const COPIED_MS = 1500
+// Within this of the newest line, new lines and a growing reply keep it in view; further up, the reader stays put.
+const FOLLOW_WITHIN = 80
+const ARRIVE = FadeInUp.duration(220)
 
 type Props = {
   readonly messages: readonly JarvisMessage[]
@@ -19,17 +41,51 @@ type Props = {
   // Xeno is answering a turn right now; shown under the last line until its reply starts to appear.
   readonly working?: boolean
   readonly onReplay: (id: number) => void
+  // Changes when the person sends something: the conversation goes to its newest line, however far up they were.
+  readonly followKey?: number
 }
 
-// The conversation with Xeno as a chat, newest at the bottom: yours on the right, Xeno's across the page.
-// Tap one of Xeno's to hear it again; touch and hold any to copy it.
-export function JarvisTranscript({ messages, hearing, enabled, working = false, onReplay }: Props) {
+function Gap() {
+  return <View style={styles.gap} />
+}
+
+// The conversation with Xeno as a chat, drawn like the Claude app's: newest at the bottom, new text pushing the
+// rest up while you're at the bottom, and staying put while you read further up, with a button back down.
+// Yours on the right, Xeno's across the page. Tap one of Xeno's to hear it again; touch and hold any to copy it.
+export function JarvisTranscript({
+  messages,
+  hearing,
+  enabled,
+  working = false,
+  onReplay,
+  followKey
+}: Props) {
   useMobileColorScheme()
   const t = useMobileTranslation()
-  const scroller = useRef<ScrollViewInstance>(null)
+  const list = useRef<FlatList<TranscriptListItem>>(null)
+  // Keys already drawn: null until the first lines load, so what's there on opening never slides in.
+  const seen = useRef<Set<string> | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
-  const entries = transcriptEntries(messages, hearing)
-  const writing = entries.at(-1)?.growing === true
+  const [height, setHeight] = useState(0)
+  const [away, setAway] = useState(false)
+  const items = transcriptListItems(transcriptEntries(messages, hearing), working)
+
+  useEffect(() => {
+    if (items.length === 0) {
+      return
+    }
+    const known = seen.current ?? new Set<string>()
+    for (const item of items) {
+      known.add(item.key)
+    }
+    seen.current = known
+  })
+
+  useEffect(() => {
+    if (followKey) {
+      list.current?.scrollToOffset({ offset: 0, animated: true })
+    }
+  }, [followKey])
 
   const copy = (entry: TranscriptEntry): void => {
     void Clipboard.setStringAsync(entry.text).then(() => {
@@ -38,55 +94,88 @@ export function JarvisTranscript({ messages, hearing, enabled, working = false, 
     })
   }
 
-  if (entries.length === 0 && !working) {
-    return (
-      <Text style={styles.empty}>
-        {t('jarvis.transcript.empty', 'Your conversation with Xeno shows up here.')}
-      </Text>
-    )
-  }
-
-  return (
-    <ScrollView
-      ref={scroller}
-      style={styles.list}
-      contentContainerStyle={styles.content}
-      keyboardDismissMode="interactive"
-      keyboardShouldPersistTaps="handled"
-      // Opens at the newest line and follows the conversation as it goes.
-      onContentSizeChange={() => scroller.current?.scrollToEnd({ animated: false })}
-    >
-      {entries.map((entry) => (
-        <JarvisTranscriptRow
-          key={entry.key}
-          entry={entry}
-          enabled={enabled}
-          copied={copied === entry.key}
-          t={t}
-          onReplay={onReplay}
-          onCopy={copy}
-        />
-      ))}
-      {working && !writing ? (
+  const renderItem = ({ item }: ListRenderItemInfo<TranscriptListItem>) => (
+    // Always the same wrapper, so a line never remounts once it has arrived; `entering` only plays on mount.
+    <Animated.View entering={animatesIn(item.key, seen.current) ? ARRIVE : undefined}>
+      {item.kind === 'working' ? (
         <View style={styles.working} accessibilityLiveRegion="polite">
           <ActivityIndicator size="small" color={colors.textMuted} />
           <Text style={styles.workingText}>{t('jarvis.chat.working', 'Xeno is working…')}</Text>
         </View>
+      ) : (
+        <JarvisTranscriptRow
+          entry={item.entry}
+          enabled={enabled}
+          copied={copied === item.key}
+          t={t}
+          onReplay={onReplay}
+          onCopy={copy}
+        />
+      )}
+    </Animated.View>
+  )
+
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
+    setAway(showJumpToLatest(event.nativeEvent.contentOffset.y, height))
+  }
+
+  return (
+    <View
+      style={styles.list}
+      onLayout={(event: LayoutChangeEvent) => setHeight(event.nativeEvent.layout.height)}
+    >
+      <Animated.FlatList
+        ref={list}
+        data={items}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        // Drawn from the bottom up: offset 0 is the newest line, so a growing reply pushes the rest up by itself.
+        inverted
+        // A reader further up stays where they are as lines arrive; near the bottom, iOS glides to the new one.
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: FOLLOW_WITHIN
+        }}
+        ItemSeparatorComponent={Gap}
+        contentContainerStyle={styles.content}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={64}
+      />
+      {items.length === 0 ? (
+        <Text style={styles.empty} pointerEvents="none">
+          {t('jarvis.transcript.empty', 'Your conversation with Xeno shows up here.')}
+        </Text>
       ) : null}
-    </ScrollView>
+      {away ? (
+        <Pressable
+          onPress={() => list.current?.scrollToOffset({ offset: 0, animated: true })}
+          style={({ pressed }) => [styles.jump, pressed && pressedStyle]}
+          accessibilityRole="button"
+          accessibilityLabel={t('jarvis.transcript.latest', 'Go to the latest message')}
+        >
+          <ArrowDown size={18} color={colors.textPrimary} strokeWidth={2.2} />
+        </Pressable>
+      ) : null}
+    </View>
   )
 }
 
 const styles = themedStyleSheet(() => ({
   list: { flex: 1 },
+  // Inverted: paddingTop is the space under the newest line, paddingBottom the space above the oldest.
   content: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.lg
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md
   },
+  gap: { height: spacing.lg },
   empty: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     color: colors.textSecondary,
     fontSize: 17,
     lineHeight: 25,
@@ -94,5 +183,18 @@ const styles = themedStyleSheet(() => ({
     paddingVertical: spacing.md
   },
   working: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
-  workingText: { color: colors.textMuted, fontSize: 15 }
+  workingText: { color: colors.textMuted, fontSize: 15 },
+  jump: {
+    position: 'absolute',
+    bottom: spacing.md,
+    alignSelf: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgRaised,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle
+  }
 }))
