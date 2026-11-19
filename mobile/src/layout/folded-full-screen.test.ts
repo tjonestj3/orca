@@ -164,6 +164,17 @@ describe('what a session page extending over the column is told', () => {
     expect(COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_BUTTON).toBeLessThanOrEqual(96)
   })
 
+  it('leaves the top alone for a page whose header only keeps below it (the host list)', () => {
+    const page = pageOverColumn({
+      insets: { top: 0, right: 84, bottom: 34, left: 0 },
+      occlusions: [],
+      column: RIGHT_COLUMN,
+      windowWidth: 466,
+      raiseTop: false
+    })
+    expect(page.insets).toEqual({ top: 0, right: 0, bottom: 34, left: 0 })
+  })
+
   it('is told nothing new while the column is not extended', () => {
     const insets = { top: 0, right: 84, bottom: 34, left: 0 }
     expect(

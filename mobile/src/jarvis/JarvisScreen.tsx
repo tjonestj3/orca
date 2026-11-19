@@ -16,6 +16,9 @@ import {
 } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
+import { columnClearance } from '../layout/folded-full-screen'
+import { useSideColumn } from '../layout/side-rail'
+import { SideColumnToggle, useSessionFullScreen } from '../session/side-column-full-screen'
 import { PickerListDrawer } from '../components/sheets/PickerListDrawer'
 import { useHostProfile } from '../host-catalog/use-host-profile'
 import { leaveHostRoute } from '../host-route-exit'
@@ -85,6 +88,9 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const t = useMobileTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // Takes the folded Duo's column when full screen is on, as Home and sessions do; it has its own orb.
+  useSessionFullScreen()
+  const column = useSideColumn()
   const { width, height } = useWindowDimensions()
   const host = useHostProfile(hostId)
   // The app-wide call: leaving this screen or the app keeps it going.
@@ -144,6 +150,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
       ]}
     >
       <NavBar
+        style={columnClearance(column) ?? undefined}
         leading={
           <NavBarButton
             icon={ChevronLeft}
@@ -154,11 +161,14 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
         title={t('jarvis.screen.title', 'Xeno')}
         subtitle={host?.name}
         trailing={
-          <NavBarButton
-            icon={MessagesSquare}
-            onPress={openTranscript}
-            accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
-          />
+          <>
+            <SideColumnToggle />
+            <NavBarButton
+              icon={MessagesSquare}
+              onPress={openTranscript}
+              accessibilityLabel={t('jarvis.screen.openTranscript', 'See the whole conversation')}
+            />
+          </>
         }
       />
       <View style={styles.stage}>

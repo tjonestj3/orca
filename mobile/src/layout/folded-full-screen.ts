@@ -130,21 +130,25 @@ export function columnToggleSlot(s: {
 
 /**
  * What a page extending over the column is told, in window points: no inset on that side, so it lays
- * out full width with its keys in the bottom row, and the column's top as a cutout, which the page's
- * header already pads itself out of. Its header then keeps clear of the camera and the toggle.
+ * out full width with its keys in the bottom row, and the column's top as a cutout. A session's header
+ * pads itself out of a cutout that tall, which keeps it clear of the camera and the toggle. Other pages'
+ * headers (the host list's) only keep below the top inset, so `raiseTop` false leaves it as it is rather
+ * than push them down the camera's height; the shell clears their header's right instead (page-header-clear).
  */
 export function pageOverColumn(s: {
   insets: Insets
   occlusions: readonly Rect[]
   column: Column | null
   windowWidth: number
+  raiseTop?: boolean
 }): { insets: Insets; occlusions: readonly Rect[] } {
   if (!s.column?.extended) {
     return { insets: s.insets, occlusions: s.occlusions }
   }
   const { side, width } = s.column
+  const top = s.raiseTop === false ? s.insets.top : Math.max(s.insets.top, COLUMN_HEADER_BAND)
   return {
-    insets: { ...s.insets, [side]: 0, top: Math.max(s.insets.top, COLUMN_HEADER_BAND) },
+    insets: { ...s.insets, [side]: 0, top },
     occlusions: [
       ...s.occlusions,
       { x: side === 'right' ? s.windowWidth - width : 0, y: 0, width, height: COLUMN_HEADER_BAND }

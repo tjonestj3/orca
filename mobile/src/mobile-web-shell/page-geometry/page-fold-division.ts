@@ -24,7 +24,7 @@ type WindowFrame = { x: number; y: number; width: number; height: number }
  * the view is measured in the window: `rootRef` and `onRootLayout` go on its container,
  * and `onShellLayout` on the WebView itself.
  */
-export function usePageFoldDivision(): {
+export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
   division: BridgeFoldDivision | null
   geometry: BridgePageGeometry
   safeAreaInsets: BridgeSafeAreaInsets
@@ -85,9 +85,10 @@ export function usePageFoldDivision(): {
         insets: measuredPageSafeAreaInsets(windowSafeArea, frame, insets),
         occlusions,
         column,
-        windowWidth: windowSize.width
+        windowWidth: windowSize.width,
+        raiseTop: options.raiseTop
       }),
-    [windowSafeArea, frame, insets, occlusions, column, windowSize.width]
+    [windowSafeArea, frame, insets, occlusions, column, windowSize.width, options.raiseTop]
   )
   const split = frame === null ? null : getFoldSplit(divisions, frame)
   const axis = split?.axis

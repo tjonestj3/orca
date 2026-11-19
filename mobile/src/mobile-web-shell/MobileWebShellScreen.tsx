@@ -146,8 +146,9 @@ export function MobileWebShellScreen({
   const showsSession = pageShowsSession(route.pathname, pageHref)
   useSessionFullScreen({ columnToggle: showsSession, snap: true })
 
-  const pageFold = usePageFoldDivision()
-  const pageRepaint = usePageRepaint()
+  // Only a session's header steps around the camera; others keep their top (see pageOverColumn).
+  const pageFold = usePageFoldDivision({ raiseTop: showsSession })
+  const pageRepaint = usePageRepaint({ headerClear: !showsSession })
   const pageInsets = pageSafeAreaInsets({
     insets: pageFold.safeAreaInsets,
     topCovered: noticeShown
