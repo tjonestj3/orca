@@ -9,10 +9,19 @@ type Geometry = {
 }
 
 const state = vi.hoisted(() => ({ geometry: null as unknown as Geometry }))
+const layoutAnimation = vi.hoisted(() => ({ configureNext: vi.fn() }))
 
 vi.mock('react-native', () => ({
   View: 'View',
   StyleSheet: { create: <T,>(styles: T) => styles },
+  LayoutAnimation: layoutAnimation,
+  Animated: {
+    View: 'AnimatedView',
+    Value: class {
+      constructor(public value: number) {}
+    },
+    timing: () => ({ start: () => undefined })
+  },
   useWindowDimensions: () => state.geometry.window
 }))
 vi.mock('react-native-safe-area-context', () => ({
@@ -105,6 +114,7 @@ afterEach(async () => {
   tree = undefined
   seen = null
   await foldedFullScreen.setDefault(false)
+  layoutAnimation.configureNext.mockClear()
 })
 
 describe('full screen when folded', () => {
@@ -170,6 +180,21 @@ describe('full screen when folded', () => {
     await act(() => foldedFullScreen.setDefault(true))
     render(DUO_FOLDED)
     expect(toggles()).toEqual([])
+  })
+
+  it('eases the screen out over the column and back, rather than jumping', async () => {
+    await act(() => foldedFullScreen.setDefault(true))
+    render(DUO_FOLDED, 'page')
+    expect(layoutAnimation.configureNext).toHaveBeenCalledTimes(1)
+    render(DUO_FOLDED, false) // back to the worktree list: the rail returns
+    expect(seen?.column?.extended).toBe(false)
+    expect(layoutAnimation.configureNext).toHaveBeenCalledTimes(2)
+  })
+
+  it('animates nothing while the column stays as it is', () => {
+    render(DUO_FOLDED, false)
+    render(DUO_FOLDED, 'page') // full screen is off: the session keeps the column
+    expect(layoutAnimation.configureNext).not.toHaveBeenCalled()
   })
 
   it('leaves a phone without a status column alone', async () => {

@@ -87,7 +87,8 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    the full-screen button in the column itself, under the camera, or heading the rail when the column is back. A
    session opened from the host list lives inside the host list's page, so the app goes by where that page
    says it is, not only by its own route. The Xeno bubble goes by the same, so it keeps above a session's
-   composer there instead of landing on its buttons.
+   composer there instead of landing on its buttons. Going in and out of full screen eases: the screen widens or
+   narrows over a quarter second, the rail fades in, and the clock fades rather than snapping.
 19. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 

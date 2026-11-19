@@ -7,7 +7,13 @@ import {
   useSyncExternalStore,
   type ReactNode
 } from 'react'
-import { StyleSheet, useWindowDimensions, View } from 'react-native'
+import {
+  Animated,
+  LayoutAnimation,
+  StyleSheet,
+  useWindowDimensions,
+  type LayoutAnimationConfig
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useReservedRegions } from './reserved-regions'
 import { useKeyboardOcclusion } from '../platform/keyboard/keyboard-occlusion'
@@ -28,6 +34,34 @@ import {
 import { ColumnToggle } from './column-toggle'
 
 type RailStore = ReturnType<typeof createRailStore>
+
+/** Screens easing out over the column or back, and the rail fading in, rather than jumping. */
+const COLUMN_EASE_MS = 220
+const COLUMN_EASE: LayoutAnimationConfig = {
+  duration: COLUMN_EASE_MS,
+  update: { type: 'easeInEaseOut' }
+}
+
+/** Animates the layout change the column switching sides of full screen makes; nothing else. */
+function useEasedColumnChange(extendedSide: string | null) {
+  const [shown, setShown] = useState(extendedSide)
+  if (shown !== extendedSide) {
+    setShown(extendedSide)
+    LayoutAnimation.configureNext(COLUMN_EASE)
+  }
+}
+
+function FadeIn({ style, children }: { style: object; children: ReactNode }) {
+  const [opacity] = useState(() => new Animated.Value(0))
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: COLUMN_EASE_MS,
+      useNativeDriver: true
+    }).start()
+  }, [opacity])
+  return <Animated.View style={[style, { opacity }]}>{children}</Animated.View>
+}
 
 /** The device's status column, whether screens draw in it or extend over it. */
 export type SideColumn = {
@@ -113,6 +147,7 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
     fullScreen: useFoldedFullScreen(),
     column: remembered
   })
+  useEasedColumnChange(extendedSide)
   const column = useMemo(
     () =>
       remembered && (unoccludedStrip || extendedSide)
@@ -174,7 +209,7 @@ function SideRailOutlet() {
     return null
   }
   return (
-    <View
+    <FadeIn
       style={[
         styles.outlet,
         { width: strip.width, top: strip.top, bottom: strip.bottom },
@@ -183,7 +218,7 @@ function SideRailOutlet() {
     >
       {pinned}
       {content?.node}
-    </View>
+    </FadeIn>
   )
 }
 

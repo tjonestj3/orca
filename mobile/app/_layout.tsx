@@ -233,7 +233,8 @@ function RootStack({ colorScheme }: { colorScheme: ReturnType<typeof useMobileCo
         ...(Platform.OS === 'ios'
           ? {
               statusBarStyle: colorScheme === 'dark' ? ('light' as const) : ('dark' as const),
-              statusBarHidden: column?.extended === true
+              statusBarHidden: column?.extended === true,
+              statusBarAnimation: 'fade' as const
             }
           : {})
         // Leave orientation unset: react-native-screens overrides rotation lock even for default; Android manifest fullUser honors the user’s setting.
