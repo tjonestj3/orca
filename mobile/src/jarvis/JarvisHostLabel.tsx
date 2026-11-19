@@ -6,8 +6,8 @@ import { useSessionMonospace } from '../theme/mobile-appearance'
 import { useJarvis } from './jarvis-context'
 import { hostInitials } from './jarvis-bubble-policy'
 
-// The desktop Xeno is talking to, under the bubble or rail orb, so it's never in doubt with several desktops. Beside
-// the bubble and the small session orb it's initials ("XL"), which keep out of the page's controls; the rail has room.
+// The desktop Xeno is talking to, under the orb in Home's tab bar: the one place it's in doubt with several desktops
+// (in a session or a host list it's that one). As initials ("XL") there, to fit a tab.
 export function JarvisHostLabel({
   maxWidth,
   initials = false

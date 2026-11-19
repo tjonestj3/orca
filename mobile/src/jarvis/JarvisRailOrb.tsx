@@ -2,7 +2,6 @@ import { View } from 'react-native'
 import { useSideRailHasContent } from '../layout/side-rail'
 import { spacing } from '../theme/mobile-theme'
 import { railOrbSize } from './jarvis-bubble-policy'
-import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 
 // Jarvis in the folded iPhone Duo's side rail: at the top, sized to the strip, or key-sized as the first of a
@@ -18,7 +17,6 @@ export function JarvisRailOrb({ stripWidth }: { readonly stripWidth: number }) {
       }}
     >
       <JarvisTalkControl size={railOrbSize(stripWidth, besideKeys)} />
-      {besideKeys ? null : <JarvisHostLabel maxWidth={stripWidth - spacing.sm * 2} />}
     </View>
   )
 }

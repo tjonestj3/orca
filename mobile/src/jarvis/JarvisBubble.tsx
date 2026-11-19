@@ -5,14 +5,13 @@ import { useSideColumn } from '../layout/side-rail'
 import { useKeyboardOcclusion } from '../platform/keyboard/keyboard-occlusion'
 import { useShowingSession } from '../session/showing-session'
 import { sessionOrbPlace } from './jarvis-bubble-policy'
-import { JarvisHostLabel } from './JarvisHostLabel'
 import { JarvisTalkControl } from './JarvisTalkControl'
 import { usePageModalOpen } from './page-modal'
 import { micOrbPlace, plusOrbPlace, terminalMicOrbPlace, usePageAnchors } from './page-anchors'
 
 const BUBBLE_SIZE = 56
-// Beside the small orb in a session, the desktop's name has the composer's empty middle to itself.
-const SESSION_LABEL_WIDTH = 150
+// No desktop name beside the orb here: in a session, a host list or settings, which desktop is clear (or doesn't
+// matter); Home's tab bar, where it isn't, names it (JarvisTabButton).
 
 export function JarvisBubble() {
   const insets = useSafeAreaInsets()
@@ -58,7 +57,6 @@ export function JarvisBubble() {
               { top: at.middle - place.size / 2, right: screen.width - at.right }
             ]}
           >
-            <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} />
             <JarvisTalkControl size={place.size} />
           </View>
         </View>
@@ -81,7 +79,6 @@ export function JarvisBubble() {
         <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <View style={[styles.row, { bottom: place.bottom, left: insets.left + spacing.lg }]}>
             <JarvisTalkControl size={place.size} />
-            <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} initials />
           </View>
         </View>
       )
@@ -89,7 +86,6 @@ export function JarvisBubble() {
     return (
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
         <View style={[styles.row, { bottom: place.bottom, right: place.right }]}>
-          <JarvisHostLabel maxWidth={SESSION_LABEL_WIDTH} />
           <JarvisTalkControl size={place.size} />
         </View>
       </View>
@@ -105,7 +101,6 @@ export function JarvisBubble() {
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
       <View style={[styles.corner, { bottom, right }]}>
         <JarvisTalkControl size={BUBBLE_SIZE} />
-        <JarvisHostLabel maxWidth={BUBBLE_SIZE + spacing.xl} initials />
       </View>
     </View>
   )
