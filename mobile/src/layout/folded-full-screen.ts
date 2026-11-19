@@ -101,9 +101,9 @@ type Rect = { x: number; y: number; width: number; height: number }
  * (96 pt with tabs) and the page loses no room to full screen.
  */
 export const COLUMN_HEADER_BAND = 67
-/** The column's own toggle: just under the camera, beside the header, inside its height. */
-export const COLUMN_TOGGLE_TOP = COLUMN_HEADER_BAND
-export const COLUMN_TOGGLE_BUTTON = 28 // NavBarButton's compact size
+/** The column's own toggle: just under the camera, beside the header, centred in what's left of its height. */
+export const COLUMN_TOGGLE_TOP = COLUMN_HEADER_BAND + 2
+export const COLUMN_TOGGLE_BUTTON = 24 // NavBarButton's compact size
 /** A nav bar button and the gap below it, where the toggle heads the rail. */
 export const COLUMN_TOGGLE_SLOT = 44
 

@@ -5,7 +5,7 @@ import { themedStyleSheet } from '../../theme/themed-styles'
 import { useMobileColorScheme } from '../../theme/use-mobile-color-scheme'
 
 export const NAV_BAR_BUTTON_SIZE = 36
-const COMPACT_SIZE = 28 // COLUMN_TOGGLE_BUTTON fits it under the folded Duo's camera
+const COMPACT_SIZE = 24 // COLUMN_TOGGLE_BUTTON fits it under the folded Duo's camera, clear of the header's edge
 
 type IconProps = { size?: number; color?: string; strokeWidth?: number }
 
@@ -53,7 +53,7 @@ export function NavBarButton({
       accessibilityState={{ disabled, selected: active }}
     >
       <Icon
-        size={compact ? 15 : 18}
+        size={compact ? 13 : 18}
         color={active ? colors.bgBase : (iconColor ?? colors.textPrimary)}
         strokeWidth={2.1}
       />

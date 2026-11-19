@@ -161,7 +161,7 @@ describe('what a session page extending over the column is told', () => {
     expect(COLUMN_HEADER_BAND).toBeLessThan(96)
     // The button fits beside the header, under the camera, inside the header's own height.
     expect(COLUMN_TOGGLE_TOP).toBeGreaterThanOrEqual(COLUMN_HEADER_BAND)
-    expect(COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_BUTTON).toBeLessThanOrEqual(96)
+    expect(COLUMN_TOGGLE_TOP + COLUMN_TOGGLE_BUTTON).toBeLessThanOrEqual(96 - 3) // a little room above the header's edge
   })
 
   it('leaves the top alone for a page whose header only keeps below it (the host list)', () => {

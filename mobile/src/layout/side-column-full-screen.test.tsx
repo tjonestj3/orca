@@ -182,7 +182,7 @@ describe('full screen when folded', () => {
   it("draws a session page's toggle in the column, under the camera, while extended", async () => {
     await act(() => foldedFullScreen.setDefault(true))
     render(DUO_FOLDED, 'page')
-    expect(toggles()).toEqual([{ slot: { side: 'right', width: 84, top: 67 }, extended: true }])
+    expect(toggles()).toEqual([{ slot: { side: 'right', width: 84, top: 69 }, extended: true }])
   })
 
   it('heads the rail with it while the column is back, and the rail starts below it', () => {
