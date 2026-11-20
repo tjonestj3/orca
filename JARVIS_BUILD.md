@@ -102,7 +102,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    quality (the phone's own mic listens), and music is ducked while Xeno speaks or the orb is held, coming back
    up 1.5 s after. Each duck reports to the brain log (`phone: music-duck …`, with whether other audio was
    playing), since iOS's voice processing may duck other audio by itself for the whole call.
-22. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
+22. `feat(jarvis): say how long iPhone dictation took after the button was let go` — iPhone dictation says
+   how long its text took after the let-go (`readyMs` on `jarvis-dictation`, timed on the phone alone). Older
+   brains ignore it.
+23. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 
 The Jarvis server must be running on the desktop (`systemctl --user status jarvis`) and reachable
