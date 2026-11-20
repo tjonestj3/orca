@@ -19,6 +19,7 @@ import { useHostDisplay } from '../../host-descriptors/use-host-display'
 import { useHostProfile } from '../../host-catalog/use-host-profile'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 import { pageBrowserKeysScript } from './page-browser-keys'
+import { PAGE_SCROLLBAR_NUDGE } from './page-scrollbar-nudge'
 
 const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
 
@@ -129,7 +130,15 @@ export function usePageRepaint(options: {
           }
         : null
     )
-    return [repaint, PAGE_MODAL_WATCH, PAGE_SCROLL_PIN, anchors, pill, ...sessionOnly].join('\n')
+    return [
+      repaint,
+      PAGE_MODAL_WATCH,
+      PAGE_SCROLL_PIN,
+      PAGE_SCROLLBAR_NUDGE,
+      anchors,
+      pill,
+      ...sessionOnly
+    ].join('\n')
   }, [
     themed,
     monospace,
