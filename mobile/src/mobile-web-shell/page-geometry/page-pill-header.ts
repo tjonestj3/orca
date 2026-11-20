@@ -294,13 +294,17 @@ check();
  * camera's band, which the shell adds for Orca's header), and clear of the folded Duo's column on its side, which
  * the camera tops.
  */
+// On the session sheet (session-sheet), the room its grab handle takes at the top.
+const SHEET_HANDLE_ROOM = 12
+
 export function pillPlace(
   fold: { safeAreaInsets: { top: number }; raisedBy: number },
-  column: { side: 'left' | 'right'; width: number; extended: boolean } | null
+  column: { side: 'left' | 'right'; width: number; extended: boolean } | null,
+  sheet = false
 ): { top: number; left: number; right: number } {
   const over = column?.extended ? column : null
   return {
-    top: Math.max(0, fold.safeAreaInsets.top - fold.raisedBy),
+    top: Math.max(0, fold.safeAreaInsets.top - fold.raisedBy) + (sheet ? SHEET_HANDLE_ROOM : 0),
     left: over?.side === 'left' ? over.width : 0,
     right: over?.side === 'right' ? over.width : 0
   }

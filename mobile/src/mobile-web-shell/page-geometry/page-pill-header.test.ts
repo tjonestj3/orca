@@ -19,3 +19,7 @@ it('spans the pane’s top, its row under the page’s own top inset (not the ca
     right: 0
   })
 })
+
+it('on the session sheet, keeps its row below the grab handle', () => {
+  expect(pillPlace({ safeAreaInsets: { top: 0 }, raisedBy: 0 }, null, true).top).toBe(12)
+})

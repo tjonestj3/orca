@@ -3,7 +3,6 @@ import { Linking, Platform, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useNavigationContainerRef, useRouter } from 'expo-router'
 import { OrcaMobileWebShellView } from '../../modules/orca-mobile-web-shell/src/index'
-import { parseMobileWebShellLoadState } from '../../modules/orca-mobile-web-shell/src/load-state'
 import { HostRouteNoticeBanner } from '../components/host-connection/HostRouteNoticeBanner'
 import { colors } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
@@ -55,6 +54,8 @@ import {
 import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/page-fold-division'
 import { usePageRepaint } from './page-geometry/use-page-repaint'
 import { pillPlace } from './page-geometry/page-pill-header'
+import { useSessionSheet } from './session-sheet'
+import { onShellLoadState } from './shell-load-state'
 import { useSideColumn } from '../layout/side-rail'
 import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
@@ -159,12 +160,13 @@ export function MobileWebShellScreen({
   // Xeno's small orb sits by the session's own controls: the composer's mic, or the terminal's last line.
   useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
   const sideColumn = useSideColumn()
+  const sheet = useSessionSheet(showsSession)
   const pageRepaint = usePageRepaint({
     headerClear: !showsSession,
     terminal: showsSession && keyRail.terminalShowing,
     // Unfolded, the host list beside a session shares the raised top; its header gives the camera's room back.
     hostHeaderLift: showsSession ? pageFold.raisedBy : 0,
-    pillAt: showsSession ? pillPlace(pageFold, sideColumn) : null,
+    pillAt: showsSession ? pillPlace(pageFold, sideColumn, sheet.on) : null,
     pillHost: hostId
   })
   const {
@@ -385,6 +387,7 @@ export function MobileWebShellScreen({
         styles.shellRoot,
         // The page pads system bars from init insets; a visible banner owns the status-bar strip.
         { paddingTop: noticeShown ? insets.top : 0 },
+        sheet.root,
         overlay && { backgroundColor: 'transparent' }
       ]}
       testID="mobile-web-shell-ready"
@@ -401,7 +404,11 @@ export function MobileWebShellScreen({
         key={state.sessionId}
         ref={bridge.viewRef}
         // Overlays cannot cover the screen beneath; hide their opaque WebView until first paint.
-        style={[styles.shellView, overlay && pageFrame !== 'painted' && styles.unpaintedOverlay]}
+        style={[
+          styles.shellView,
+          sheet.page,
+          overlay && pageFrame !== 'painted' && styles.unpaintedOverlay
+        ]}
         onLayout={pageFold.onShellLayout}
         generationDirectory={state.generationDirectory}
         sessionId={state.sessionId}
@@ -418,23 +425,13 @@ export function MobileWebShellScreen({
           }
           openUrlForPage(target)
         }}
-        onLoadState={(event) => {
-          const parsed = parseMobileWebShellLoadState(event.nativeEvent)
-          if (parsed?.state === 'failed') {
-            reportShellFailure(parsed.reason, parsed.reclaimed === true)
-            return
-          }
-          // Load completion proves only response commit; start waiting for the page’s own first paint here.
-          if (parsed?.state === 'ready') {
-            reportDocumentLoaded()
-            return
-          }
-          // Cover on load start: the old document remains visible until the new one paints, before ready arrives.
-          if (parsed?.state === 'loading') {
-            reportDocumentStarted()
-          }
-        }}
+        onLoadState={onShellLoadState({
+          failure: reportShellFailure,
+          started: reportDocumentStarted,
+          loaded: reportDocumentLoaded
+        })}
       />
+      {sheet.handle}
       {overlay ? null : (
         <ShellPageCover label={SHELL_OPENING_LABEL} visible={pageFrame === 'unpainted'} />
       )}
