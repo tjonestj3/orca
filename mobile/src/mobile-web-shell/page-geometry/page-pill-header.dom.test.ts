@@ -260,7 +260,7 @@ it('over a terminal keeps the bar in the page’s flow, and moves between the tw
   document.getElementById('pane')!.insertAdjacentHTML('beforeend', '<div class="xterm"></div>')
   run(PILL)
   expect(style('chrome', 'position')).toBe('')
-  expect(style('chrome', 'padding-top')).toBe('67px') // the page's own, in flow
+  expect(style('chrome', 'padding-top')).toBe('26px') // in the page's flow, but at the very top still
   expect(role('chrome')).toBe('bar')
   expect(byId('chrome').getAttribute('data-xeno-mode')).toBe('flow')
   expect(role('center')).toBe('ghost')

@@ -250,14 +250,14 @@ function check() {
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
   }
+  // At the very top over a terminal or a browser tab too, not under the camera's band Orca leaves for its header.
+  set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
   if (mode === 'float') {
     set(chrome, 'position', 'absolute');
-    set(chrome, 'top', '0px');
-    set(chrome, 'left', pill.left + 'px');
+    set(chrome, 'top', '0px'); set(chrome, 'left', pill.left + 'px');
     set(chrome, 'right', pill.right + 'px');
     set(chrome, 'z-index', '20'); set(chrome, 'height', 'auto');
     set(chrome, 'min-height', '0px');
-    set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
     set(chrome, '--xeno-fade-left', -pill.left + 'px'); set(chrome, '--xeno-fade-right', -pill.right + 'px');
   }
   // Back at the bar's start, the branch and menu circles at its end and the tab strip's row between them, placed
