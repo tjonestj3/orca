@@ -126,6 +126,26 @@ jobs:
         working-directory: mobile/ios
         run: bundle exec pod install
 
+      # React Native's ccache wrappers start ccache from $CCACHE_BINARY, a build setting Xcode doesn't hand the
+      # compiler, so they ran plain clang: write them with this runner's ccache and cache settings in place.
+      - name: Point React Native's ccache wrappers at ccache
+        run: |
+          set -euo pipefail
+          dir="$(node -p "require('path').dirname(require.resolve('react-native/package.json'))")/scripts/xcode"
+          ccache="$(command -v ccache)"
+          for pair in "ccache-clang.sh:clang" "ccache-clang++.sh:clang++"; do
+            file="$dir/${pair%%:*}"
+            rm -f "$file"
+            {
+              echo '#!/bin/sh'
+              echo "export CCACHE_CONFIGPATH='$dir/ccache.conf'"
+              echo "export CCACHE_DIR='$CCACHE_DIR' CCACHE_BASEDIR='$CCACHE_BASEDIR' CCACHE_MAXSIZE='$CCACHE_MAXSIZE'"
+              echo "exec '$ccache' ${pair##*:} \"\$@\""
+            } > "$file"
+            chmod +x "$file"
+            cat "$file"
+          done
+
       - name: Import distribution certificate
         env:
           IOS_DIST_CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
