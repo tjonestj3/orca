@@ -159,6 +159,17 @@ jobs:
           ccache --zero-stats
           bundle exec fastlane ios build_and_upload
 
+      # Whether Xcode compiled through React Native's ccache wrapper, and where any cache went.
       - name: ccache stats
         if: always()
-        run: ccache --show-stats || true
+        run: |
+          ccache --show-stats -v || true
+          for d in "$HOME/Library/Caches/ccache" "$HOME/.ccache" "$HOME/.cache/ccache"; do
+            if [ -d "$d" ]; then du -sh "$d"; fi
+          done
+          log="$(ls -t "$HOME"/Library/Logs/gym/*.log 2>/dev/null | head -1)"
+          if [ -n "$log" ]; then
+            echo "compiles through the ccache wrapper: $(grep -c 'ccache-clang' "$log" || true)"
+            echo "clang compiles: $(grep -cE '^\s*(CompileC|SwiftCompile) ' "$log" || true)"
+            grep -m1 -E 'ccache-clang|bin/clang ' "$log" | cut -c1-300 || true
+          fi
