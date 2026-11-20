@@ -154,6 +154,11 @@ function rowOf(button, chrome) {
   }
   return null;
 }
+// The width of a row of circles: those shown, a gap between each.
+function span(buttons) {
+  var n = buttons.filter(function (b) { return getComputedStyle(b).display !== 'none'; }).length;
+  return n > 0 ? n * ${DOT} + (n - 1) * 8 : 0;
+}
 function labelled(el) {
   return Array.prototype.slice.call(el.querySelectorAll('[aria-label]'));
 }
@@ -181,7 +186,7 @@ function lay(chrome, more, tab) {
   // The worktree's name and branch stay, unseen, holding the middle: tapping the agent's tab opens their card.
   mark(title, 'data-xeno-pill', 'ghost');
   var backs = labelled(lead), trailing = labelled(trail);
-  mark(backs[backs.length - 1], 'data-xeno-btn', 'yellow');
+  backs.forEach(function (button, i) { mark(button, 'data-xeno-btn', i === backs.length - 1 ? 'yellow' : 'blue'); });
   trailing.forEach(function (button) {
     mark(button, 'data-xeno-btn', button === more ? 'blue' : 'salmon');
   });
@@ -207,7 +212,7 @@ function lay(chrome, more, tab) {
       if (j > 0 && getComputedStyle(part).position === 'absolute') mark(part, 'data-xeno-pill', 'alert');
     });
   });
-  return { tabRow: rows.tab, lead: lead, circles: backs.slice(-1).concat(trailing) };
+  return { tabRow: rows.tab, lead: lead, trail: trail, backs: backs, trailing: trailing };
 }
 ${TAP_OR_HOLD + PROMPT_ROOM}
 function check() {
@@ -241,33 +246,28 @@ function check() {
   state.marked = state.next;
   set(chrome, 'padding-bottom', '8px');
   ['padding-left', 'padding-right'].forEach(function (side) { set(chrome, side, '14px'); });
-  // The tab strip's row over the title row's middle, between where back and the branch and menu circles really are.
-  var box = chrome.getBoundingClientRect();
-  var edges = laid.circles.reduce(function (at, button) {
-    var r = button.getBoundingClientRect();
-    if (r.width <= 0) return at;
-    if (laid.lead.contains(button)) at.left = Math.max(at.left, r.right - box.left);
-    else at.right = Math.max(at.right, box.right - r.left);
-    return at;
-  }, { left: 14 + ${DOT}, right: 14 + ${DOT} });
-  set(laid.tabRow, 'top', getComputedStyle(chrome).paddingTop);
-  set(laid.tabRow, 'left', Math.round(edges.left + 8) + 'px');
-  set(laid.tabRow, 'right', Math.round(edges.right + 8) + 'px');
   // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
   }
+  if (mode === 'float') {
+    set(chrome, 'position', 'absolute');
+    set(chrome, 'top', '0px');
+    set(chrome, 'left', pill.left + 'px');
+    set(chrome, 'right', pill.right + 'px');
+    set(chrome, 'z-index', '20'); set(chrome, 'height', 'auto');
+    set(chrome, 'min-height', '0px');
+    set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
+    set(chrome, '--xeno-fade-left', -pill.left + 'px'); set(chrome, '--xeno-fade-right', -pill.right + 'px');
+  }
+  // Back at the bar's start, the branch and menu circles at its end and the tab strip's row between them, placed
+  // on the bar itself at its row's height (once the bar is where it goes): Orca's title row needn't span the bar.
+  var top = getComputedStyle(chrome).paddingTop;
+  [laid.lead, laid.trail, laid.tabRow].forEach(function (el) { set(el, 'top', top); });
+  set(laid.tabRow, 'left', (14 + span(laid.backs) + 8) + 'px');
+  set(laid.tabRow, 'right', (14 + span(laid.trailing) + 8) + 'px');
   if (mode === 'flow') return;
   var list = conversation(chrome);
-  set(chrome, 'position', 'absolute');
-  set(chrome, 'top', '0px');
-  set(chrome, 'left', pill.left + 'px');
-  set(chrome, 'right', pill.right + 'px');
-  set(chrome, 'z-index', '20');
-  set(chrome, 'height', 'auto');
-  set(chrome, 'min-height', '0px');
-  set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
-  set(chrome, '--xeno-fade-left', -pill.left + 'px'); set(chrome, '--xeno-fade-right', -pill.right + 'px');
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;

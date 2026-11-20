@@ -116,20 +116,25 @@ it('is Moshi’s row: back, tabs, the agent’s tab, the desktop chip, branch, m
   )
 })
 
-it('keeps the tab row, and the chip at its end, clear of the circles wherever they sit', () => {
+it('pins back and the branch and menu circles to the bar’s ends, the tab row between, whatever Orca’s row does', () => {
   orcaHeader()
   run(PILL)
-  // The chrome is 400 wide; back ends at 50, the branch circle starts at 300.
-  place(byId('back'), { top: 10, height: 22, width: 22, left: 28 })
-  place(byId('branch'), { top: 10, height: 22, width: 22, left: 300 })
-  place(byId('more'), { top: 10, height: 22, width: 22, left: 330 })
-  byId('content').append(' more')
-  run(PILL)
-  expect(style('tabbar', 'left')).toBe(`${50 + 8}px`)
-  expect(style('tabbar', 'right')).toBe(`${400 - 300 + 8}px`)
+  // Placed once the bar is at the top: its row's height there, not where the header sat before.
+  expect([style('leading', 'top'), style('trailing', 'top'), style('tabbar', 'top')]).toEqual([
+    '26px',
+    '26px',
+    '26px'
+  ])
+  expect(style('tabbar', 'left')).toBe(`${14 + 22 + 8}px`) // back
+  expect(style('tabbar', 'right')).toBe(`${14 + 22 + 8 + 22 + 8}px`) // branch and menu
+  const css = document.getElementById('xeno-pill-style')!.textContent!
+  expect(css).toMatch(/\[data-xeno-pill="lead"\] \{ position: absolute !important; left: 14px/)
+  expect(css).toMatch(/\[data-xeno-pill="trail"\] \{ position: absolute !important; right: 14px/)
+  expect(css).toMatch(/\[data-xeno-pill="line"\] \{ position: static !important/)
   // The fade behind it runs out over the column the bar keeps clear of.
   expect(style('chrome', '--xeno-fade-right')).toBe('-84px')
   run(null)
+  expect(style('leading', 'top')).toBe('')
 })
 
 it('lets a question’s card take the room under the bar, not Orca’s 60%, and gives it back', () => {
