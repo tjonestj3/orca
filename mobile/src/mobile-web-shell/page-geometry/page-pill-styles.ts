@@ -28,9 +28,12 @@ export function pillStyles(chip: string | null, background: string): string {
     // (:where keeps this rule's weight that of "bar *", so the circles' colours below still win.)
     `${bar} *:where(:not([data-xeno-pill="state"], [data-xeno-pill="alert"])) { background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
     `${bar} [data-xeno-pill="flat"] { display: contents !important; }`,
+    `${bar} [data-xeno-pill="line"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 1 1 auto !important; min-width: 0 !important; height: 26px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; gap: 8px !important; }`,
+    // The tabs circle sits just after back, in the room back leaves it (the bar's own padding is 14 px, set inline).
+    `${bar}[data-xeno-tabs] [data-xeno-pill="lead"] { margin-right: 34px !important; }`,
     `${bar} [data-xeno-pill="hide"], ${bar} [data-xeno-pill="state"] { display: none !important; }`,
     `${bar} [data-xeno-pill="lead"] { order: 1 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
-    `${bar} [data-xeno-pill="count"] { order: 2 !important; }`,
+    `${bar} [data-xeno-pill="count"] { position: absolute !important; left: 48px !important; bottom: 8px !important; top: auto !important; }`,
     `${bar} [data-xeno-pill="title"] { order: 3 !important; flex: 1 1 0px !important; min-width: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; overflow: hidden !important; opacity: 1 !important; }`,
     `${bar} [data-xeno-pill="trail"] { order: 4 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
     // The name and branch on a glass capsule, as tall as the circles, readable over whatever scrolls under it.

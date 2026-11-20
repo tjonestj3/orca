@@ -90,9 +90,14 @@ it('lays the header across the very top of the pane, the chat starting below it,
 it('is Moshi’s row: back, tabs, the name and branch, the desktop chip, branch, menu', () => {
   orcaHeader()
   run(PILL)
-  for (const id of ['nav', 'bar', 'strip', 'tabbar']) {
-    expect(role(id)).toBe('flat')
-  }
+  // The title row keeps its box (Orca places the workspace card below it); the tab strip's step out.
+  expect([role('nav'), role('bar'), role('strip'), role('tabbar')]).toEqual([
+    'line',
+    'line',
+    'flat',
+    'flat'
+  ])
+  expect(byId('chrome').getAttribute('data-xeno-tabs')).toBe('on')
   expect([role('leading'), role('count'), role('center'), role('trailing')]).toEqual([
     'lead',
     'count',

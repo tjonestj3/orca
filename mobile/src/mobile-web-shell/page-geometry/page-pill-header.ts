@@ -125,6 +125,7 @@ function unmark(el) {
   el.removeAttribute('data-xeno-pill');
   el.removeAttribute('data-xeno-btn');
   el.removeAttribute('data-xeno-conn');
+  el.removeAttribute('data-xeno-tabs');
 }
 // The desktop's connection from the colour of Orca's status dot: green connected, red lost, else on its way.
 function connection(dot) {
@@ -167,9 +168,11 @@ function lay(chrome, more, tab) {
     rows = state.rows = found && strip && found !== strip ? { chrome: chrome, title: found, tab: strip } : null;
   }
   if (!rows || rows.title.children.length < 3) return;
-  [rows.title, rows.tab].forEach(function (row) {
-    for (var el = row; el && el !== chrome; el = el.parentElement) mark(el, 'data-xeno-pill', 'flat');
-  });
+  // The title row and the boxes above it stay boxes, one line high: Orca places the workspace card (tap the name)
+  // below them, so they must still measure where they are. The tab strip's boxes step out of the layout, and the
+  // tabs circle is placed beside back.
+  for (var el = rows.title; el && el !== chrome; el = el.parentElement) mark(el, 'data-xeno-pill', 'line');
+  for (var box = rows.tab; box && box !== chrome; box = box.parentElement) mark(box, 'data-xeno-pill', 'flat');
   var parts = Array.prototype.slice.call(rows.title.children);
   var lead = parts[0], title = parts[1], trail = parts[parts.length - 1];
   mark(lead, 'data-xeno-pill', 'lead');
@@ -199,6 +202,7 @@ function lay(chrome, more, tab) {
     if (i === 0 || cell.contains(tab)) { mark(cell, 'data-xeno-pill', 'hide'); return; }
     mark(cell, 'data-xeno-pill', 'count');
     mark(cell, 'data-xeno-btn', 'green');
+    mark(chrome, 'data-xeno-tabs', 'on');
     // Orca's dot for another tab needing you, a badge on the circle.
     Array.prototype.forEach.call(cell.children, function (part, j) {
       if (j > 0 && getComputedStyle(part).position === 'absolute') mark(part, 'data-xeno-pill', 'alert');
