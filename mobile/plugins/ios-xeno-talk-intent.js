@@ -25,15 +25,19 @@ struct TalkToXenoIntent: AppIntent, ForegroundContinuableIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     let defaults = UserDefaults.standard
-    let thisProcess = Int(ProcessInfo.processInfo.processIdentifier)
+    // The app clears this as it starts, so one left from before it was closed doesn't count as a live call.
     let live = defaults.bool(forKey: "orca.xenoCallLive")
-      && defaults.integer(forKey: "orca.xenoCallProcess") == thisProcess
+    let wasHolding = defaults.bool(forKey: "orca.xenoCallHolding")
+    // For Xeno's server log (the app reports it): what this press found, and in which process.
+    let stamp = "live=\\(live) holding=\\(wasHolding) pid=\\(ProcessInfo.processInfo.processIdentifier)"
+      + " appPid=\\(defaults.integer(forKey: "orca.xenoCallProcess"))"
+    defaults.set(stamp, forKey: "orca.xenoTalkTrace")
     guard live else {
       throw needsToContinueInForegroundError("Opening Xeno to start a call.") {
+        UserDefaults.standard.set(stamp + " continued", forKey: "orca.xenoTalkTrace")
         TalkToXenoIntent.press()
       }
     }
-    let wasHolding = defaults.bool(forKey: "orca.xenoCallHolding")
     TalkToXenoIntent.press()
     return .result(dialog: wasHolding ? "Sent to Xeno" : "Xeno is listening")
   }

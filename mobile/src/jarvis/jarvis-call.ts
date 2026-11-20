@@ -131,7 +131,11 @@ export class JarvisCall {
   }
 
   // For the server's log: the phone locking or its audio being interrupted, which is why a locked phone goes unheard.
-  reportDevice(note: { readonly kind: string; readonly at?: number }): void {
+  reportDevice(note: {
+    readonly kind: string
+    readonly at?: number
+    readonly [detail: string]: unknown
+  }): void {
     this.sendClientMessage('jarvis-device', { ...note, at: note.at ?? Date.now() })
   }
 

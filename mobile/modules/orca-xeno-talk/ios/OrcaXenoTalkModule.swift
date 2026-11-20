@@ -130,6 +130,13 @@ public class OrcaXenoTalkModule: Module {
     Name("OrcaXenoTalk")
     Events("onTalk", "onDevice")
 
+    // A call left marked live by an app that was closed isn't one: the Talk to Xeno shortcut would think it could
+    // toggle talking without opening the app.
+    OnCreate {
+      UserDefaults.standard.set(false, forKey: xenoCallLiveKey)
+      UserDefaults.standard.set(false, forKey: xenoCallHoldingKey)
+    }
+
     OnStartObserving {
       self.observer = NotificationCenter.default.addObserver(
         forName: xenoTalkRequested, object: nil, queue: .main
@@ -152,6 +159,15 @@ public class OrcaXenoTalkModule: Module {
 
     Function("takePending") { () -> Bool in
       takeXenoTalkPress()
+    }
+
+    // What the last Talk to Xeno press found (live call, holding, its process), for Xeno's server log; taking it
+    // clears it.
+    Function("takeTrace") { () -> String? in
+      let defaults = UserDefaults.standard
+      let trace = defaults.string(forKey: "orca.xenoTalkTrace")
+      defaults.removeObject(forKey: "orca.xenoTalkTrace")
+      return trace
     }
 
     // Holding the talk button with the phone's own dictation: the call's audio stops so the dictation engine

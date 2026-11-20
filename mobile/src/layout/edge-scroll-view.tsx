@@ -1,4 +1,4 @@
-import { ScrollView, type ScrollViewProps } from 'react-native'
+import { ScrollView, type ScrollViewInstance, type ScrollViewProps } from 'react-native'
 import { useSideColumn } from './side-rail'
 
 /**
@@ -6,7 +6,7 @@ import { useSideColumn } from './side-rail'
  * by the safe area, which still counts the status column after a screen extends over it, so the bar sat at the
  * column's old edge, across the content.
  */
-export function EdgeScrollView(props: ScrollViewProps & { ref?: React.Ref<ScrollView> }) {
+export function EdgeScrollView(props: ScrollViewProps & { ref?: React.Ref<ScrollViewInstance> }) {
   return <ScrollView {...useEdgeScrollBar()} {...props} />
 }
 

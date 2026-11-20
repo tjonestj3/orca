@@ -158,6 +158,12 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       canPick: needsPick,
       canTalk: offerUrl !== null
     })
+    // For Xeno's server log: what the shortcut found, and what the press did here.
+    call.reportDevice({
+      kind: 'talk-press',
+      action: action ?? 'none',
+      trace: OrcaXenoTalk?.takeTrace?.() ?? ''
+    })
     if (action === 'release') {
       call.releaseTalk()
     } else if (action === 'pick') {
@@ -173,6 +179,12 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     const take = (): void => {
       if (OrcaXenoTalk?.takePending()) {
         actionPress.current()
+        return
+      }
+      // A shortcut press that opened the app but never reached it (its continuation didn't run).
+      const trace = OrcaXenoTalk?.takeTrace?.()
+      if (trace) {
+        call.reportDevice({ kind: 'talk-press', action: 'lost', trace })
       }
     }
     take() // a press that launched the app
