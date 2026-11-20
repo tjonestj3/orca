@@ -91,7 +91,8 @@ window.__orb = {
 };
 function step(nowMs) {
   real = nowMs / 1000;
-  const rdt = last ? Math.min(0.05, Math.max(0, (nowMs - last) / 1000)) : 0;
+  // Up to a quarter second between frames counts in full, so a resting orb's slow motion keeps its pace.
+  const rdt = last ? Math.min(0.25, Math.max(0, (nowMs - last) / 1000)) : 0;
   last = nowMs;
   const speed = F.reduce ? 0.25 : 1;
   F.frame++;
@@ -120,9 +121,19 @@ function paint(nowMs) {
   ctx.restore();
 }
 window.__orb.paint = paint;
+// How often a frame is drawn. A frame every screen refresh (up to 120 a second) on every orb all call long warmed
+// the phone, so 30 a second while the orb moves with a voice or changes state, and 8 while it rests (idle,
+// listening, an error once its shake has settled), enough for its slow turning and breathing. Each frame is asked
+// for only when it's due, not every refresh.
+const ACTIVE_FPS = 30, RESTING_FPS = 8;
+function resting() {
+  if (F.k < 1) return false;
+  return F.cur === 'idle' || F.cur === 'listening' || (F.cur === 'error' && F.ts > 1.5);
+}
 function frame(nowMs) {
   paint(nowMs);
-  requestAnimationFrame(frame);
+  const due = 1000 / (resting() ? RESTING_FPS : ACTIVE_FPS);
+  setTimeout(function () { requestAnimationFrame(frame); }, Math.max(0, due - (performance.now() - nowMs) - 4));
 }
 
 // Starts drawing once the theme has set window.__orbDraw; the app's first 'set' may come before or after.

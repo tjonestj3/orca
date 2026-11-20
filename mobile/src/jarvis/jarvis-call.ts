@@ -18,7 +18,7 @@ import {
   type JarvisCallSnapshot,
   type JarvisOpening
 } from './jarvis-call-types'
-import { JarvisLevelMeter } from './jarvis-call-levels'
+import { JarvisLevelMeter, levelPoller, levelsMatter } from './jarvis-call-levels'
 import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 import { CallDictation } from './jarvis-call-dictation'
 import { CallMusic, openCallMicrophone } from './jarvis-call-music'
@@ -247,13 +247,9 @@ export class JarvisCall {
         this.connected = true
         this.lastActivityAt = Date.now()
         this.applyMic()
-        this.every(LEVEL_POLL_MS, () => {
-          void this.meter.poll(
-            pc,
-            () => generation === this.generation,
-            () => this.micOpen()
-          )
-        })
+        const current = (): boolean => generation === this.generation
+        const side = () => ({ micOpen: this.micOpen(), matters: levelsMatter(this.snapshot) })
+        this.every(LEVEL_POLL_MS, levelPoller(this.meter, pc, current, side))
         this.every(IDLE_CHECK_MS, () => {
           if (Date.now() - this.lastActivityAt > jarvisIdleHangUpMs(this.snapshot)) {
             this.fail(generation, 'idle')

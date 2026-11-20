@@ -173,7 +173,12 @@ function check() {
     if (parseFloat(getComputedStyle(up).borderBottomWidth) > 0) set(up, 'border-bottom-width', '0px');
   }
 }
-function soon() { if (!state.pending) { state.pending = true; requestAnimationFrame(check); } }
+// At most four checks a second: a streaming chat changes the page many times a second, and each check measures it.
+function soon() {
+  if (state.pending) return;
+  state.pending = true;
+  setTimeout(function () { requestAnimationFrame(check); }, 250);
+}
 if (!state.installed) {
   state.installed = true;
   new MutationObserver(soon).observe(document.documentElement, { subtree: true, childList: true });

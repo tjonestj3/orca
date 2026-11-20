@@ -166,7 +166,8 @@ it('keeps the host list’s header lifted however often the page changes', async
   for (let i = 0; i < 4; i++) {
     // Each change on the page runs the check again.
     document.body.appendChild(document.createElement('span'))
-    await new Promise((resolve) => requestAnimationFrame(resolve))
+    // The check runs a quarter second after a change (at most four a second), then on the next frame.
+    await new Promise((resolve) => setTimeout(resolve, 300))
     await new Promise((resolve) => requestAnimationFrame(resolve))
     expect(
       document.getElementById('safe')!.style.getPropertyValue('padding-top'),

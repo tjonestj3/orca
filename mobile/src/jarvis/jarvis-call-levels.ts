@@ -47,3 +47,30 @@ export class JarvisLevelMeter {
     this.listeners.forEach((listener) => listener())
   }
 }
+
+/** While nobody is talking or being heard, the levels are read this many times less often: the orb is at rest. */
+export const QUIET_POLL_EVERY = 10
+
+/** Whether the call's levels matter now: Xeno speaking, or the person heard or holding to talk. */
+export function levelsMatter(s: { readonly phase: string; readonly holding: boolean }): boolean {
+  return s.phase === 'speaking' || s.phase === 'hearing' || s.holding
+}
+
+/**
+ * One tick of the call's level polling: every tick while levels matter, every QUIET_POLL_EVERYth otherwise, which
+ * still sees a reply's last words fade (for its level note) and lets the orb settle, at a tenth of the reads.
+ */
+export function levelPoller(
+  meter: JarvisLevelMeter,
+  pc: RTCPeerConnection,
+  current: () => boolean,
+  side: () => { readonly micOpen: boolean; readonly matters: boolean }
+): () => void {
+  let tick = 0
+  return () => {
+    tick++
+    if (side().matters || tick % QUIET_POLL_EVERY === 0) {
+      void meter.poll(pc, current, () => side().micOpen)
+    }
+  }
+}
