@@ -197,8 +197,22 @@ it('lays the header out on one line: back, title, tab count, branch and menu, an
     style('count', 'order'),
     style('trailing', 'order')
   ]).toEqual(['1', '2', '3', '4'])
-  expect(style('center', 'align-items')).toBe('flex-start')
+  expect(style('center', 'align-items')).toBe('stretch')
   expect(style('tabcell', 'display')).toBe('none')
+  expect(style('newcell', 'display')).toBe('none')
+  expect(style('center', 'font-family')).toMatch(/-apple-system/)
+  expect(style('chrome', 'min-height')).toBe('52px')
+
+  // Hidden, the new tab button has no box; the flattened rows have none either. Checked again (the page changed
+  // as you typed), it stays one pill, shaped the same, rather than coming off and going back on.
+  place(byId('new'), { top: 0, height: 0, width: 0 })
+  place(byId('bar'), { top: 0, height: 0, width: 0 })
+  place(byId('tabbar'), { top: 0, height: 0, width: 0 })
+  byId('center').append(' ')
+  new Function(pagePillHeaderScript(PILL))()
+  expect(style('chrome', 'position')).toBe('absolute')
+  expect(style('chrome', 'display')).toBe('flex')
+  expect(style('chrome', 'min-height')).toBe('52px')
   expect(style('newcell', 'display')).toBe('none')
 
   new Function(pagePillHeaderScript(null))()

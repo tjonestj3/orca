@@ -63,11 +63,16 @@ function restoreAll() {
   state.at = null;
   state.content = null;
   state.minimalFor = null;
+  state.rows = null;
+  state.oneLine = false;
 }
-function byLabel(label) {
+// A button by its label, shown, or inside the pill already up: the pill hides the new tab button it is found by,
+// and must still find itself the next time it looks, or it would come off and go back on at every check.
+function byLabel(label, within) {
   var found = null;
   document.querySelectorAll('[aria-label]').forEach(function (el) {
-    if (!found && el.getAttribute('aria-label') === label && el.getBoundingClientRect().width > 0) found = el;
+    if (found || el.getAttribute('aria-label') !== label) return;
+    if (el.getBoundingClientRect().width > 0 || (within && within.contains(el))) found = el;
   });
   return found;
 }
@@ -129,38 +134,59 @@ function minimal(chrome, more, tab) {
       sides.forEach(function (side) { if (parseFloat(look.getPropertyValue(side)) > 0) set(el, side, '0px'); });
     }
   });
-  oneLine(chrome, rowOf(more, chrome), rowOf(tab, chrome), tab);
+  // Once laid out on one line the rows have no box of their own to measure: the ones found before still hold.
+  var rows = state.rows;
+  if (!rows || rows.chrome !== chrome || !rows.title.contains(more) || !rows.tab.contains(tab)) {
+    var title = rowOf(more, chrome), strip = rowOf(tab, chrome);
+    rows = state.rows = title && strip ? { chrome: chrome, title: title, tab: strip } : null;
+  }
+  if (rows) oneLine(chrome, rows.title, rows.tab, tab);
+  else state.oneLine = false;
 }
 // One line, like Moshi's: back, the worktree with its branch line, the tab count, the branch button, the menu.
 // Without moving anything the page drew: the boxes holding the title row and the tab strip step out of the layout
 // (display: contents), so their parts line up in the pill's own row, ordered there. The agent's tab and the new
-// tab button are hidden; the tab count opens the tabs, new tab included.
+// tab button are hidden; the tab count opens the tabs, new tab included. Set in the system font, like an iOS bar,
+// whatever font the session's text is in, with the title and branch line centred and cut short to fit.
+var SYSTEM_FONT = '-apple-system, system-ui, "SF Pro Text", "Helvetica Neue", sans-serif';
 function flatten(chrome, row) {
   for (var el = row; el && el !== chrome; el = el.parentElement) set(el, 'display', 'contents');
 }
+function side(el, order) {
+  set(el, 'order', order);
+  set(el, 'flex', '0 0 auto');
+  set(el, 'min-width', '0px');
+}
 function oneLine(chrome, titleRow, tabRow, newTab) {
+  state.oneLine = false;
   if (!titleRow || !tabRow || titleRow === tabRow || titleRow.children.length < 3) return;
-  set(chrome, 'display', 'flex');
-  set(chrome, 'flex-direction', 'row');
-  set(chrome, 'flex-wrap', 'nowrap');
-  set(chrome, 'align-items', 'center');
-  set(chrome, 'padding-right', '6px');
+  state.oneLine = true;
+  chrome.querySelectorAll('*').forEach(function (el) { set(el, 'font-family', SYSTEM_FONT); });
   flatten(chrome, titleRow);
   flatten(chrome, tabRow);
   var parts = Array.prototype.slice.call(titleRow.children);
-  var leading = parts[0], title = parts[1], trailing = parts[parts.length - 1];
-  set(leading, 'order', '1');
-  set(leading, 'flex', '0 0 auto');
+  side(parts[0], '1');
+  side(parts[parts.length - 1], '4');
+  var title = parts[1];
   set(title, 'order', '2');
-  set(title, 'flex', '1 1 auto');
+  set(title, 'flex', '1 1 0px');
   set(title, 'min-width', '0px');
-  set(title, 'align-items', 'flex-start');
-  set(title, 'text-align', 'left');
-  set(trailing, 'order', '4');
-  set(trailing, 'flex', '0 0 auto');
+  set(title, 'max-width', 'none');
+  set(title, 'overflow', 'hidden');
+  set(title, 'align-items', 'stretch');
+  title.querySelectorAll('*').forEach(function (el) {
+    set(el, 'min-width', '0px');
+    set(el, 'max-width', '100%');
+    if (getComputedStyle(el).flexDirection === 'row') set(el, 'justify-content', 'center');
+    else set(el, 'align-items', 'stretch');
+    if (!el.firstElementChild) set(el, 'text-align', 'center');
+  });
   Array.prototype.forEach.call(tabRow.children, function (cell, i) {
-    if (i === 0 || cell.contains(newTab)) set(cell, 'display', 'none');
-    else { set(cell, 'order', '3'); set(cell, 'flex', '0 0 auto'); }
+    if (i === 0 || cell.contains(newTab)) { set(cell, 'display', 'none'); return; }
+    side(cell, '3');
+    ['border-left-width', 'border-right-width', 'border-top-width', 'border-bottom-width'].forEach(function (b) {
+      if (parseFloat(getComputedStyle(cell).getPropertyValue(b)) > 0) set(cell, b, '0px');
+    });
   });
 }
 function check() {
@@ -172,24 +198,34 @@ function check() {
   // app's guess, which lags a switch between them.
   var chat = pill && document.querySelector('[data-testid="native-chat-view"]');
   var chatShown = !!chat && chat.getBoundingClientRect().width > 0;
-  var more = chatShown && byLabel(pill.moreLabel);
-  var tab = chatShown && byLabel(pill.newTabLabel);
+  var floating = state.at && state.at.isConnected && state.at.getBoundingClientRect().width > 0 ? state.at : null;
+  var more = chatShown && byLabel(pill.moreLabel, floating);
+  var tab = chatShown && byLabel(pill.newTabLabel, floating);
   var chrome = more && tab ? common(more, tab) : null;
   if (!chrome) { if (state.held.length) restoreAll(); return; }
   if (state.at && state.at !== chrome) restoreAll();
   state.at = chrome;
+  minimal(chrome, more, tab);
+  var one = state.oneLine;
   var bg = rgba(pill.background, 0.62);
   set(chrome, 'position', 'absolute');
   set(chrome, 'top', pill.top + 'px');
   set(chrome, 'left', pill.left + 'px');
   set(chrome, 'right', pill.right + 'px');
   set(chrome, 'z-index', '20');
-  set(chrome, 'min-height', '0px');
+  if (one) {
+    set(chrome, 'display', 'flex');
+    set(chrome, 'flex-direction', 'row');
+    set(chrome, 'flex-wrap', 'nowrap');
+    set(chrome, 'align-items', 'center');
+    set(chrome, 'height', 'auto');
+  }
+  set(chrome, 'min-height', one ? '52px' : '0px');
   set(chrome, 'padding-top', '4px');
-  set(chrome, 'padding-bottom', '0px');
+  set(chrome, 'padding-bottom', one ? '4px' : '0px');
   set(chrome, 'padding-left', '4px');
-  set(chrome, 'padding-right', '4px');
-  set(chrome, 'border-radius', '22px');
+  set(chrome, 'padding-right', one ? '6px' : '4px');
+  set(chrome, 'border-radius', one ? '26px' : '22px');
   set(chrome, 'overflow', 'hidden');
   set(chrome, 'background-color', bg);
   set(chrome, 'border', '1px solid rgba(255,255,255,0.06)');
@@ -200,7 +236,6 @@ function check() {
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
   }
-  minimal(chrome, more, tab);
   var list = conversation(chrome);
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
