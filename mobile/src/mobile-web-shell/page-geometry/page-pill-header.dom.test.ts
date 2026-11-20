@@ -34,12 +34,12 @@ const ORCA_HEADER =
   '<div id="nav"><div id="bar" style="display: flex; flex-direction: row">' +
   '<div id="leading" style="flex: 1 1 0px"><div id="back" aria-label="Back to worktrees"><svg></svg></div></div>' +
   '<div id="center" style="align-items: center"><div id="block" role="button">' +
-  '<div id="name">barge-in-no-wake-word</div><div id="meta"><div id="dot"></div><div>tjonestj3/barge-in-no-wake-word</div></div>' +
+  '<div id="name">barge-in-no-wake-word</div><div id="meta"><div id="dot" style="background-color: rgb(166, 227, 161)"></div><div>tjonestj3/barge-in-no-wake-word</div></div>' +
   '</div></div>' +
   '<div id="trailing"><div id="branch" aria-label="Source control"></div><div id="more" aria-label="More session actions"></div></div>' +
   '</div></div>' +
   '<div id="strip"><div id="tabbar" style="display: flex; flex-direction: row; border-top: 1px solid #333">' +
-  '<div id="tabcell">CARD-009362 phase 2a</div><div id="count" aria-label="2 tabs">2</div><div id="newcell"><div id="new" aria-label="New tab"></div></div>' +
+  '<div id="tabcell">CARD-009362 phase 2a</div><div id="count" aria-label="2 tabs"><div>2</div><div id="alert" style="position: absolute; background-color: red"></div></div><div id="newcell"><div id="new" aria-label="New tab"></div></div>' +
   '</div></div>' +
   '</div></div>' +
   '<div id="chatview" data-testid="native-chat-view">' +
@@ -109,8 +109,10 @@ it('is Moshi’s row: back, tabs, the name and branch, the desktop chip, branch,
     'tblock',
     'ttext',
     'tmeta',
-    'hide'
+    'state'
   ])
+  expect(byId('chrome').getAttribute('data-xeno-conn')).toBe('ok') // the dot's green
+  expect(role('alert')).toBe('alert') // another tab needs you
   expect(role('tabcell')).toBe('hide')
   expect(role('newcell')).toBe('hide')
   expect(document.getElementById('xeno-pill-style')!.textContent).toContain(
@@ -161,13 +163,32 @@ it('when the page restyles its header just before the bar comes off, the page’
   expect(style('chrome', 'padding-top')).toBe('12px')
 })
 
-it('leaves a terminal’s header as Orca draws it: only a chat scrolls under the bar', () => {
+it('over a terminal keeps the bar in the page’s flow, and moves between the two as the view switches', () => {
   orcaHeader()
-  byId('chatview').remove()
+  run(PILL)
+  expect(style('chrome', 'position')).toBe('absolute')
+  byId('chatview').remove() // switched to the terminal
   document.getElementById('pane')!.insertAdjacentHTML('beforeend', '<div class="xterm"></div>')
-  run(PILL) // the app still thought a chat was showing
+  run(PILL)
   expect(style('chrome', 'position')).toBe('')
+  expect(style('chrome', 'padding-top')).toBe('67px') // the page's own, in flow
+  expect(role('chrome')).toBe('bar')
+  expect(role('center')).toBe('title')
+  run(null)
   expect(role('chrome')).toBeNull()
+})
+
+it('colours the chip by the desktop’s connection, from Orca’s status dot', () => {
+  orcaHeader()
+  byId('dot').style.backgroundColor = 'rgb(243, 139, 168)'
+  run(PILL)
+  expect(byId('chrome').getAttribute('data-xeno-conn')).toBe('down')
+  byId('dot').style.backgroundColor = 'rgb(249, 226, 175)'
+  byId('content').append(' more')
+  run(PILL)
+  expect(byId('chrome').getAttribute('data-xeno-conn')).toBe('wait')
+  run(null)
+  expect(byId('chrome').getAttribute('data-xeno-conn')).toBeNull()
 })
 
 it('puts no chip on the bar without a desktop name', () => {

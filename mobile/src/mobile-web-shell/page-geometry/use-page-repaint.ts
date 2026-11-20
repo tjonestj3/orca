@@ -32,7 +32,7 @@ export function usePageRepaint(options: {
   headerClear: boolean
   terminal?: boolean
   hostHeaderLift?: number
-  /** A chat session's pane: where its header floats as a pill (page-pill-header), or null for Orca's own. */
+  /** A session's pane: where its header's bar goes (page-pill-header), or null for Orca's own header. */
   pillAt?: { top: number; left: number; right: number } | null
   /** The session's desktop, named on the chip in its bar. */
   pillHost?: string

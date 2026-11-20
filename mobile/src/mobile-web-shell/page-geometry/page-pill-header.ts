@@ -1,11 +1,13 @@
+import { pillStyles, STYLE_ID } from './page-pill-styles'
+
 /**
  * A session's header as one slim bar at the very top, like Moshi's: Orca's header (the title row and the tab strip)
  * lifted out of the page's layout and laid out on one line over the conversation, which is padded to start below
  * it. Back, then the tabs, as small coloured circles; the worktree and its branch in dim monospace; the desktop as a
  * chip; the branch and menu buttons as circles. Restyled from outside, with CSS only (the page is Orca's, and moving
  * its elements would fight its rendering): the parts are marked with data attributes that one stylesheet styles.
- * Chat only (the page's chat view showing): a terminal or a file can't scroll under anything, and keeps Orca's
- * header.
+ * Over a chat it floats and the conversation scrolls up under it; over a terminal or a file, which can't scroll
+ * under anything, it keeps its place at the top of the page.
  *
  * Found by the header's "More session actions" and the tab strip's "New tab" buttons (as the app's own translation
  * gives them; the page shares its language): the bar is the smallest box holding both. Anything it set is put back
@@ -27,54 +29,6 @@ export type PagePill = {
 // Under the bar, before the conversation's first line; and between the top inset and the bar's row.
 const PILL_GAP = 6
 const ROW_GAP = 6
-
-// Moshi's colours: pastel circles with dark icons, and a teal chip.
-const INK = '#1e1e2e'
-const STYLE_ID = 'xeno-pill-style'
-
-/** A CSS string holding `text`, for a stylesheet's `content`. */
-function cssString(text: string): string {
-  return `"${text.replace(/[\\"]/g, '\\$&').replace(/[\n\r]+/g, ' ')}"`
-}
-
-function pillStyles(chip: string | null): string {
-  const bar = '[data-xeno-pill="bar"]'
-  const mono = 'ui-monospace, "SF Mono", Menlo, monospace'
-  const system = '-apple-system, system-ui, "Helvetica Neue", sans-serif'
-  const rules = [
-    `${bar} { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; }`,
-    // Inside the bar only icons, words and the circles: Orca fills its buttons and the active tab, and rules its rows.
-    `${bar} * { background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
-    `${bar} [data-xeno-pill="flat"] { display: contents !important; }`,
-    `${bar} [data-xeno-pill="hide"] { display: none !important; }`,
-    `${bar} [data-xeno-pill="lead"] { order: 1 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
-    `${bar} [data-xeno-pill="count"] { order: 2 !important; }`,
-    `${bar} [data-xeno-pill="title"] { order: 3 !important; flex: 1 1 0px !important; min-width: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; overflow: hidden !important; opacity: 1 !important; }`,
-    `${bar} [data-xeno-pill="trail"] { order: 4 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
-    `${bar} [data-xeno-pill="tblock"] { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 6px !important; flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }`,
-    `${bar} [data-xeno-pill="tblock"] * { font-family: ${mono} !important; font-size: 13px !important; font-weight: 400 !important; color: rgba(205, 214, 244, 0.6) !important; text-align: left !important; }`,
-    `${bar} [data-xeno-pill="ttext"] { flex: 0 1 auto !important; min-width: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }`,
-    `${bar} [data-xeno-pill="tmeta"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 0 3 auto !important; min-width: 0 !important; gap: 0 !important; }`,
-    `${bar} [data-xeno-pill="tmeta"]::before { content: "·"; margin-right: 6px; color: rgba(205, 214, 244, 0.45); }`,
-    `${bar} [data-xeno-btn] { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 26px !important; max-width: 26px !important; padding: 0 !important; margin: 0 !important; border-radius: 13px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; }`,
-    `${bar} [data-xeno-btn] * { min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; color: ${INK} !important; font-family: ${system} !important; font-size: 12px !important; font-weight: 700 !important; }`,
-    `${bar} [data-xeno-btn] svg { width: 15px !important; height: 15px !important; }`,
-    `${bar} [data-xeno-btn] svg, ${bar} [data-xeno-btn] svg * { stroke: ${INK} !important; }`,
-    `${bar} [data-xeno-btn="yellow"] { background-color: #f9e2af !important; }`,
-    `${bar} [data-xeno-btn="green"] { background-color: #a6e3a1 !important; }`,
-    `${bar} [data-xeno-btn="salmon"] { background-color: #f5a97f !important; }`,
-    `${bar} [data-xeno-btn="blue"] { background-color: #8aadf4 !important; }`,
-    // Back as Moshi's minimise: a dash in the yellow circle.
-    `${bar} [data-xeno-btn="yellow"] > * { display: none !important; }`,
-    `${bar} [data-xeno-btn="yellow"]::after { content: ""; width: 11px; height: 2.5px; border-radius: 2px; background: ${INK}; }`
-  ]
-  if (chip) {
-    rules.push(
-      `${bar} [data-xeno-pill="title"]::after { content: ${cssString(chip)}; flex: 0 0 auto; margin-left: auto; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 24px; line-height: 24px; padding: 0 10px; border-radius: 12px; background: #17463f; color: #5fe0c3; font: 600 12px ${system}; }`
-    )
-  }
-  return rules.join('\n')
-}
 
 export function pagePillHeaderScript(pill: PagePill | null): string {
   return String.raw`(function () {
@@ -118,6 +72,7 @@ function restoreAll() {
   state.marked = [];
   stylesheet('');
   state.at = null;
+  state.mode = null;
   state.content = null;
   state.rows = null;
 }
@@ -169,6 +124,15 @@ function mark(el, attr, value) {
 function unmark(el) {
   el.removeAttribute('data-xeno-pill');
   el.removeAttribute('data-xeno-btn');
+  el.removeAttribute('data-xeno-conn');
+}
+// The desktop's connection from the colour of Orca's status dot: green connected, red lost, else on its way.
+function connection(dot) {
+  var rgb = (getComputedStyle(dot).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+  if (rgb.length < 3 || rgb[3] === 0) return 'wait';
+  if (rgb[0] > 180 && rgb[0] - rgb[1] > 70) return 'down';
+  if (rgb[1] > 140 && rgb[1] > rgb[0] + 20) return 'ok';
+  return 'wait';
 }
 function stylesheet(css) {
   var sheet = document.getElementById('${STYLE_ID}');
@@ -223,15 +187,22 @@ function lay(chrome, more, tab) {
     mark(name, 'data-xeno-pill', 'ttext');
     if (meta) {
       mark(meta, 'data-xeno-pill', 'tmeta');
-      // The connection dot before the branch: Moshi's line is words only.
+      // The connection dot before the branch: Moshi's line is words only, so it shows as the chip's colour instead.
       var dot = meta.firstElementChild;
-      if (dot && dot !== meta.lastElementChild && !dot.textContent.trim()) mark(dot, 'data-xeno-pill', 'hide');
+      if (dot && dot !== meta.lastElementChild && !dot.textContent.trim()) {
+        mark(dot, 'data-xeno-pill', 'state');
+        mark(chrome, 'data-xeno-conn', connection(dot));
+      }
     }
   }
   Array.prototype.forEach.call(rows.tab.children, function (cell, i) {
     if (i === 0 || cell.contains(tab)) { mark(cell, 'data-xeno-pill', 'hide'); return; }
     mark(cell, 'data-xeno-pill', 'count');
     mark(cell, 'data-xeno-btn', 'green');
+    // Orca's dot for another tab needing you, a badge on the circle.
+    Array.prototype.forEach.call(cell.children, function (part, j) {
+      if (j > 0 && getComputedStyle(part).position === 'absolute') mark(part, 'data-xeno-pill', 'alert');
+    });
   });
 }
 // The page's own ground behind the conversation, for the bar's: Moshi's bar is the sheet's colour, not a panel.
@@ -247,23 +218,33 @@ function check() {
   // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
   if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
   var pill = state.pill;
-  // Only over a chat: a terminal (or a file) can't scroll under it. The page says which shows, more surely than the
-  // app's guess, which lags a switch between them.
-  var chat = pill && document.querySelector('[data-testid="native-chat-view"]');
-  var chatShown = !!chat && chat.getBoundingClientRect().width > 0;
   var floating = state.at && state.at.isConnected && state.at.getBoundingClientRect().width > 0 ? state.at : null;
-  var more = chatShown && byLabel(pill.moreLabel, floating);
-  var tab = chatShown && byLabel(pill.newTabLabel, floating);
+  var more = pill && byLabel(pill.moreLabel, floating);
+  var tab = pill && byLabel(pill.newTabLabel, floating);
   var chrome = more && tab ? common(more, tab) : null;
   if (!chrome) { if (state.held.length || state.marked.length) restoreAll(); return; }
-  if (state.at && state.at !== chrome) restoreAll();
+  // Over a chat the bar floats and the conversation scrolls up under it; over a terminal (or a file), which can't
+  // scroll under anything, it keeps its place in the page. The page says which shows, more surely than the app's
+  // guess, which lags a switch between them.
+  var chat = document.querySelector('[data-testid="native-chat-view"]');
+  var mode = chat && chat.getBoundingClientRect().width > 0 ? 'float' : 'flow';
+  if ((state.at && state.at !== chrome) || (state.mode && state.mode !== mode)) restoreAll();
   state.at = chrome;
+  state.mode = mode;
   stylesheet(state.css);
   state.next = [];
   lay(chrome, more, tab);
   // What was marked before and isn't now (the page redrew a part) loses its mark.
   state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
   state.marked = state.next;
+  set(chrome, 'padding-bottom', '8px');
+  set(chrome, 'padding-left', '14px');
+  set(chrome, 'padding-right', '14px');
+  // The tab strip's line across the top is gone with the strip's row.
+  for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
+    if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
+  }
+  if (mode === 'flow') return;
   var list = conversation(chrome);
   set(chrome, 'position', 'absolute');
   set(chrome, 'top', '0px');
@@ -273,14 +254,7 @@ function check() {
   set(chrome, 'height', 'auto');
   set(chrome, 'min-height', '0px');
   set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
-  set(chrome, 'padding-bottom', '8px');
-  set(chrome, 'padding-left', '14px');
-  set(chrome, 'padding-right', '14px');
   set(chrome, 'background-color', ground(list, pill.background));
-  // The tab strip's line across the top is gone with the strip's row.
-  for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
-    if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
-  }
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;

@@ -164,7 +164,7 @@ export function MobileWebShellScreen({
     terminal: showsSession && keyRail.terminalShowing,
     // Unfolded, the host list beside a session shares the raised top; its header gives the camera's room back.
     hostHeaderLift: showsSession ? pageFold.raisedBy : 0,
-    pillAt: showsSession && !keyRail.terminalShowing ? pillPlace(pageFold, sideColumn) : null,
+    pillAt: showsSession ? pillPlace(pageFold, sideColumn) : null,
     pillHost: hostId
   })
   const {
