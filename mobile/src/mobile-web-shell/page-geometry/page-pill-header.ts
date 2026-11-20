@@ -3,7 +3,8 @@
  * branch line, and the tab strip) lifted out of the page's layout to float over the conversation as one rounded,
  * see-through bar, and the conversation padded to start below it, so it scrolls up under the pill. Restyled from
  * outside (the page is Orca's, and its rows can't be rearranged without fighting its rendering), so on a phone the
- * pill keeps Orca's two lines. Chat only: a terminal can't scroll under anything, and keeps Orca's header.
+ * pill keeps Orca's two lines. Chat only (the page's chat view showing): a terminal or a file can't scroll under
+ * anything, and keeps Orca's header.
  *
  * Found by the header's "More session actions" and the tab strip's "New tab" buttons (as the app's own translation
  * gives them; the page shares its language): the pill is the smallest box holding both. Anything it set is put back
@@ -131,8 +132,12 @@ function check() {
   // Nothing moves under a sheet or menu: leave the pill as it is until it closes.
   if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
   var pill = state.pill;
-  var more = pill && byLabel(pill.moreLabel);
-  var tab = pill && byLabel(pill.newTabLabel);
+  // Only over a chat: a terminal (or a file) can't scroll under it. The page says which shows, more surely than the
+  // app's guess, which lags a switch between them.
+  var chat = pill && document.querySelector('[data-testid="native-chat-view"]');
+  var chatShown = !!chat && chat.getBoundingClientRect().width > 0;
+  var more = chatShown && byLabel(pill.moreLabel);
+  var tab = chatShown && byLabel(pill.newTabLabel);
   var chrome = more && tab ? common(more, tab) : null;
   if (!chrome) { if (state.held.length) restoreAll(); return; }
   if (state.at && state.at !== chrome) restoreAll();

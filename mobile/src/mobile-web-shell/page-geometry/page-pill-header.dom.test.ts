@@ -33,12 +33,13 @@ it('floats the session header as one pill over the chat, which starts below it, 
     '<div id="nav"><div id="more" aria-label="More session actions"></div></div>' +
     '<div id="tabs" style="border-top: 1px solid #333"><div id="new" aria-label="New tab"></div></div>' +
     '</div></div>' +
-    '<div id="chat" style="overflow-y: auto"><div id="content"><p>hello</p></div></div>' +
+    '<div id="chatview" data-testid="native-chat-view"><div id="chat" style="overflow-y: auto"><div id="content"><p>hello</p></div></div></div>' +
     '</div>'
   const byId = (id: string) => document.getElementById(id)!
   place(byId('more'), { top: 10, height: 36, width: 36 })
   place(byId('new'), { top: 60, height: 36, width: 36 })
   place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
   place(byId('chat'), { top: 0, height: window.innerHeight })
 
   new Function(pagePillHeaderScript(PILL))()
@@ -69,7 +70,7 @@ it('pads the transcript, not the lower region a tall question scrolls in, and li
     '<div><div id="more" aria-label="More session actions"></div></div>' +
     '<div><div id="new" aria-label="New tab"></div></div>' +
     '</div></div>' +
-    '<div data-testid="native-chat-view">' +
+    '<div id="chatview" data-testid="native-chat-view">' +
     '<div id="chat" style="overflow-y: auto"><div id="content"></div></div>' +
     '<div data-testid="native-chat-lower-scroll" id="lower" style="overflow-y: auto"><div id="card"></div></div>' +
     '</div></div>'
@@ -77,6 +78,7 @@ it('pads the transcript, not the lower region a tall question scrolls in, and li
   place(byId('more'), { top: 10, height: 36, width: 36 })
   place(byId('new'), { top: 60, height: 36, width: 36 })
   place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
   place(byId('chat'), { top: 0, height: window.innerHeight * 0.35 })
   // A tall question: the lower region is the bigger scroller now.
   place(byId('lower'), { top: window.innerHeight * 0.35, height: window.innerHeight * 0.6 })
@@ -94,13 +96,14 @@ it('keeps only icons and words inside the pill: no button or tab fills, no rules
     '<div><div id="more" aria-label="More session actions" style="background-color: #262626"></div></div>' +
     '<div id="tabs" style="border-top: 1px solid #333"><div id="tab" style="background-color: #262626; border-bottom: 2px solid #aaa">Xeno</div>' +
     '<div id="count" style="border: 1.5px solid #fff">2</div><div id="new" aria-label="New tab"></div></div>' +
-    '</div></div><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div>'
+    '</div></div><div id="chatview" data-testid="native-chat-view"><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div></div>'
   const byId = (id: string) => document.getElementById(id)!
   place(byId('more'), { top: 10, height: 36, width: 36 })
   place(byId('new'), { top: 60, height: 36, width: 36 })
   place(byId('chrome'), { top: 8, height: 84 })
   place(byId('tab'), { top: 52, height: 40, width: 300 })
   place(byId('count'), { top: 56, height: 24, width: 24 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
   place(byId('chat'), { top: 0, height: window.innerHeight })
 
   new Function(pagePillHeaderScript(PILL))()
@@ -122,11 +125,12 @@ it('when it comes off, gives the header back as the page last set it, not as it 
     '<div id="pane"><div id="top"><div id="chrome" style="padding-top: 67px">' +
     '<div><div id="more" aria-label="More session actions"></div></div>' +
     '<div><div id="new" aria-label="New tab"></div></div>' +
-    '</div></div><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div>'
+    '</div></div><div id="chatview" data-testid="native-chat-view"><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div></div>'
   const byId = (id: string) => document.getElementById(id)!
   place(byId('more'), { top: 10, height: 36, width: 36 })
   place(byId('new'), { top: 60, height: 36, width: 36 })
   place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
   place(byId('chat'), { top: 0, height: window.innerHeight })
   new Function(pagePillHeaderScript(PILL))()
 
@@ -140,4 +144,19 @@ it('when it comes off, gives the header back as the page last set it, not as it 
   new Function(pagePillHeaderScript(null))() // switched to the terminal
   expect(chrome.getPropertyValue('padding-top')).toBe('0px')
   expect(chrome.getPropertyValue('padding-right')).toBe('84px')
+})
+
+it('leaves a terminal’s header as Orca draws it: only a chat scrolls under the pill', () => {
+  document.body.innerHTML =
+    '<div id="pane"><div id="top"><div id="chrome" style="padding-top: 0px">' +
+    '<div><div id="more" aria-label="More session actions"></div></div>' +
+    '<div><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div><div id="terminal" class="xterm"></div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  new Function(pagePillHeaderScript(PILL))() // the app still thought a chat was showing
+  expect(byId('chrome').style.getPropertyValue('position')).toBe('')
+  expect(byId('chrome').style.getPropertyValue('padding-top')).toBe('0px')
 })
