@@ -58,7 +58,9 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    come and go to Xeno as text when you let go. "Hey Xeno" listening still goes through the call to Whisper. A
    switch on the Xeno screen (iPhone / Desktop dictation, on by default); a phone without the recognizer ready, a
    locked phone, or a hold that starts the call uses the call's microphone as before. Needs the brain from
-   `68bc351` (the `jarvis-dictation` message).
+   `68bc351` (the `jarvis-dictation` message). **Taken out on Nov 20** (see 22): handing the call's audio to
+   the recognizer and back left "Hey Xeno" broken until the app restarted, so a hold uses the call's microphone
+   again and the switch is gone. The native `OrcaXenoTalk` dictation functions stay, unused.
 14. `fix(jarvis): one look for Xeno hearing you` — the orb is purple and says "Hearing you" whether you're holding
    or said "Hey Xeno", from the moment you press (the Xeno screen used to wait for the desktop to hear a sound).
    Letting go of a hold now turns it amber (thinking) once the desktop has your words; it used to stay on hearing
@@ -102,9 +104,10 @@ Not for upstream: this branch also deletes upstream CI so pushes here don't run 
    quality (the phone's own mic listens), and music is ducked while Xeno speaks or the orb is held, coming back
    up 1.5 s after. Each duck reports to the brain log (`phone: music-duck …`, with whether other audio was
    playing), since iOS's voice processing may duck other audio by itself for the whole call.
-22. `feat(jarvis): say how long iPhone dictation took after the button was let go` — iPhone dictation says
-   how long its text took after the let-go (`readyMs` on `jarvis-dictation`, timed on the phone alone). Older
-   brains ignore it.
+22. `fix(jarvis): holding to talk uses the call's microphone again, not iPhone dictation` — takes 13 out (with
+   the Nov 20 let-go timing and text-first changes to it): a hold opens the call's own microphone track and
+   nothing else, so "Hey Xeno" carries on cleanly after it. The brain still accepts `jarvis-dictation`; nothing
+   sends it.
 23. `chore(jarvis): personal TestFlight build` — bundle ID, name and icon via env, this workflow,
    upstream CI removed, this file.
 

@@ -12,8 +12,7 @@ import {
   EarOff,
   Music,
   PhoneOff,
-  Play,
-  Smartphone
+  Play
 } from 'lucide-react-native'
 import { NavBar } from '../components/nav-bar/NavBar'
 import { NavBarButton } from '../components/nav-bar/NavBarButton'
@@ -65,9 +64,6 @@ function statusLine(state: JarvisCallSnapshot, t: Translate): string {
   if (state.error === 'dictation') {
     return t('jarvis.screen.dictationHungUp', 'Xeno hung up so you could dictate.')
   }
-  if (state.dictating !== null) {
-    return t('jarvis.screen.dictating', 'Listening on your iPhone…')
-  }
   switch (jarvisOrbPhase(state)) {
     case 'connecting':
       return t('jarvis.screen.connecting', 'Connecting…')
@@ -96,7 +92,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
   const { width, height } = useWindowDimensions()
   const host = useHostProfile(hostId)
   // The app-wide call: leaving this screen or the app keeps it going.
-  const { call, offerUrl, voice, setVoice, phoneDictation, setPhoneDictation } = useJarvis()
+  const { call, offerUrl, voice, setVoice } = useJarvis()
   const music = useMusicUnderXeno()
   const wakeOn = useHeyXeno()
   const state = useSyncExternalStore(call.subscribe, call.getSnapshot)
@@ -112,8 +108,7 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
     host ? jarvisHistoryUrl(host.endpoint) : null,
     state.messages
   )
-  // While the phone's dictation hears a hold, its words show as they come.
-  const heard = state.dictating || state.heard
+  const heard = state.heard
 
   const live = state.phase !== 'idle' && state.phase !== 'error'
   const ask = (text: string): void => {
@@ -261,27 +256,6 @@ export function JarvisScreen({ hostId }: { readonly hostId: string }) {
             {current?.name ?? voice}
           </Text>
           <ChevronDown size={16} color={colors.textSecondary} />
-        </Pressable>
-        <Pressable
-          onPress={() => setPhoneDictation(!phoneDictation)}
-          style={({ pressed }) => [styles.voiceButton, pressed && pressedStyle]}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: phoneDictation }}
-          accessibilityLabel={t(
-            'jarvis.screen.phoneDictation',
-            'Hold to talk with iPhone dictation'
-          )}
-          testID="jarvis-phone-dictation"
-        >
-          <Smartphone
-            size={16}
-            color={phoneDictation ? colors.statusGreen : colors.textSecondary}
-          />
-          <Text style={styles.voiceLabel} numberOfLines={1}>
-            {phoneDictation
-              ? t('jarvis.screen.phoneDictationOn', 'iPhone dictation')
-              : t('jarvis.screen.phoneDictationOff', 'Desktop dictation')}
-          </Text>
         </Pressable>
         <Pressable
           onPress={() => heyXeno.set(!wakeOn)}

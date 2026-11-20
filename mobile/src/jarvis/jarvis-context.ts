@@ -10,9 +10,6 @@ export type JarvisContextValue = {
   readonly reachable: boolean | null
   readonly voice: JarvisVoice
   readonly setVoice: (voice: JarvisVoice) => void
-  // Holding to talk uses the iPhone's own dictation rather than the desktop's Whisper.
-  readonly phoneDictation: boolean
-  readonly setPhoneDictation: (on: boolean) => void
   // The desktop being talked to, shown so it's never in doubt.
   readonly hostName: string | null
   // Set while several desktops run Xeno and none was picked yet: a press asks which instead of talking.

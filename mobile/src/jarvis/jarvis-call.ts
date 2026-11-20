@@ -1,4 +1,4 @@
-import { AppState, Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { RTCPeerConnection, type MediaStream } from 'react-native-webrtc'
 import { preferSpeakerForCallIOS } from '@orca/expo-two-way-audio'
 import { nativeMicrophoneScreenLock } from '../platform/audio-capture/native-audio-device'
@@ -20,9 +20,7 @@ import {
 } from './jarvis-call-types'
 import { JarvisLevelMeter, levelPoller, levelsMatter } from './jarvis-call-levels'
 import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
-import { CallDictation } from './jarvis-call-dictation'
 import { CallMusic, openCallMicrophone } from './jarvis-call-music'
-import type { PhoneDictation } from './jarvis-phone-dictation'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
@@ -44,27 +42,6 @@ export class JarvisCall {
   private lastActivityAt = 0
   // Bumped on every start and hang-up so late async steps of an abandoned call do nothing.
   private generation = 0
-  // Holding to talk with the phone's own dictation (Apple's recognizer) rather than the desktop's Whisper.
-  private readonly phone: CallDictation
-
-  constructor(dictation: PhoneDictation | null = null) {
-    this.phone = new CallDictation(dictation, {
-      snapshot: () => this.snapshot,
-      set: (next) => this.set(next),
-      send: (type, data) => this.sendClientMessage(type, data),
-      generation: () => this.generation,
-      touch: () => void (this.lastActivityAt = Date.now()),
-      holdThroughCall: () => {
-        this.applyMic()
-        this.sendClientMessage('jarvis-ptt', { state: 'down' })
-      }
-    })
-  }
-
-  setPhoneDictation(on: boolean): void {
-    this.phone.on = on
-  }
-
   // "Hey Xeno" on: the mic stays open and Xeno answers when named. Off: push to talk, the mic only while held.
   setWake(on: boolean): void {
     this.set({ ...this.snapshot, wake: on })
@@ -98,9 +75,8 @@ export class JarvisCall {
       void this.start(offerUrl, voice)
       return
     }
-    if (this.phone.begin(this.connected && AppState.currentState === 'active')) {
-      return
-    }
+    // Always through the call's own microphone: the phone's dictation took the call's audio over for the hold and
+    // didn't hand it back cleanly, so "Hey Xeno" afterwards needed the app restarted (Nov 20).
     this.applyMic()
     this.sendClientMessage('jarvis-ptt', { state: 'down' })
   }
@@ -111,9 +87,6 @@ export class JarvisCall {
       return
     }
     this.set({ ...this.snapshot, holding: false })
-    if (this.phone.release()) {
-      return
-    }
     this.applyMic()
     if (this.connected) {
       this.sendClientMessage('jarvis-ptt', { state: 'up' })
@@ -123,9 +96,6 @@ export class JarvisCall {
   // A tap that turned out not to be talk: shut the mic and say nothing to Jarvis.
   cancelTalk(): void {
     this.set({ ...this.snapshot, holding: false, heldTurn: false })
-    if (this.phone.cancel()) {
-      return
-    }
     this.applyMic()
     this.sendClientMessage('jarvis-ptt', { state: 'cancel' })
   }
@@ -313,7 +283,6 @@ export class JarvisCall {
   }
 
   private teardown(): void {
-    this.phone.stop()
     this.music.stop()
     this.timers.forEach(clearInterval)
     this.timers = []

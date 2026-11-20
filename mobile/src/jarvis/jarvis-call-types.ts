@@ -11,8 +11,6 @@ export type JarvisCallSnapshot = JarvisCallState & {
   // Hey Xeno switches are gone, and holding a talk control or the Action Button needs no name.
   readonly wake: boolean
   readonly holding: boolean
-  // While a hold is heard by the phone's own dictation: what it has made out so far ('' before the first word).
-  readonly dictating: string | null
   readonly error: JarvisCallError | null
 }
 
@@ -33,17 +31,14 @@ export const IDLE_SNAPSHOT: JarvisCallSnapshot = {
   ...IDLE_JARVIS_CALL,
   wake: true,
   holding: false,
-  dictating: null,
   error: null
 }
 export const QUIET: JarvisLevels = { user: 0, bot: 0 }
 
 // What the orb shows. Hearing you looks the same however you got Xeno's attention (holding, the Action Button or
 // "Hey Xeno"), and holding shows it the moment you press, before the desktop has heard a sound.
-export function jarvisOrbPhase(
-  s: Pick<JarvisCallSnapshot, 'phase' | 'holding' | 'dictating'>
-): JarvisPhase {
+export function jarvisOrbPhase(s: Pick<JarvisCallSnapshot, 'phase' | 'holding'>): JarvisPhase {
   // Still connecting, the microphone isn't open yet: that shows as connecting.
   const connected = s.phase !== 'idle' && s.phase !== 'error' && s.phase !== 'connecting'
-  return connected && (s.holding || s.dictating !== null) ? 'hearing' : s.phase
+  return connected && s.holding ? 'hearing' : s.phase
 }

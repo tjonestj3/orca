@@ -60,10 +60,6 @@ describe('jarvisOrbPhase', () => {
     expect(jarvisOrbPhase(server(letGo, 'user-stopped-speaking'))).toBe('thinking')
   })
 
-  it("shows the phone's own dictation as hearing you", () => {
-    expect(jarvisOrbPhase({ ...listening, dictating: '' })).toBe('hearing')
-  })
-
   it('shows connecting while a press is still starting the call, and nothing when there is no call', () => {
     expect(jarvisOrbPhase({ ...IDLE_SNAPSHOT, phase: 'connecting', holding: true })).toBe(
       'connecting'

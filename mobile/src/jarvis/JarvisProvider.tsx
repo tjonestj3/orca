@@ -15,12 +15,6 @@ import { onDictationStarting } from '../platform/microphone-handoff'
 import { useCallResume } from './jarvis-call-interruption'
 import { actionButtonPress, bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
 import { JarvisCall } from './jarvis-call'
-import {
-  DEFAULT_PHONE_DICTATION,
-  loadPhoneDictation,
-  savePhoneDictation
-} from './jarvis-dictation-preference'
-import { phoneDictation as phoneDictationDevice } from './jarvis-phone-dictation-device'
 import { useHeyXeno } from './jarvis-wake-preference'
 import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
@@ -49,14 +43,13 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const callRef = useRef<JarvisCall | null>(null)
-  callRef.current ??= new JarvisCall(phoneDictationDevice)
+  callRef.current ??= new JarvisCall()
   const call = callRef.current
   // The last desktop you were in with Xeno running, remembered; a live call's own desktop while it lasts.
   const [lastHostId, setLastHostId] = useState<string | null>(null)
   const [callHostId, setCallHostId] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [voice, setVoiceState] = useState<JarvisVoice>(DEFAULT_JARVIS_VOICE)
-  const [phoneDictation, setPhoneDictationState] = useState(DEFAULT_PHONE_DICTATION)
   const { phase, opening, holding } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
@@ -112,9 +105,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   useEffect(() => {
     void loadJarvisHost().then(setLastHostId)
     void loadJarvisVoice().then(setVoiceState)
-    void loadPhoneDictation().then(setPhoneDictationState)
   }, [])
-  useEffect(() => call.setPhoneDictation(phoneDictation), [call, phoneDictation])
   // "Hey Xeno", or push to talk (the Xeno screen's switch), live as it changes.
   const wake = useHeyXeno()
   useEffect(() => call.setWake(wake), [call, wake])
@@ -137,10 +128,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     },
     [call, offerUrl]
   )
-  const setPhoneDictation = useCallback((on: boolean) => {
-    setPhoneDictationState(on)
-    void savePhoneDictation(on)
-  }, [])
   const adoptHost = useCallback((next: string) => {
     setLastHostId(next)
     void rememberJarvisHost(next)
@@ -238,8 +225,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       reachable,
       voice,
       setVoice,
-      phoneDictation,
-      setPhoneDictation,
       hostName: host?.name ?? null,
       pickHost,
       adoptHost,
@@ -252,8 +237,6 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       reachable,
       voice,
       setVoice,
-      phoneDictation,
-      setPhoneDictation,
       host,
       pickHost,
       adoptHost,
