@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest'
 import { pagePillHeaderScript, type PagePill } from './page-pill-header'
+import { isHoldHapticMessage } from './page-pill-tap'
 
 function place(el: Element, r: { top: number; height: number; width?: number; left?: number }) {
   const width = r.width ?? 400
@@ -185,9 +186,17 @@ describe('the agent’s tab in the bar', () => {
     vi.useFakeTimers()
     try {
       const pressed = watched()
+      const posted: string[] = []
+      Object.defineProperty(window, 'orcaBridge', {
+        configurable: true,
+        value: { postMessage: (json: string) => posted.push(json) }
+      })
       touch(byId('tabbutton'), 'touchstart')
-      vi.advanceTimersByTime(460)
+      vi.advanceTimersByTime(340)
+      expect(pressed).toEqual([]) // not yet: a tap's still a tap
+      vi.advanceTimersByTime(20)
       expect(pressed).toEqual(['tab menu'])
+      expect(posted.filter(isHoldHapticMessage)).toHaveLength(1) // felt the moment it registers
       touch(byId('tabbutton'), 'touchend')
       byId('tabbutton').click() // the release's own click
       expect(pressed).toEqual(['tab menu'])

@@ -55,7 +55,7 @@ import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/p
 import { usePageRepaint } from './page-geometry/use-page-repaint'
 import { pillPlace } from './page-geometry/page-pill-header'
 import { useSessionSheet } from './session-sheet'
-import { useColumnToggleMessage } from './page-geometry/use-column-toggle-message'
+import { useShellPageMessages } from './page-geometry/use-shell-page-messages'
 import { onShellLoadState } from './shell-load-state'
 import { useSideColumn } from '../layout/side-rail'
 import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
@@ -329,7 +329,7 @@ export function MobileWebShellScreen({
   useEffect(() => bridge.publishRoute(pageRoute), [bridge.publishRoute, pageRoute])
   // The page's sheets and menus can't cover Xeno's orb, which the app draws over it; it hides while one is open.
   const onPageMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage, sheet.pageTop)
-  const onBridgeMessage = useColumnToggleMessage(onPageMessage)
+  const onBridgeMessage = useShellPageMessages(onPageMessage)
 
   usePublishedSafeAreaInsets(bridge.publishSafeAreaInsets, pageInsets)
   const publishKeyboardInset = bridge.publishKeyboardInset
