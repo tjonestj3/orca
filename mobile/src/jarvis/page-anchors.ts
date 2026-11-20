@@ -91,19 +91,24 @@ function hold(el, prop) {
            base: parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0 };
 }
 // Written only when it changes: a write, even of the same value, is a change the watch sees, and would run it again
-// every frame.
+// every frame. What was set is read back as the browser keeps it, to tell it from the page's own later.
 function setIfChanged(el, prop, value, held) {
   var current = el.style.getPropertyValue(prop), priority = el.style.getPropertyPriority(prop);
-  if (current === value && priority === 'important') return;
+  var ours = held && held.applied !== undefined && current === held.applied && priority === 'important';
+  if (ours && held.wanted === value) return;
+  if (!held && current === value && priority === 'important') return;
   // The page wrote this style since (it re-rendered): that is what goes back later, not what it had before.
-  if (held && held.applied !== undefined && !(current === held.applied && priority === 'important')) {
+  if (held && held.applied !== undefined && !ours) {
     held.inline = current;
     held.priority = priority;
   }
   el.style.setProperty(prop, value, 'important');
-  if (held) held.applied = value;
+  if (held) { held.wanted = value; held.applied = el.style.getPropertyValue(prop); }
 }
+// Unless the page has written the style since the last check: then its write stands.
 function restore(held) {
+  var current = held.el.style.getPropertyValue(held.prop), priority = held.el.style.getPropertyPriority(held.prop);
+  if (held.applied !== undefined && !(current === held.applied && priority === 'important')) return;
   if (held.inline) held.el.style.setProperty(held.prop, held.inline, held.priority);
   else held.el.style.removeProperty(held.prop);
 }

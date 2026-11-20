@@ -160,3 +160,72 @@ it('leaves a terminal’s header as Orca draws it: only a chat scrolls under the
   expect(byId('chrome').style.getPropertyValue('position')).toBe('')
   expect(byId('chrome').style.getPropertyValue('padding-top')).toBe('0px')
 })
+
+it('lays the header out on one line: back, title, tab count, branch and menu, and puts it all back', () => {
+  // Orca's session header: the nav bar (back, the title and branch line, the branch and ⋯ buttons) over the tab
+  // strip (the agent's tab, the tab count, +).
+  document.body.innerHTML =
+    '<div id="pane"><div id="top"><div id="chrome">' +
+    '<div id="nav"><div id="bar" style="display: flex; flex-direction: row">' +
+    '<div id="leading" style="flex: 1 1 0px"><div aria-label="Back"></div></div>' +
+    '<div id="center" style="align-items: center">card-009362<br>feature/CARD-009362</div>' +
+    '<div id="trailing"><div aria-label="Branch"></div><div id="more" aria-label="More session actions"></div></div>' +
+    '</div></div>' +
+    '<div id="strip"><div id="tabbar" style="display: flex; flex-direction: row">' +
+    '<div id="tabcell">CARD-009362 phase 2a</div><div id="count">2</div><div id="newcell"><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div>' +
+    '</div></div><div id="chatview" data-testid="native-chat-view"><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('bar'), { top: 8, height: 44 })
+  place(byId('tabbar'), { top: 52, height: 40 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
+  place(byId('chat'), { top: 0, height: window.innerHeight })
+
+  new Function(pagePillHeaderScript(PILL))()
+  const style = (id: string, prop: string) => byId(id).style.getPropertyValue(prop)
+  expect(style('chrome', 'display')).toBe('flex')
+  expect(style('chrome', 'flex-direction')).toBe('row')
+  for (const id of ['nav', 'bar', 'strip', 'tabbar']) {
+    expect(style(id, 'display')).toBe('contents')
+  }
+  expect([
+    style('leading', 'order'),
+    style('center', 'order'),
+    style('count', 'order'),
+    style('trailing', 'order')
+  ]).toEqual(['1', '2', '3', '4'])
+  expect(style('center', 'align-items')).toBe('flex-start')
+  expect(style('tabcell', 'display')).toBe('none')
+  expect(style('newcell', 'display')).toBe('none')
+
+  new Function(pagePillHeaderScript(null))()
+  expect(style('chrome', 'display')).toBe('')
+  expect(style('chrome', 'background-color')).toBe('') // not the pill's own colour, read back as the browser keeps it
+  expect(style('bar', 'display')).toBe('flex')
+  expect(style('tabcell', 'display')).toBe('')
+  expect(style('center', 'align-items')).toBe('center')
+  expect(style('leading', 'flex')).toMatch(/^1 1 0(px)?$/)
+})
+
+it('when the page restyles its header just before the pill comes off, the page’s style stands', () => {
+  document.body.innerHTML =
+    '<div id="pane"><div id="top"><div id="chrome" style="padding-top: 67px">' +
+    '<div><div id="more" aria-label="More session actions"></div></div>' +
+    '<div><div id="new" aria-label="New tab"></div></div>' +
+    '</div></div><div id="chatview" data-testid="native-chat-view"><div id="chat" style="overflow-y: auto"><div id="content"></div></div></div></div>'
+  const byId = (id: string) => document.getElementById(id)!
+  place(byId('more'), { top: 10, height: 36, width: 36 })
+  place(byId('new'), { top: 60, height: 36, width: 36 })
+  place(byId('chrome'), { top: 8, height: 84 })
+  place(byId('chatview'), { top: 0, height: window.innerHeight })
+  place(byId('chat'), { top: 0, height: window.innerHeight })
+  new Function(pagePillHeaderScript(PILL))()
+
+  // Switching to the terminal, Orca re-measures its header in the same moment the pill is told to come off.
+  byId('chrome').style.paddingTop = '12px'
+  new Function(pagePillHeaderScript(null))()
+  expect(byId('chrome').style.getPropertyValue('padding-top')).toBe('12px')
+})

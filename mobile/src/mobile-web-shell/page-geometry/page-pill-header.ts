@@ -1,10 +1,10 @@
 /**
  * A session's header as one floating pill, like Moshi's: Orca's header (the title row with the worktree and its
  * branch line, and the tab strip) lifted out of the page's layout to float over the conversation as one rounded,
- * see-through bar, and the conversation padded to start below it, so it scrolls up under the pill. Restyled from
- * outside (the page is Orca's, and its rows can't be rearranged without fighting its rendering), so on a phone the
- * pill keeps Orca's two lines. Chat only (the page's chat view showing): a terminal or a file can't scroll under
- * anything, and keeps Orca's header.
+ * see-through bar on one line, and the conversation padded to start below it, so it scrolls up under the pill.
+ * Restyled from outside, with CSS only (the page is Orca's, and moving its elements would fight its rendering).
+ * Chat only (the page's chat view showing): a terminal or a file can't scroll under anything, and keeps Orca's
+ * header.
  *
  * Found by the header's "More session actions" and the tab strip's "New tab" buttons (as the app's own translation
  * gives them; the page shares its language): the pill is the smallest box holding both. Anything it set is put back
@@ -33,25 +33,32 @@ function hold(el, prop) {
 }
 // Sets a style over the page's own, remembering the page's latest: when the page writes that style while the pill
 // covers it (as Orca does once it has measured its header), that write is what goes back when the pill comes off,
-// not what the page had the moment the pill went on.
+// not what the page had the moment the pill went on. What was set is read back as the browser keeps it ('rgba(0, 0,
+// 0, 0.35) 0px 8px 24px', not as written), or the pill's own colours would pass for the page's and go back with it.
 function set(el, prop, value) {
   var held = null;
   state.held.forEach(function (h) { if (h.el === el && h.prop === prop) held = h; });
   if (!held) { held = hold(el, prop); state.held.push(held); }
   var current = el.style.getPropertyValue(prop), priority = el.style.getPropertyPriority(prop);
-  if (current === value && priority === 'important') return;
-  if (held.applied !== undefined && !(current === held.applied && priority === 'important')) {
+  var ours = held.applied !== undefined && current === held.applied && priority === 'important';
+  if (ours && held.wanted === value) return;
+  if (held.applied !== undefined && !ours) {
     held.inline = current;
     held.priority = priority;
   }
   el.style.setProperty(prop, value, 'important');
-  held.applied = value;
+  held.wanted = value;
+  held.applied = el.style.getPropertyValue(prop);
+}
+// Puts one style back: the page's, unless the page has written it since the last check, when its write stands.
+function putBack(h) {
+  var current = h.el.style.getPropertyValue(h.prop), priority = h.el.style.getPropertyPriority(h.prop);
+  if (h.applied !== undefined && !(current === h.applied && priority === 'important')) return;
+  if (h.inline) h.el.style.setProperty(h.prop, h.inline, h.priority);
+  else h.el.style.removeProperty(h.prop);
 }
 function restoreAll() {
-  state.held.forEach(function (h) {
-    if (h.inline) h.el.style.setProperty(h.prop, h.inline, h.priority);
-    else h.el.style.removeProperty(h.prop);
-  });
+  state.held.forEach(putBack);
   state.held = [];
   state.at = null;
   state.content = null;
@@ -93,13 +100,13 @@ function conversation(chrome) {
 function restoreOn(el) {
   state.held = state.held.filter(function (h) {
     if (h.el !== el) return true;
-    if (h.inline) h.el.style.setProperty(h.prop, h.inline, h.priority);
-    else h.el.style.removeProperty(h.prop);
+    putBack(h);
     return false;
   });
 }
-// Inside the pill, only icons and words: Orca's header fills its buttons and the active tab, rules its rows and
-// cells, and sizes them for a solid bar. Redone only when the header's contents change, not on every line of chat.
+// Inside the pill, only icons and words, on one line: Orca's header fills its buttons and the active tab, rules its
+// rows and cells, and stacks them for a solid bar. Redone only when the header's contents change, not on every line
+// of chat.
 function rowOf(button, chrome) {
   for (var el = button.parentElement; el && el !== chrome; el = el.parentElement) {
     if (getComputedStyle(el).flexDirection === 'row' && el.getBoundingClientRect().width >= chrome.getBoundingClientRect().width * 0.6) return el;
@@ -122,10 +129,39 @@ function minimal(chrome, more, tab) {
       sides.forEach(function (side) { if (parseFloat(look.getPropertyValue(side)) > 0) set(el, side, '0px'); });
     }
   });
-  var titleRow = rowOf(more, chrome);
-  if (titleRow) set(titleRow, 'height', '42px');
-  var tabRow = rowOf(tab, chrome);
-  if (tabRow && tabRow !== titleRow) set(tabRow, 'height', '32px');
+  oneLine(chrome, rowOf(more, chrome), rowOf(tab, chrome), tab);
+}
+// One line, like Moshi's: back, the worktree with its branch line, the tab count, the branch button, the menu.
+// Without moving anything the page drew: the boxes holding the title row and the tab strip step out of the layout
+// (display: contents), so their parts line up in the pill's own row, ordered there. The agent's tab and the new
+// tab button are hidden; the tab count opens the tabs, new tab included.
+function flatten(chrome, row) {
+  for (var el = row; el && el !== chrome; el = el.parentElement) set(el, 'display', 'contents');
+}
+function oneLine(chrome, titleRow, tabRow, newTab) {
+  if (!titleRow || !tabRow || titleRow === tabRow || titleRow.children.length < 3) return;
+  set(chrome, 'display', 'flex');
+  set(chrome, 'flex-direction', 'row');
+  set(chrome, 'flex-wrap', 'nowrap');
+  set(chrome, 'align-items', 'center');
+  set(chrome, 'padding-right', '6px');
+  flatten(chrome, titleRow);
+  flatten(chrome, tabRow);
+  var parts = Array.prototype.slice.call(titleRow.children);
+  var leading = parts[0], title = parts[1], trailing = parts[parts.length - 1];
+  set(leading, 'order', '1');
+  set(leading, 'flex', '0 0 auto');
+  set(title, 'order', '2');
+  set(title, 'flex', '1 1 auto');
+  set(title, 'min-width', '0px');
+  set(title, 'align-items', 'flex-start');
+  set(title, 'text-align', 'left');
+  set(trailing, 'order', '4');
+  set(trailing, 'flex', '0 0 auto');
+  Array.prototype.forEach.call(tabRow.children, function (cell, i) {
+    if (i === 0 || cell.contains(newTab)) set(cell, 'display', 'none');
+    else { set(cell, 'order', '3'); set(cell, 'flex', '0 0 auto'); }
+  });
 }
 function check() {
   state.pending = false;
