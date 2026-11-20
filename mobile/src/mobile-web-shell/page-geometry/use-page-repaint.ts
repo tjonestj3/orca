@@ -15,6 +15,8 @@ import { PAGE_MODAL_WATCH } from '../../jarvis/page-modal'
 import { PLUS_ORB_ROOM, TERMINAL_MIC_ROOM, pageAnchorsScript } from '../../jarvis/page-anchors'
 import { PAGE_SCROLL_PIN } from './page-scroll-pin'
 import { pagePillHeaderScript } from './page-pill-header'
+import { useHostDisplay } from '../../host-descriptors/use-host-display'
+import { useHostProfile } from '../../host-catalog/use-host-profile'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 
 const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
@@ -32,6 +34,8 @@ export function usePageRepaint(options: {
   hostHeaderLift?: number
   /** A chat session's pane: where its header floats as a pill (page-pill-header), or null for Orca's own. */
   pillAt?: { top: number; left: number; right: number } | null
+  /** The session's desktop, named on the chip in its bar. */
+  pillHost?: string
 }): string {
   const scheme = useMobileColorScheme()
   const theme = useMobileDarkTheme()
@@ -67,6 +71,7 @@ export function usePageRepaint(options: {
   const pillLeft = at?.left ?? 0
   const pillRight = at?.right ?? 0
   const pillShown = at !== null
+  const pillChip = useHostDisplay(useHostProfile(options.pillHost ?? '')).title || null
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
@@ -107,7 +112,8 @@ export function usePageRepaint(options: {
             top: pillTop,
             left: pillLeft,
             right: pillRight,
-            background: pillBackground
+            background: pillBackground,
+            chip: pillChip
           }
         : null
     )
@@ -125,6 +131,7 @@ export function usePageRepaint(options: {
     micRoom,
     lift,
     pillShown,
+    pillChip,
     moreLabel,
     newTabLabel,
     pillTop,

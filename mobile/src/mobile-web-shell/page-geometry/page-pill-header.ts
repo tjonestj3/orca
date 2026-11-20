@@ -1,33 +1,87 @@
 /**
- * A session's header as one floating pill, like Moshi's: Orca's header (the title row with the worktree and its
- * branch line, and the tab strip) lifted out of the page's layout to float over the conversation as one rounded,
- * see-through bar on one line, and the conversation padded to start below it, so it scrolls up under the pill.
- * Restyled from outside, with CSS only (the page is Orca's, and moving its elements would fight its rendering).
+ * A session's header as one slim bar at the very top, like Moshi's: Orca's header (the title row and the tab strip)
+ * lifted out of the page's layout and laid out on one line over the conversation, which is padded to start below
+ * it. Back, then the tabs, as small coloured circles; the worktree and its branch in dim monospace; the desktop as a
+ * chip; the branch and menu buttons as circles. Restyled from outside, with CSS only (the page is Orca's, and moving
+ * its elements would fight its rendering): the parts are marked with data attributes that one stylesheet styles.
  * Chat only (the page's chat view showing): a terminal or a file can't scroll under anything, and keeps Orca's
  * header.
  *
  * Found by the header's "More session actions" and the tab strip's "New tab" buttons (as the app's own translation
- * gives them; the page shares its language): the pill is the smallest box holding both. Anything it set is put back
- * as the page had it when the pill is no longer wanted, or the header can't be found.
+ * gives them; the page shares its language): the bar is the smallest box holding both. Anything it set is put back
+ * as the page had it when the bar is no longer wanted, or the header can't be found.
  */
 export type PagePill = {
   readonly moreLabel: string
   readonly newTabLabel: string
-  /** Where the pill sits in its pane, in points: below the top inset, clear of the folded Duo's camera. */
+  /** The pane's top inset, in points: the bar's own band starts at the pane's top and holds its row below this. */
   readonly top: number
   readonly left: number
   readonly right: number
-  /** The theme's panel colour, as #rrggbb; the pill shows it see-through. */
+  /** The theme's panel colour, as #rrggbb: the bar's ground where the page's own can't be read. */
   readonly background: string
+  /** The desktop's name, for the chip; null for none. */
+  readonly chip: string | null
 }
 
-// Under the pill, before the conversation's first line.
-const PILL_GAP = 8
+// Under the bar, before the conversation's first line; and between the top inset and the bar's row.
+const PILL_GAP = 6
+const ROW_GAP = 6
+
+// Moshi's colours: pastel circles with dark icons, and a teal chip.
+const INK = '#1e1e2e'
+const STYLE_ID = 'xeno-pill-style'
+
+/** A CSS string holding `text`, for a stylesheet's `content`. */
+function cssString(text: string): string {
+  return `"${text.replace(/[\\"]/g, '\\$&').replace(/[\n\r]+/g, ' ')}"`
+}
+
+function pillStyles(chip: string | null): string {
+  const bar = '[data-xeno-pill="bar"]'
+  const mono = 'ui-monospace, "SF Mono", Menlo, monospace'
+  const system = '-apple-system, system-ui, "Helvetica Neue", sans-serif'
+  const rules = [
+    `${bar} { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; }`,
+    // Inside the bar only icons, words and the circles: Orca fills its buttons and the active tab, and rules its rows.
+    `${bar} * { background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
+    `${bar} [data-xeno-pill="flat"] { display: contents !important; }`,
+    `${bar} [data-xeno-pill="hide"] { display: none !important; }`,
+    `${bar} [data-xeno-pill="lead"] { order: 1 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
+    `${bar} [data-xeno-pill="count"] { order: 2 !important; }`,
+    `${bar} [data-xeno-pill="title"] { order: 3 !important; flex: 1 1 0px !important; min-width: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; overflow: hidden !important; opacity: 1 !important; }`,
+    `${bar} [data-xeno-pill="trail"] { order: 4 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
+    `${bar} [data-xeno-pill="tblock"] { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 6px !important; flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }`,
+    `${bar} [data-xeno-pill="tblock"] * { font-family: ${mono} !important; font-size: 13px !important; font-weight: 400 !important; color: rgba(205, 214, 244, 0.6) !important; text-align: left !important; }`,
+    `${bar} [data-xeno-pill="ttext"] { flex: 0 1 auto !important; min-width: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }`,
+    `${bar} [data-xeno-pill="tmeta"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 0 3 auto !important; min-width: 0 !important; gap: 0 !important; }`,
+    `${bar} [data-xeno-pill="tmeta"]::before { content: "·"; margin-right: 6px; color: rgba(205, 214, 244, 0.45); }`,
+    `${bar} [data-xeno-btn] { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 26px !important; max-width: 26px !important; padding: 0 !important; margin: 0 !important; border-radius: 13px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; }`,
+    `${bar} [data-xeno-btn] * { min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; color: ${INK} !important; font-family: ${system} !important; font-size: 12px !important; font-weight: 700 !important; }`,
+    `${bar} [data-xeno-btn] svg { width: 15px !important; height: 15px !important; }`,
+    `${bar} [data-xeno-btn] svg, ${bar} [data-xeno-btn] svg * { stroke: ${INK} !important; }`,
+    `${bar} [data-xeno-btn="yellow"] { background-color: #f9e2af !important; }`,
+    `${bar} [data-xeno-btn="green"] { background-color: #a6e3a1 !important; }`,
+    `${bar} [data-xeno-btn="salmon"] { background-color: #f5a97f !important; }`,
+    `${bar} [data-xeno-btn="blue"] { background-color: #8aadf4 !important; }`,
+    // Back as Moshi's minimise: a dash in the yellow circle.
+    `${bar} [data-xeno-btn="yellow"] > * { display: none !important; }`,
+    `${bar} [data-xeno-btn="yellow"]::after { content: ""; width: 11px; height: 2.5px; border-radius: 2px; background: ${INK}; }`
+  ]
+  if (chip) {
+    rules.push(
+      `${bar} [data-xeno-pill="title"]::after { content: ${cssString(chip)}; flex: 0 0 auto; margin-left: auto; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 24px; line-height: 24px; padding: 0 10px; border-radius: 12px; background: #17463f; color: #5fe0c3; font: 600 12px ${system}; }`
+    )
+  }
+  return rules.join('\n')
+}
 
 export function pagePillHeaderScript(pill: PagePill | null): string {
   return String.raw`(function () {
 var state = window.__xenoPill || (window.__xenoPill = { held: [] });
 state.pill = ${JSON.stringify(pill)};
+state.css = ${JSON.stringify(pill ? pillStyles(pill.chip) : '')};
+state.marked = state.marked || [];
 function hold(el, prop) {
   return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) };
 }
@@ -60,11 +114,12 @@ function putBack(h) {
 function restoreAll() {
   state.held.forEach(putBack);
   state.held = [];
+  state.marked.forEach(unmark);
+  state.marked = [];
+  stylesheet('');
   state.at = null;
   state.content = null;
-  state.minimalFor = null;
   state.rows = null;
-  state.oneLine = false;
 }
 // A button by its label, shown, or inside the pill already up: the pill hides the new tab button it is found by,
 // and must still find itself the next time it looks, or it would come off and go back on at every check.
@@ -79,10 +134,6 @@ function byLabel(label, within) {
 function common(a, b) {
   for (var el = a.parentElement; el && el !== document.body; el = el.parentElement) if (el.contains(b)) return el;
   return null;
-}
-function rgba(hex, a) {
-  var n = parseInt(hex.slice(1), 16);
-  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 // The conversation: the chat's transcript, the biggest scrolling box in the chat view that isn't its lower region
 // (the composer and an agent's question, which scrolls too, and can be the bigger while a question is tall).
@@ -109,89 +160,91 @@ function restoreOn(el) {
     return false;
   });
 }
-// Inside the pill, only icons and words, on one line: Orca's header fills its buttons and the active tab, rules its
-// rows and cells, and stacks them for a solid bar. Redone only when the header's contents change, not on every line
-// of chat.
+// Marks a part of the header for the stylesheet. Marks are attributes React doesn't own, so it leaves them be.
+function mark(el, attr, value) {
+  if (!el) return;
+  if (el.getAttribute(attr) !== value) el.setAttribute(attr, value);
+  if (state.next.indexOf(el) < 0) state.next.push(el);
+}
+function unmark(el) {
+  el.removeAttribute('data-xeno-pill');
+  el.removeAttribute('data-xeno-btn');
+}
+function stylesheet(css) {
+  var sheet = document.getElementById('${STYLE_ID}');
+  if (!css) { if (sheet) sheet.remove(); return; }
+  if (!sheet) {
+    sheet = document.createElement('style');
+    sheet.id = '${STYLE_ID}';
+    document.head.appendChild(sheet);
+  }
+  if (sheet.textContent !== css) sheet.textContent = css;
+}
+// The rows inside the bar: the nearest row at least 60% of its width above a button.
 function rowOf(button, chrome) {
   for (var el = button.parentElement; el && el !== chrome; el = el.parentElement) {
     if (getComputedStyle(el).flexDirection === 'row' && el.getBoundingClientRect().width >= chrome.getBoundingClientRect().width * 0.6) return el;
   }
   return null;
 }
-function minimal(chrome, more, tab) {
-  var all = chrome.querySelectorAll('*');
-  var signature = all.length + ':' + chrome.textContent.length;
-  if (state.minimalFor === chrome && state.minimalSig === signature) return;
-  state.minimalFor = chrome;
-  state.minimalSig = signature;
-  var sides = ['border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width'];
-  all.forEach(function (el) {
-    var look = getComputedStyle(el);
-    var bg = look.backgroundColor;
-    if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) set(el, 'background-color', 'transparent');
-    // Lines on rows and cells go; a small box's outline (the tab count) stays.
-    if (el.getBoundingClientRect().width > 60) {
-      sides.forEach(function (side) { if (parseFloat(look.getPropertyValue(side)) > 0) set(el, side, '0px'); });
-    }
-  });
+function labelled(el) {
+  return Array.prototype.slice.call(el.querySelectorAll('[aria-label]'));
+}
+// Moshi's row: back (yellow), the tabs (green, with their count), the worktree and branch, the desktop's chip,
+// the branch button (salmon) and the menu (blue). The boxes holding Orca's title row and tab strip step out of
+// the layout (display: contents) so their parts share the bar's row, ordered there; the agent's tab and + are
+// hidden (the tabs list has both).
+function lay(chrome, more, tab) {
+  mark(chrome, 'data-xeno-pill', 'bar');
   // Once laid out on one line the rows have no box of their own to measure: the ones found before still hold.
   var rows = state.rows;
   if (!rows || rows.chrome !== chrome || !rows.title.contains(more) || !rows.tab.contains(tab)) {
-    var title = rowOf(more, chrome), strip = rowOf(tab, chrome);
-    rows = state.rows = title && strip ? { chrome: chrome, title: title, tab: strip } : null;
+    var found = rowOf(more, chrome), strip = rowOf(tab, chrome);
+    rows = state.rows = found && strip && found !== strip ? { chrome: chrome, title: found, tab: strip } : null;
   }
-  if (rows) oneLine(chrome, rows.title, rows.tab, tab);
-  else state.oneLine = false;
-}
-// One line, like Moshi's: back, the worktree with its branch line, the tab count, the branch button, the menu.
-// Without moving anything the page drew: the boxes holding the title row and the tab strip step out of the layout
-// (display: contents), so their parts line up in the pill's own row, ordered there. The agent's tab and the new
-// tab button are hidden; the tab count opens the tabs, new tab included. Set in the system font, like an iOS bar,
-// whatever font the session's text is in, with the title and branch line centred and cut short to fit.
-var SYSTEM_FONT = '-apple-system, system-ui, "SF Pro Text", "Helvetica Neue", sans-serif';
-function flatten(chrome, row) {
-  for (var el = row; el && el !== chrome; el = el.parentElement) set(el, 'display', 'contents');
-}
-function side(el, order) {
-  set(el, 'order', order);
-  set(el, 'flex', '0 0 auto');
-  set(el, 'min-width', '0px');
-}
-function oneLine(chrome, titleRow, tabRow, newTab) {
-  state.oneLine = false;
-  if (!titleRow || !tabRow || titleRow === tabRow || titleRow.children.length < 3) return;
-  state.oneLine = true;
-  chrome.querySelectorAll('*').forEach(function (el) { set(el, 'font-family', SYSTEM_FONT); });
-  flatten(chrome, titleRow);
-  flatten(chrome, tabRow);
-  var parts = Array.prototype.slice.call(titleRow.children);
-  side(parts[0], '1');
-  side(parts[parts.length - 1], '4');
-  var title = parts[1];
-  set(title, 'order', '2');
-  set(title, 'flex', '1 1 0px');
-  set(title, 'min-width', '0px');
-  set(title, 'max-width', 'none');
-  set(title, 'overflow', 'hidden');
-  set(title, 'align-items', 'stretch');
-  title.querySelectorAll('*').forEach(function (el) {
-    set(el, 'min-width', '0px');
-    set(el, 'max-width', '100%');
-    if (getComputedStyle(el).flexDirection === 'row') set(el, 'justify-content', 'center');
-    else set(el, 'align-items', 'stretch');
-    if (!el.firstElementChild) set(el, 'text-align', 'center');
+  if (!rows || rows.title.children.length < 3) return;
+  [rows.title, rows.tab].forEach(function (row) {
+    for (var el = row; el && el !== chrome; el = el.parentElement) mark(el, 'data-xeno-pill', 'flat');
   });
-  Array.prototype.forEach.call(tabRow.children, function (cell, i) {
-    if (i === 0 || cell.contains(newTab)) { set(cell, 'display', 'none'); return; }
-    side(cell, '3');
-    ['border-left-width', 'border-right-width', 'border-top-width', 'border-bottom-width'].forEach(function (b) {
-      if (parseFloat(getComputedStyle(cell).getPropertyValue(b)) > 0) set(cell, b, '0px');
-    });
+  var parts = Array.prototype.slice.call(rows.title.children);
+  var lead = parts[0], title = parts[1], trail = parts[parts.length - 1];
+  mark(lead, 'data-xeno-pill', 'lead');
+  mark(title, 'data-xeno-pill', 'title');
+  mark(trail, 'data-xeno-pill', 'trail');
+  var backs = labelled(lead);
+  mark(backs[backs.length - 1], 'data-xeno-btn', 'yellow');
+  labelled(trail).forEach(function (button) {
+    mark(button, 'data-xeno-btn', button === more ? 'blue' : 'salmon');
   });
+  var block = title.querySelector('[role="button"]');
+  if (block) {
+    mark(block, 'data-xeno-pill', 'tblock');
+    var name = block.firstElementChild, meta = name && name.nextElementSibling;
+    mark(name, 'data-xeno-pill', 'ttext');
+    if (meta) {
+      mark(meta, 'data-xeno-pill', 'tmeta');
+      // The connection dot before the branch: Moshi's line is words only.
+      var dot = meta.firstElementChild;
+      if (dot && dot !== meta.lastElementChild && !dot.textContent.trim()) mark(dot, 'data-xeno-pill', 'hide');
+    }
+  }
+  Array.prototype.forEach.call(rows.tab.children, function (cell, i) {
+    if (i === 0 || cell.contains(tab)) { mark(cell, 'data-xeno-pill', 'hide'); return; }
+    mark(cell, 'data-xeno-pill', 'count');
+    mark(cell, 'data-xeno-btn', 'green');
+  });
+}
+// The page's own ground behind the conversation, for the bar's: Moshi's bar is the sheet's colour, not a panel.
+function ground(list, fallback) {
+  for (var el = list; el && el !== document.documentElement; el = el.parentElement) {
+    var bg = getComputedStyle(el).backgroundColor;
+    if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) return bg;
+  }
+  return fallback;
 }
 function check() {
   state.pending = false;
-  // Nothing moves under a sheet or menu: leave the pill as it is until it closes.
+  // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
   if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
   var pill = state.pill;
   // Only over a chat: a terminal (or a file) can't scroll under it. The page says which shows, more surely than the
@@ -202,46 +255,37 @@ function check() {
   var more = chatShown && byLabel(pill.moreLabel, floating);
   var tab = chatShown && byLabel(pill.newTabLabel, floating);
   var chrome = more && tab ? common(more, tab) : null;
-  if (!chrome) { if (state.held.length) restoreAll(); return; }
+  if (!chrome) { if (state.held.length || state.marked.length) restoreAll(); return; }
   if (state.at && state.at !== chrome) restoreAll();
   state.at = chrome;
-  minimal(chrome, more, tab);
-  var one = state.oneLine;
-  var bg = rgba(pill.background, 0.62);
+  stylesheet(state.css);
+  state.next = [];
+  lay(chrome, more, tab);
+  // What was marked before and isn't now (the page redrew a part) loses its mark.
+  state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
+  state.marked = state.next;
+  var list = conversation(chrome);
   set(chrome, 'position', 'absolute');
-  set(chrome, 'top', pill.top + 'px');
+  set(chrome, 'top', '0px');
   set(chrome, 'left', pill.left + 'px');
   set(chrome, 'right', pill.right + 'px');
   set(chrome, 'z-index', '20');
-  if (one) {
-    set(chrome, 'display', 'flex');
-    set(chrome, 'flex-direction', 'row');
-    set(chrome, 'flex-wrap', 'nowrap');
-    set(chrome, 'align-items', 'center');
-    set(chrome, 'height', 'auto');
-  }
-  set(chrome, 'min-height', one ? '52px' : '0px');
-  set(chrome, 'padding-top', '4px');
-  set(chrome, 'padding-bottom', one ? '4px' : '0px');
-  set(chrome, 'padding-left', '4px');
-  set(chrome, 'padding-right', one ? '6px' : '4px');
-  set(chrome, 'border-radius', one ? '26px' : '22px');
-  set(chrome, 'overflow', 'hidden');
-  set(chrome, 'background-color', bg);
-  set(chrome, 'border', '1px solid rgba(255,255,255,0.06)');
-  set(chrome, 'box-shadow', '0 8px 24px rgba(0,0,0,0.35)');
-  set(chrome, '-webkit-backdrop-filter', 'blur(20px) saturate(150%)');
-  set(chrome, 'backdrop-filter', 'blur(20px) saturate(150%)');
-  // The tab strip's line across the top is the pill's own edge now.
+  set(chrome, 'height', 'auto');
+  set(chrome, 'min-height', '0px');
+  set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
+  set(chrome, 'padding-bottom', '8px');
+  set(chrome, 'padding-left', '14px');
+  set(chrome, 'padding-right', '14px');
+  set(chrome, 'background-color', ground(list, pill.background));
+  // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
   }
-  var list = conversation(chrome);
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;
-  if (content) set(content, 'padding-top', (chrome.getBoundingClientRect().height + pill.top + ${PILL_GAP}) + 'px');
-  // React Native Web gives every view its own stacking layer, so the pill's z-index only counts within its
+  if (content) set(content, 'padding-top', (chrome.getBoundingClientRect().height + ${PILL_GAP}) + 'px');
+  // React Native Web gives every view its own stacking layer, so the bar's z-index only counts within its
   // wrapper: lift each wrapper up to the one it shares with the conversation, which would draw over it otherwise.
   for (var up = chrome.parentElement; up && up !== document.body && !(list && up.contains(list)); up = up.parentElement) {
     set(up, 'z-index', '20');
@@ -264,12 +308,10 @@ check();
 })();`
 }
 
-// The pill's margin from its pane's edges, and from the top inset.
-const PILL_MARGIN = 8
-
 /**
- * Where the pill sits in a session's pane: just under the page's own top inset (not the camera's band, which the
- * shell adds for Orca's header), and clear of the folded Duo's column on its side, which the camera tops.
+ * Where the bar sits in a session's pane: across its top, holding its row under the page's own top inset (not the
+ * camera's band, which the shell adds for Orca's header), and clear of the folded Duo's column on its side, which
+ * the camera tops.
  */
 export function pillPlace(
   fold: { safeAreaInsets: { top: number }; raisedBy: number },
@@ -277,8 +319,8 @@ export function pillPlace(
 ): { top: number; left: number; right: number } {
   const over = column?.extended ? column : null
   return {
-    top: Math.max(0, fold.safeAreaInsets.top - fold.raisedBy) + PILL_MARGIN,
-    left: PILL_MARGIN + (over?.side === 'left' ? over.width : 0),
-    right: PILL_MARGIN + (over?.side === 'right' ? over.width : 0)
+    top: Math.max(0, fold.safeAreaInsets.top - fold.raisedBy),
+    left: over?.side === 'left' ? over.width : 0,
+    right: over?.side === 'right' ? over.width : 0
   }
 }
