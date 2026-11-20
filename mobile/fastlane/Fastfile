@@ -202,6 +202,10 @@ platform :ios do
     # This fastlane exposes the chosen profile through SIGH_NAME, not SIGH_PROFILE_MAPPING.
     profile_name = lane_context[SharedValues::SIGH_NAME]
 
+    # With ccache (CI sets CCACHE_DIR), React Native's ccache wrapper compiles the Pods; Xcode's explicit modules
+    # don't take the wrapper as a compiler and compile without it, so they're off.
+    ccache_xcargs = ENV["CCACHE_DIR"] ? " CLANG_ENABLE_EXPLICIT_MODULES=NO" : ""
+
     # Archive needs explicit manual signing/team/profile; omitting DEVELOPMENT_TEAM fails signing.
     build_app(
       workspace: WORKSPACE,
@@ -211,7 +215,8 @@ platform :ios do
       xcargs: "DEVELOPMENT_TEAM=#{team_id} " \
         "CODE_SIGN_STYLE=Manual " \
         "CODE_SIGN_IDENTITY='Apple Distribution' " \
-        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'",
+        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'" \
+        "#{ccache_xcargs}",
       export_options: {
         teamID: team_id,
         signingStyle: "manual",
