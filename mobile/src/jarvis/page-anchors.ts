@@ -56,6 +56,7 @@ export function pageAnchorsScript(watches: readonly PageAnchorWatch[]): string {
   return String.raw`(function () {
 var state = window.__xenoAnchors || (window.__xenoAnchors = { rows: {}, lifts: {}, at: {} });
 state.lifts = state.lifts || {};
+state.found = state.found || {};
 state.watches = ${JSON.stringify(watches)};
 // The bar to make room in: the nearest row at least half the page wide. Not simply the first full-width box: on the
 // unfolded Duo a session shares the page with the host list, and that box is the whole page.
@@ -146,13 +147,45 @@ function check() {
     // Only a bar asked to make room is touched; padding is put back when it's no longer asked for.
     if (watch.pad > 0 || state.rows[watch.name]) pad(watch.name, button ? bar(button) : null, watch.pad);
     if (watch.lift > 0 || state.lifts[watch.name]) lifted(watch.name, button, watch.lift || 0);
-    var r = button && button.getBoundingClientRect();
-    var at = r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(',') : '';
-    if (at === state.at[watch.name]) return;
-    state.at[watch.name] = at;
-    try {
-      window.orcaBridge.postMessage(JSON.stringify({ type: '${PAGE_ANCHOR_MESSAGE}', name: watch.name, at: at }));
-    } catch (e) {}
+    state.found[watch.name] = button;
+    // A button that moved is likely still moving (the composer sliding as the keyboard goes, a message sent).
+    if (report(watch.name, button) && button) follow();
+  });
+}
+function where(button) {
+  var r = button && button.getBoundingClientRect();
+  return r ? [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)].join(',') : '';
+}
+// Says where a button is now, if that's news; whether it was.
+function report(name, button) {
+  var at = where(button);
+  if (at === state.at[name]) return false;
+  state.at[name] = at;
+  try {
+    window.orcaBridge.postMessage(JSON.stringify({ type: '${PAGE_ANCHOR_MESSAGE}', name: name, at: at }));
+  } catch (e) {}
+  return true;
+}
+// While a button moves, says where it is every frame, not four times a second, so the orb moves with it rather than
+// in steps behind it; until the buttons have held still for ten frames. Only the buttons already found are measured
+// (cheap enough for each frame); one gone from the page means a full look, which follows again if it moved.
+function follow() {
+  state.still = 0;
+  if (state.following) return;
+  state.following = true;
+  requestAnimationFrame(function frame() {
+    if (document.querySelector('[aria-modal="true"]')) { state.following = false; return; }
+    var moved = false, gone = false;
+    Object.keys(state.found).forEach(function (name) {
+      var button = state.found[name];
+      if (!button) return;
+      if (!button.isConnected) { gone = true; return; }
+      if (report(name, button)) moved = true;
+    });
+    state.still = moved ? 0 : state.still + 1;
+    if (gone) soon();
+    if (gone || state.still >= 10) { state.following = false; return; }
+    requestAnimationFrame(frame);
   });
 }
 // At once when there's been no check for a quarter second (the keyboard closing, a message sent: the orb and bar
@@ -172,9 +205,11 @@ if (!state.installed) {
   state.installed = true;
   new MutationObserver(soon).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-label', 'style', 'class'] });
   window.addEventListener('resize', soon);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', soon);
+  // The keyboard coming or going moves the composer with no change to the page for the watch to see.
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { soon(); follow(); });
 }
 state.at = {};
+state.found = {};
 check();
 })();`
 }

@@ -175,3 +175,27 @@ it('keeps the host list’s header lifted however often the page changes', async
     ).toBe('0px')
   }
 })
+
+it('says where a moving button is every frame until it holds still, not four times a second', async () => {
+  const posted = listen()
+  const height = window.innerHeight
+  document.body.innerHTML = '<div id="mic" aria-label="Dictate"></div>'
+  const mic = document.getElementById('mic')!
+  place(mic, { left: 358, top: height - 60, width: 36, height: 36 })
+  new Function(
+    pageAnchorsScript([{ name: 'mic', labels: ['Dictate'], near: 'bottom', pad: 0 }])
+  )()
+  const frame = () => new Promise((done) => requestAnimationFrame(() => done(null)))
+  // The composer slides up as the keyboard comes, with nothing changing in the page for its watch to see.
+  for (const top of [height - 100, height - 140, height - 180]) {
+    place(mic, { left: 358, top, width: 36, height: 36 })
+    await frame()
+    await frame()
+    expect(posted.at(-1)).toEqual({ name: 'mic', at: { x: 358, y: top, width: 36, height: 36 } })
+  }
+  const told = posted.length
+  for (let i = 0; i < 12; i++) {
+    await frame()
+  }
+  expect(posted.length).toBe(told) // held still: nothing more to say
+})

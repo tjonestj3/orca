@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
@@ -41,6 +41,9 @@ export function JarvisBubble() {
   }
   const shown = hide ? null : spot
   const at = shown ?? last.current
+  // The orb follows the composer every frame while it moves: only where it sits changes, not the orb drawn.
+  const size = at?.size
+  const control = useMemo(() => (size === undefined ? null : <JarvisTalkControl size={size} />), [size])
   if (!at) {
     return null
   }
@@ -50,7 +53,7 @@ export function JarvisBubble() {
       style={[StyleSheet.absoluteFill, !shown && styles.hidden]}
     >
       <View style={at.style}>
-        <JarvisTalkControl size={at.size} />
+        {control}
       </View>
     </View>
   )
