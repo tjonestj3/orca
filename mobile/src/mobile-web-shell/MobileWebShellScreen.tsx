@@ -327,7 +327,7 @@ export function MobileWebShellScreen({
   useShellPageStorageRefresh(refreshStorage, bridge.publishStorage)
   useEffect(() => bridge.publishRoute(pageRoute), [bridge.publishRoute, pageRoute])
   // The page's sheets and menus can't cover Xeno's orb, which the app draws over it; it hides while one is open.
-  const onBridgeMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage)
+  const onBridgeMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage, sheet.pageTop)
 
   usePublishedSafeAreaInsets(bridge.publishSafeAreaInsets, pageInsets)
   const publishKeyboardInset = bridge.publishKeyboardInset

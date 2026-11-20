@@ -3,7 +3,8 @@ import { useSessionPill } from '../theme/mobile-appearance'
 
 // Moshi's look for a session: the page on a sheet a little below the top, its top corners rounded over a darker
 // ground, a grab handle at its top edge. With the floating header (Settings → Appearance), which it goes with.
-const SHEET_TOP = 10
+/** How far down the sheet puts the page: what the page measures, the window sees this much lower. */
+export const SHEET_TOP = 10
 const SHEET_RADIUS = 22
 
 /** A session's sheet, or nulls when it isn't on one: the shell's root and page styles, and the handle to draw. */
@@ -11,6 +12,7 @@ export function useSessionSheet(showsSession: boolean) {
   const on = useSessionPill() && showsSession
   return {
     on,
+    pageTop: on ? SHEET_TOP : 0,
     root: on ? styles.root : null,
     page: on ? styles.page : null,
     handle: on ? <View pointerEvents="none" style={styles.handle} /> : null

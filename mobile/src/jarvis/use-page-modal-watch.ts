@@ -19,7 +19,9 @@ type BridgeMessage = NativeSyntheticEvent<MobileWebShellBridgeMessagePayload>
  */
 export function usePageModalWatch(
   page: string | null,
-  forward: (event: BridgeMessage) => void
+  forward: (event: BridgeMessage) => void,
+  // Where the page starts in the window (a session's sheet puts it lower): its anchors move down with it.
+  pageTop = 0
 ): (event: BridgeMessage) => void {
   const anchors = useRef<Partial<Record<PageAnchorName, PageAnchor>>>({})
   const focused = useRef(false)
@@ -57,13 +59,14 @@ export function usePageModalWatch(
       } else if (page !== null && open !== null) {
         pageModals.set(page, open)
       } else if (page !== null && anchor !== null) {
-        const next = { ...anchors.current, [anchor.name]: anchor.at ?? undefined }
+        const at = anchor.at ? { ...anchor.at, y: anchor.at.y + pageTop } : undefined
+        const next = { ...anchors.current, [anchor.name]: at }
         anchors.current = next
         if (focused.current) {
           pageAnchors.show(page, next)
         }
       }
     },
-    [forward, page]
+    [forward, page, pageTop]
   )
 }

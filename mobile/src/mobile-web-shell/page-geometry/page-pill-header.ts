@@ -20,7 +20,7 @@ export type PagePill = {
   readonly top: number
   readonly left: number
   readonly right: number
-  /** The theme's panel colour, as #rrggbb: the bar's ground where the page's own can't be read. */
+  /** The theme's panel colour, as #rrggbb: the glass behind the worktree's name. */
   readonly background: string
   /** The desktop's name, for the chip; null for none. */
   readonly chip: string | null
@@ -34,7 +34,7 @@ export function pagePillHeaderScript(pill: PagePill | null): string {
   return String.raw`(function () {
 var state = window.__xenoPill || (window.__xenoPill = { held: [] });
 state.pill = ${JSON.stringify(pill)};
-state.css = ${JSON.stringify(pill ? pillStyles(pill.chip) : '')};
+state.css = ${JSON.stringify(pill ? pillStyles(pill.chip, pill.background) : '')};
 state.marked = state.marked || [];
 function hold(el, prop) {
   return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) };
@@ -205,14 +205,6 @@ function lay(chrome, more, tab) {
     });
   });
 }
-// The page's own ground behind the conversation, for the bar's: Moshi's bar is the sheet's colour, not a panel.
-function ground(list, fallback) {
-  for (var el = list; el && el !== document.documentElement; el = el.parentElement) {
-    var bg = getComputedStyle(el).backgroundColor;
-    if (bg && bg !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(bg)) return bg;
-  }
-  return fallback;
-}
 function check() {
   state.pending = false;
   // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
@@ -254,7 +246,6 @@ function check() {
   set(chrome, 'height', 'auto');
   set(chrome, 'min-height', '0px');
   set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
-  set(chrome, 'background-color', ground(list, pill.background));
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;

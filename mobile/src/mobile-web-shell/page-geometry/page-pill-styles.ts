@@ -11,12 +11,19 @@ function cssString(text: string): string {
   return `"${text.replace(/[\\"]/g, '\\$&').replace(/[\n\r]+/g, ' ')}"`
 }
 
-export function pillStyles(chip: string | null): string {
+/** `hex` (#rrggbb) at opacity `a`. */
+function rgba(hex: string, a: number): string {
+  const n = Number.parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
+}
+
+export function pillStyles(chip: string | null, background: string): string {
   const bar = '[data-xeno-pill="bar"]'
   const mono = 'ui-monospace, "SF Mono", Menlo, monospace'
   const system = '-apple-system, system-ui, "Helvetica Neue", sans-serif'
   const rules = [
-    `${bar} { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; }`,
+    // No strip: the bar itself is clear, only its circles, the name's capsule and the chip show over the chat.
+    `${bar} { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
     // Inside the bar only icons, words and the circles: Orca fills its buttons and the active tab, and rules its rows.
     // (:where keeps this rule's weight that of "bar *", so the circles' colours below still win.)
     `${bar} *:where(:not([data-xeno-pill="state"], [data-xeno-pill="alert"])) { background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
@@ -26,11 +33,11 @@ export function pillStyles(chip: string | null): string {
     `${bar} [data-xeno-pill="count"] { order: 2 !important; }`,
     `${bar} [data-xeno-pill="title"] { order: 3 !important; flex: 1 1 0px !important; min-width: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; overflow: hidden !important; opacity: 1 !important; }`,
     `${bar} [data-xeno-pill="trail"] { order: 4 !important; flex: 0 0 auto !important; min-width: 0 !important; gap: 8px !important; margin: 0 !important; }`,
-    `${bar} [data-xeno-pill="tblock"] { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 6px !important; flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }`,
-    `${bar} [data-xeno-pill="tblock"] * { font-family: ${mono} !important; font-size: 13px !important; font-weight: 400 !important; color: rgba(205, 214, 244, 0.6) !important; text-align: left !important; }`,
+    // The name and branch on a glass capsule, as tall as the circles, readable over whatever scrolls under it.
+    `${bar} [data-xeno-pill="tblock"] { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 8px !important; flex: 0 1 auto !important; min-width: 0 !important; max-width: 100% !important; height: 26px !important; min-height: 0 !important; padding: 0 10px !important; box-sizing: border-box !important; border-radius: 13px !important; background-color: ${rgba(background, 0.82)} !important; -webkit-backdrop-filter: blur(12px) !important; backdrop-filter: blur(12px) !important; }`,
+    `${bar} [data-xeno-pill="tblock"] * { font-family: ${mono} !important; font-size: 13px !important; font-weight: 400 !important; color: rgba(205, 214, 244, 0.75) !important; text-align: left !important; }`,
     `${bar} [data-xeno-pill="ttext"] { flex: 0 1 auto !important; min-width: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }`,
-    `${bar} [data-xeno-pill="tmeta"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 0 3 auto !important; min-width: 0 !important; gap: 0 !important; }`,
-    `${bar} [data-xeno-pill="tmeta"]::before { content: "·"; margin-right: 6px; color: rgba(205, 214, 244, 0.45); }`,
+    `${bar} [data-xeno-pill="tmeta"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 0 3 auto !important; min-width: 0 !important; gap: 0 !important; opacity: 0.7 !important; }`,
     `${bar} [data-xeno-btn] { width: 26px !important; height: 26px !important; min-width: 26px !important; min-height: 26px !important; max-width: 26px !important; padding: 0 !important; margin: 0 !important; border-radius: 13px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; }`,
     `${bar} [data-xeno-btn] * { min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; color: ${INK} !important; font-family: ${system} !important; font-size: 12px !important; font-weight: 700 !important; }`,
     `${bar} [data-xeno-btn] svg { width: 15px !important; height: 15px !important; }`,
@@ -47,7 +54,7 @@ export function pillStyles(chip: string | null): string {
   ]
   if (chip) {
     rules.push(
-      `${bar} [data-xeno-pill="title"]::after { content: ${cssString(chip)}; flex: 0 0 auto; margin-left: auto; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; height: 24px; line-height: 24px; padding: 0 10px; border-radius: 12px; background: #17463f; color: #5fe0c3; font: 600 12px ${system}; }`,
+      `${bar} [data-xeno-pill="title"]::after { content: ${cssString(chip)}; flex: 0 0 auto; margin-left: auto; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; box-sizing: border-box; height: 26px; line-height: 26px; padding: 0 12px; border-radius: 13px; text-align: center; background: #17463f; color: #5fe0c3; font-family: ${system} !important; font-size: 12px !important; font-weight: 600 !important; }`,
       // The desktop's connection, read from Orca's status dot: teal connected, amber on its way, red lost.
       `${bar}[data-xeno-conn="wait"] [data-xeno-pill="title"]::after { background: #4a3d16; color: #f9e2af; }`,
       `${bar}[data-xeno-conn="down"] [data-xeno-pill="title"]::after { background: #4d1f2a; color: #f38ba8; }`

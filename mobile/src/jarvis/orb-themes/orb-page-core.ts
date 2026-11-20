@@ -87,10 +87,15 @@ window.__orb = {
     if (typeof next.demo === 'boolean') want.demo = next.demo;
     if (typeof next.reduce === 'boolean') { want.reduce = next.reduce; F.reduce = next.reduce; }
     if (typeof next.state === 'string') setState(next.state);
-    // Asleep (no call), any change wakes it.
-    if (window.__orb.asleep) { window.__orb.asleep = false; requestAnimationFrame(frame); }
+    wake();
   }
 };
+// Asleep (no call), any change wakes it: what the app says, or the page resized (a still frame drawn at the old size
+// would stay that way).
+function wake() {
+  if (window.__orb.asleep) { window.__orb.asleep = false; requestAnimationFrame(frame); }
+}
+window.addEventListener('resize', wake);
 function step(nowMs) {
   real = nowMs / 1000;
   // Up to a quarter second between frames counts in full, so a resting orb's slow motion keeps its pace.
@@ -134,12 +139,15 @@ function resting() {
 }
 // With no call (idle, settled) it holds still: one frame drawn, none more until the app says something changed.
 // A still orb reads as off, and nothing is drawn while you just use the app.
-function asleep() {
-  return F.cur === 'idle' && F.k >= 1 && !want.demo;
+// Not in its first second and a half, while the page is still settling its size.
+let firstAt = null;
+function asleep(nowMs) {
+  return F.cur === 'idle' && F.k >= 1 && !want.demo && nowMs - firstAt > 1500;
 }
 function frame(nowMs) {
+  if (firstAt === null) firstAt = nowMs;
   paint(nowMs);
-  if (asleep()) { window.__orb.asleep = true; return; }
+  if (asleep(nowMs)) { window.__orb.asleep = true; return; }
   const due = 1000 / (resting() ? RESTING_FPS : ACTIVE_FPS);
   setTimeout(function () { requestAnimationFrame(frame); }, Math.max(0, due - (performance.now() - nowMs) - 4));
 }
