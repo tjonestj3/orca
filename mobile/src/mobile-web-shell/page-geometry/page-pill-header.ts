@@ -126,6 +126,7 @@ function unmark(el) {
   el.removeAttribute('data-xeno-pill');
   el.removeAttribute('data-xeno-btn');
   el.removeAttribute('data-xeno-conn');
+  el.removeAttribute('data-xeno-mode');
 }
 // The desktop's connection from the colour of Orca's status dot: green connected, red lost, else on its way.
 function connection(dot) {
@@ -160,7 +161,6 @@ function labelled(el) {
 // the layout (display: contents) so their parts share the bar's row, ordered there; the agent's tab and + are
 // hidden (the tabs list has both).
 function lay(chrome, more, tab) {
-  mark(chrome, 'data-xeno-pill', 'bar');
   // Once laid out the tab strip's boxes have none of their own to measure: the rows found before still hold.
   var rows = state.rows;
   if (!rows || rows.chrome !== chrome || !rows.title.contains(more) || !rows.tab.contains(tab)) {
@@ -168,6 +168,7 @@ function lay(chrome, more, tab) {
     rows = state.rows = found && strip && found !== strip ? { chrome: chrome, title: found, tab: strip } : null;
   }
   if (!rows || rows.title.children.length < 3) return null;
+  mark(chrome, 'data-xeno-pill', 'bar');
   // The title row and the boxes above it stay boxes, one line high: Orca places the workspace card below them, so
   // they must still measure where they are. On it: back, an empty middle, the branch and menu buttons. The tab
   // strip's row is laid over that middle: the tabs circle, the agent's tab as the name capsule, the desktop chip.
@@ -228,9 +229,14 @@ function check() {
   if ((state.at && state.at !== chrome) || (state.mode && state.mode !== mode)) restoreAll();
   state.at = chrome;
   state.mode = mode;
-  stylesheet(state.css);
   state.next = [];
   var laid = lay(chrome, more, tab);
+  // A sideways phone puts the tabs in the title's row, a bar of Orca's own that this layout doesn't fit: it stays
+  // Orca's, untouched.
+  if (!laid) { if (state.held.length || state.marked.length) restoreAll(); return; }
+  stylesheet(state.css);
+  // Over a chat, a fade behind the bar keeps what scrolls under it off the circles.
+  mark(chrome, 'data-xeno-mode', mode);
   // What was marked before and isn't now (the page redrew a part) loses its mark.
   state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
   state.marked = state.next;
@@ -238,11 +244,9 @@ function check() {
   set(chrome, 'padding-left', '14px');
   set(chrome, 'padding-right', '14px');
   // The tab strip's row over the title row's empty middle: from just after back to just before the branch button.
-  if (laid) {
-    set(laid.tabRow, 'top', getComputedStyle(chrome).paddingTop);
-    set(laid.tabRow, 'left', (14 + ${DOT} + 8) + 'px');
-    set(laid.tabRow, 'right', (14 + laid.trail.getBoundingClientRect().width + 8) + 'px');
-  }
+  set(laid.tabRow, 'top', getComputedStyle(chrome).paddingTop);
+  set(laid.tabRow, 'left', (14 + ${DOT} + 8) + 'px');
+  set(laid.tabRow, 'right', (14 + laid.trail.getBoundingClientRect().width + 8) + 'px');
   // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }

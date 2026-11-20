@@ -73,6 +73,7 @@ it('lays the header across the very top of the pane, the chat starting below it,
   expect(style('chrome', 'right')).toBe('84px')
   expect(style('chrome', 'padding-top')).toBe('26px') // its row under the top inset
   expect(role('chrome')).toBe('bar')
+  expect(byId('chrome').getAttribute('data-xeno-mode')).toBe('float') // the fade behind it, over the chat
   expect(style('content', 'padding-top')).toBe(`${44 + 6}px`)
   expect(style('card', 'padding-top')).toBe('') // a tall question's region isn't the transcript
   expect(style('top', 'z-index')).toBe('20')
@@ -170,6 +171,22 @@ it('stays as you type, though the buttons it is found by have no box once hidden
   expect(role('newcell')).toBe('hide')
 })
 
+it('leaves a sideways phone’s header, the tabs in the title’s row, as Orca has it', () => {
+  orcaHeader()
+  run(PILL)
+  expect(role('chrome')).toBe('bar')
+  // Turned sideways: the tab strip moves into the title row, between the title and the buttons.
+  byId('bar').insertBefore(byId('strip'), byId('trailing'))
+  place(byId('tabbar'), { top: 10, height: 36, width: 200 })
+  place(byId('new'), { top: 10, height: 36, width: 36 })
+  run(PILL)
+  expect(document.querySelectorAll('[data-xeno-pill], [data-xeno-btn], [data-xeno-mode]')).toHaveLength(0)
+  expect(document.getElementById('xeno-pill-style')).toBeNull()
+  expect(style('chrome', 'position')).toBe('')
+  expect(style('chrome', 'padding-top')).toBe('67px')
+  run(null)
+})
+
 it('leaves a page without a session header alone', () => {
   document.body.innerHTML = '<div id="x" style="padding-top: 4px"><p>No header</p></div>'
   run(PILL)
@@ -210,6 +227,7 @@ it('over a terminal keeps the bar in the page’s flow, and moves between the tw
   expect(style('chrome', 'position')).toBe('')
   expect(style('chrome', 'padding-top')).toBe('67px') // the page's own, in flow
   expect(role('chrome')).toBe('bar')
+  expect(byId('chrome').getAttribute('data-xeno-mode')).toBe('flow')
   expect(role('center')).toBe('ghost')
   run(null)
   expect(role('chrome')).toBeNull()

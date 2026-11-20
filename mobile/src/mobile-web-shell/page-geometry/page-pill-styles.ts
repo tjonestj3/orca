@@ -30,6 +30,9 @@ export function pillStyles(chip: string | null, background: string): string {
     // Inside the bar only icons, words and the circles: Orca fills its buttons and the active tab, and rules its rows.
     // (:where keeps this rule's weight that of "bar *", so the circles' colours below still win.)
     `${bar} *:where(:not([data-xeno-pill="state"], [data-xeno-pill="alert"])) { background-color: transparent !important; border-width: 0 !important; box-shadow: none !important; }`,
+    // Over a chat the bar floats, clear: a fade from the page's colour, behind its parts, keeps the words scrolling
+    // up under it off the circles. (The bar floating is its own layer, so -1 is still above what it floats over.)
+    `${bar}[data-xeno-mode="float"]::before { content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: -12px; z-index: -1; pointer-events: none; background-image: linear-gradient(to bottom, ${rgba(background, 0.96)} 0%, ${rgba(background, 0.9)} 70%, ${rgba(background, 0)} 100%); }`,
     `${bar} [data-xeno-pill="flat"] { display: contents !important; }`,
     `${bar} [data-xeno-pill="line"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 1 1 auto !important; min-width: 0 !important; height: ${DOT}px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; gap: 8px !important; }`,
     `${bar} [data-xeno-pill="hide"], ${bar} [data-xeno-pill="state"] { display: none !important; }`,
