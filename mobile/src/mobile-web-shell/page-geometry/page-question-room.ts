@@ -42,11 +42,18 @@ function check() {
   widen(options[0]);
   options.forEach(unclamp);
 }
-// At most four checks a second: a streaming chat changes the page many times a second, and each check measures it.
+// At once when there's been no check for a quarter second (the keyboard closing, a message sent: the orb and bar
+// follow without a lag), else when that quarter second is up: at most four checks a second through a busy stretch.
 function soon() {
   if (state.pending) return;
   state.pending = true;
-  setTimeout(function () { requestAnimationFrame(check); }, 250);
+  var wait = Math.max(0, 250 - (Date.now() - (state.checkedAt || 0)));
+  setTimeout(function () {
+    requestAnimationFrame(function () {
+      state.checkedAt = Date.now();
+      check();
+    });
+  }, wait);
 }
 if (!state.installed) {
   state.installed = true;
