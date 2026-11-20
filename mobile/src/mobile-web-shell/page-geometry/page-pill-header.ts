@@ -1,4 +1,5 @@
-import { pillStyles, STYLE_ID } from './page-pill-styles'
+import { DOT, pillStyles, STYLE_ID } from './page-pill-styles'
+import { TAP_OR_HOLD } from './page-pill-tap'
 
 /**
  * A session's header as one slim bar at the very top, like Moshi's: Orca's header (the title row and the tab strip)
@@ -125,7 +126,6 @@ function unmark(el) {
   el.removeAttribute('data-xeno-pill');
   el.removeAttribute('data-xeno-btn');
   el.removeAttribute('data-xeno-conn');
-  el.removeAttribute('data-xeno-tabs');
 }
 // The desktop's connection from the colour of Orca's status dot: green connected, red lost, else on its way.
 function connection(dot) {
@@ -161,54 +161,55 @@ function labelled(el) {
 // hidden (the tabs list has both).
 function lay(chrome, more, tab) {
   mark(chrome, 'data-xeno-pill', 'bar');
-  // Once laid out on one line the rows have no box of their own to measure: the ones found before still hold.
+  // Once laid out the tab strip's boxes have none of their own to measure: the rows found before still hold.
   var rows = state.rows;
   if (!rows || rows.chrome !== chrome || !rows.title.contains(more) || !rows.tab.contains(tab)) {
     var found = rowOf(more, chrome), strip = rowOf(tab, chrome);
     rows = state.rows = found && strip && found !== strip ? { chrome: chrome, title: found, tab: strip } : null;
   }
-  if (!rows || rows.title.children.length < 3) return;
-  // The title row and the boxes above it stay boxes, one line high: Orca places the workspace card (tap the name)
-  // below them, so they must still measure where they are. The tab strip's boxes step out of the layout, and the
-  // tabs circle is placed beside back.
+  if (!rows || rows.title.children.length < 3) return null;
+  // The title row and the boxes above it stay boxes, one line high: Orca places the workspace card below them, so
+  // they must still measure where they are. On it: back, an empty middle, the branch and menu buttons. The tab
+  // strip's row is laid over that middle: the tabs circle, the agent's tab as the name capsule, the desktop chip.
   for (var el = rows.title; el && el !== chrome; el = el.parentElement) mark(el, 'data-xeno-pill', 'line');
-  for (var box = rows.tab; box && box !== chrome; box = box.parentElement) mark(box, 'data-xeno-pill', 'flat');
+  for (var box = rows.tab.parentElement; box && box !== chrome; box = box.parentElement) mark(box, 'data-xeno-pill', 'flat');
+  mark(rows.tab, 'data-xeno-pill', 'tabrow');
   var parts = Array.prototype.slice.call(rows.title.children);
   var lead = parts[0], title = parts[1], trail = parts[parts.length - 1];
   mark(lead, 'data-xeno-pill', 'lead');
-  mark(title, 'data-xeno-pill', 'title');
   mark(trail, 'data-xeno-pill', 'trail');
+  // The worktree's name and branch stay, unseen, holding the middle: tapping the agent's tab opens their card.
+  mark(title, 'data-xeno-pill', 'ghost');
   var backs = labelled(lead);
   mark(backs[backs.length - 1], 'data-xeno-btn', 'yellow');
   labelled(trail).forEach(function (button) {
     mark(button, 'data-xeno-btn', button === more ? 'blue' : 'salmon');
   });
   var block = title.querySelector('[role="button"]');
-  if (block) {
-    mark(block, 'data-xeno-pill', 'tblock');
-    var name = block.firstElementChild, meta = name && name.nextElementSibling;
-    mark(name, 'data-xeno-pill', 'ttext');
-    if (meta) {
-      mark(meta, 'data-xeno-pill', 'tmeta');
-      // The connection dot before the branch: Moshi's line is words only, so it shows as the chip's colour instead.
-      var dot = meta.firstElementChild;
-      if (dot && dot !== meta.lastElementChild && !dot.textContent.trim()) {
-        mark(dot, 'data-xeno-pill', 'state');
-        mark(chrome, 'data-xeno-conn', connection(dot));
-      }
-    }
+  var meta = block && block.firstElementChild && block.firstElementChild.nextElementSibling;
+  // The connection dot before the branch shows as the chip's colour.
+  var dot = meta && meta.firstElementChild;
+  if (dot && dot !== meta.lastElementChild && !dot.textContent.trim()) {
+    mark(dot, 'data-xeno-pill', 'state');
+    mark(chrome, 'data-xeno-conn', connection(dot));
   }
   Array.prototype.forEach.call(rows.tab.children, function (cell, i) {
-    if (i === 0 || cell.contains(tab)) { mark(cell, 'data-xeno-pill', 'hide'); return; }
+    if (cell.contains(tab)) { mark(cell, 'data-xeno-pill', 'hide'); return; }
+    if (i === 0) {
+      mark(cell, 'data-xeno-pill', 'tabcap');
+      tapOrHold(cell, block);
+      return;
+    }
     mark(cell, 'data-xeno-pill', 'count');
     mark(cell, 'data-xeno-btn', 'green');
-    mark(chrome, 'data-xeno-tabs', 'on');
     // Orca's dot for another tab needing you, a badge on the circle.
     Array.prototype.forEach.call(cell.children, function (part, j) {
       if (j > 0 && getComputedStyle(part).position === 'absolute') mark(part, 'data-xeno-pill', 'alert');
     });
   });
+  return { tabRow: rows.tab, trail: trail };
 }
+${TAP_OR_HOLD}
 function check() {
   state.pending = false;
   // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
@@ -229,13 +230,19 @@ function check() {
   state.mode = mode;
   stylesheet(state.css);
   state.next = [];
-  lay(chrome, more, tab);
+  var laid = lay(chrome, more, tab);
   // What was marked before and isn't now (the page redrew a part) loses its mark.
   state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
   state.marked = state.next;
   set(chrome, 'padding-bottom', '8px');
   set(chrome, 'padding-left', '14px');
   set(chrome, 'padding-right', '14px');
+  // The tab strip's row over the title row's empty middle: from just after back to just before the branch button.
+  if (laid) {
+    set(laid.tabRow, 'top', getComputedStyle(chrome).paddingTop);
+    set(laid.tabRow, 'left', (14 + ${DOT} + 8) + 'px');
+    set(laid.tabRow, 'right', (14 + laid.trail.getBoundingClientRect().width + 8) + 'px');
+  }
   // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }

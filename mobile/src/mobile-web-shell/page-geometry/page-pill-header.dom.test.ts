@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pagePillHeaderScript, type PagePill } from './page-pill-header'
 
 function place(el: Element, r: { top: number; height: number; width?: number }) {
@@ -87,42 +87,74 @@ it('lays the header across the very top of the pane, the chat starting below it,
   expect(document.getElementById('xeno-pill-style')).toBeNull()
 })
 
-it('is Moshi’s row: back, tabs, the name and branch, the desktop chip, branch, menu', () => {
+it('is Moshi’s row: back, tabs, the agent’s tab, the desktop chip, branch, menu', () => {
   orcaHeader()
   run(PILL)
-  // The title row keeps its box (Orca places the workspace card below it); the tab strip's step out.
+  // The title row keeps its box (Orca places the workspace card below it); the tab strip's row lies over it.
   expect([role('nav'), role('bar'), role('strip'), role('tabbar')]).toEqual([
     'line',
     'line',
     'flat',
-    'flat'
+    'tabrow'
   ])
-  expect(byId('chrome').getAttribute('data-xeno-tabs')).toBe('on')
-  expect([role('leading'), role('count'), role('center'), role('trailing')]).toEqual([
-    'lead',
-    'count',
-    'title',
-    'trail'
-  ])
+  expect(style('tabbar', 'left')).toBe('44px') // just after back
+  expect([role('leading'), role('center'), role('trailing')]).toEqual(['lead', 'ghost', 'trail'])
+  expect([role('count'), role('tabcell'), role('newcell')]).toEqual(['count', 'tabcap', 'hide'])
   expect([circle('back'), circle('count'), circle('branch'), circle('more')]).toEqual([
     'yellow',
     'green',
     'salmon',
     'blue'
   ])
-  expect([role('block'), role('name'), role('meta'), role('dot')]).toEqual([
-    'tblock',
-    'ttext',
-    'tmeta',
-    'state'
-  ])
+  expect(role('dot')).toBe('state')
   expect(byId('chrome').getAttribute('data-xeno-conn')).toBe('ok') // the dot's green
   expect(role('alert')).toBe('alert') // another tab needs you
-  expect(role('tabcell')).toBe('hide')
-  expect(role('newcell')).toBe('hide')
   expect(document.getElementById('xeno-pill-style')!.textContent).toContain(
     'content: "Xeno Laptop"'
   )
+})
+
+describe('the agent’s tab in the bar', () => {
+  function touch(el: Element, type: string) {
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'touches', {
+      value: type === 'touchend' ? [] : [{ clientX: 10, clientY: 10 }]
+    })
+    el.dispatchEvent(event)
+  }
+  function watched() {
+    orcaHeader()
+    byId('tabcell').innerHTML = '<div id="tabbutton" aria-label="Claude">CARD-009362 phase 2a</div>'
+    run(PILL)
+    const pressed: string[] = []
+    // Orca's buttons, pressed by a click reaching them (React Native Web's onPress).
+    byId('tabbutton').addEventListener('click', () => pressed.push('tab menu'))
+    byId('block').addEventListener('click', () => pressed.push('worktree card'))
+    return pressed
+  }
+
+  it('opens the worktree’s card on a tap, not the tab menu', () => {
+    const pressed = watched()
+    touch(byId('tabbutton'), 'touchstart')
+    touch(byId('tabbutton'), 'touchend')
+    byId('tabbutton').click()
+    expect(pressed).toEqual(['worktree card'])
+  })
+
+  it('opens Orca’s tab menu on a hold, once', () => {
+    vi.useFakeTimers()
+    try {
+      const pressed = watched()
+      touch(byId('tabbutton'), 'touchstart')
+      vi.advanceTimersByTime(460)
+      expect(pressed).toEqual(['tab menu'])
+      touch(byId('tabbutton'), 'touchend')
+      byId('tabbutton').click() // the release's own click
+      expect(pressed).toEqual(['tab menu'])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
 
 it('stays as you type, though the buttons it is found by have no box once hidden and laid out', () => {
@@ -134,7 +166,7 @@ it('stays as you type, though the buttons it is found by have no box once hidden
   byId('content').append(' typing')
   run(PILL)
   expect(style('chrome', 'position')).toBe('absolute')
-  expect(role('center')).toBe('title')
+  expect(role('center')).toBe('ghost')
   expect(role('newcell')).toBe('hide')
 })
 
@@ -178,7 +210,7 @@ it('over a terminal keeps the bar in the page’s flow, and moves between the tw
   expect(style('chrome', 'position')).toBe('')
   expect(style('chrome', 'padding-top')).toBe('67px') // the page's own, in flow
   expect(role('chrome')).toBe('bar')
-  expect(role('center')).toBe('title')
+  expect(role('center')).toBe('ghost')
   run(null)
   expect(role('chrome')).toBeNull()
 })
