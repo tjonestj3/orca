@@ -1,5 +1,6 @@
 import { useMemo, useRef } from 'react'
 import { StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
 import { useSideColumn } from '../layout/side-rail'
@@ -7,6 +8,7 @@ import { useKeyboardOcclusion } from '../platform/keyboard/keyboard-occlusion'
 import { useShowingSession } from '../session/showing-session'
 import { sessionOrbPlace } from './jarvis-bubble-policy'
 import { JarvisTalkControl } from './JarvisTalkControl'
+import { useOrbKeyboardRide } from './use-orb-keyboard-ride'
 import { usePageModalOpen } from './page-modal'
 import {
   approvalOrbPlace,
@@ -22,7 +24,9 @@ const BUBBLE_SIZE = 56
 // No desktop name beside the orb here: in a session, a host list or settings, which desktop is clear (or doesn't
 // matter); Home's tab bar, where it isn't, names it (JarvisTabButton).
 
-type Spot = { readonly style: StyleProp<ViewStyle>; readonly size: number }
+// `top`, for a spot by a control on the page: where the page last said it is, which the orb rides from with the
+// keyboard (use-orb-keyboard-ride) rather than waiting for the page to say where it went.
+type Spot = { readonly style: StyleProp<ViewStyle>; readonly size: number; readonly top?: number }
 
 export function JarvisBubble() {
   const spot = useOrbSpot()
@@ -47,6 +51,7 @@ export function JarvisBubble() {
     () => (size === undefined ? null : <JarvisTalkControl size={size} />),
     [size]
   )
+  const ride = useOrbKeyboardRide(at?.top, useSafeAreaInsets().bottom)
   if (!at) {
     return null
   }
@@ -55,7 +60,7 @@ export function JarvisBubble() {
       pointerEvents={shown ? 'box-none' : 'none'}
       style={[StyleSheet.absoluteFill, !shown && styles.hidden]}
     >
-      <View style={at.style}>{control}</View>
+      <Animated.View style={[at.style, ride]}>{control}</Animated.View>
     </View>
   )
 }
@@ -72,6 +77,7 @@ function useOrbSpot(): Spot | null {
   if (!view && plus) {
     // The host list: just right of its + button, in the room its bar made (page-anchors).
     const place = plusOrbPlace(plus)
+    // Its bar isn't known to ride the keyboard, so the orb waits for the page there.
     return { style: [styles.anchored, { left: place.left, top: place.top }], size: place.size }
   }
   if (view) {
@@ -88,24 +94,26 @@ function useOrbSpot(): Spot | null {
     if (beside) {
       const at = micOrbPlace(beside)
       return {
-        style: [styles.row, { top: at.middle - place.size / 2, right: screen.width - at.right }],
+        style: [styles.row, { right: screen.width - at.right }],
+        top: at.middle - place.size / 2,
         size: place.size
       }
     }
     if (view === 'terminal' && mic) {
       // Just right of the live input row's mic, in the room the row made (page-anchors).
       const at = terminalMicOrbPlace(mic)
-      return { style: [styles.anchored, { left: at.left, top: at.top }], size: at.size }
+      return { style: [styles.anchored, { left: at.left }], top: at.top, size: at.size }
     }
     if (view === 'chat' && approval) {
       // A permission card where the composer was: the right end of its button row (page-anchors).
       const at = approvalOrbPlace(approval, place.size)
-      return { style: [styles.anchored, { left: at.left, top: at.top }], size: place.size }
+      return { style: [styles.anchored, { left: at.left }], top: at.top, size: place.size }
     }
     if (view === 'chat' && keys) {
       // A browser tab: the free right end of the line its keys share (page-browser-keys), level with them.
       return {
-        style: [styles.row, { top: keys.y + (keys.height - place.size) / 2, right: place.right }],
+        style: [styles.row, { right: place.right }],
+        top: keys.y + (keys.height - place.size) / 2,
         size: place.size
       }
     }
