@@ -78,7 +78,7 @@ jobs:
           {
             echo "CCACHE_DIR=$RUNNER_TEMP/ccache"
             echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE"
-            echo "CCACHE_MAXSIZE=3G"
+            echo "CCACHE_MAXSIZE=2G"
           } >> "$GITHUB_ENV"
 
       - name: Restore ccache
@@ -204,7 +204,7 @@ jobs:
           xcodebuild -version | tr -s '\n' ' '; echo
           if [ -f "$RUNNER_TEMP/ccache.log" ]; then
             echo "why compiles missed:"
-            grep -oE '(No manifest|Did not find result|Got result key|Result: [a-z_ ]+)' "$RUNNER_TEMP/ccache.log" | sort | uniq -c || true
+            grep -oE '(No [0-9a-f]{40,} in local storage|Retrieved [0-9a-f]{40,} from local storage|Got result key from [a-z ]+|Running real compiler)' "$RUNNER_TEMP/ccache.log" | sed -E 's/[0-9a-f]{40,}/KEY/' | sort | uniq -c || true
           fi
           tar -czf "$RUNNER_TEMP/ccache-debug.tgz" -C "$RUNNER_TEMP" ccache-debug ccache.log 2>/dev/null || true
 
