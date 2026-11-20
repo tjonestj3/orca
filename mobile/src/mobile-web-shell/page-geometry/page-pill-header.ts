@@ -156,10 +156,8 @@ function rowOf(button, chrome) {
 function labelled(el) {
   return Array.prototype.slice.call(el.querySelectorAll('[aria-label]'));
 }
-// Moshi's row: back (yellow), the tabs (green, with their count), the worktree and branch, the desktop's chip,
-// the branch button (salmon) and the menu (blue). The boxes holding Orca's title row and tab strip step out of
-// the layout (display: contents) so their parts share the bar's row, ordered there; the agent's tab and + are
-// hidden (the tabs list has both).
+// Moshi's row: back (yellow), the tab count (green), the agent's tab as the name capsule, the desktop's chip, the
+// branch button (salmon) and the menu (blue).
 function lay(chrome, more, tab) {
   // Once laid out the tab strip's boxes have none of their own to measure: the rows found before still hold.
   var rows = state.rows;
@@ -181,9 +179,9 @@ function lay(chrome, more, tab) {
   mark(trail, 'data-xeno-pill', 'trail');
   // The worktree's name and branch stay, unseen, holding the middle: tapping the agent's tab opens their card.
   mark(title, 'data-xeno-pill', 'ghost');
-  var backs = labelled(lead);
+  var backs = labelled(lead), trailing = labelled(trail);
   mark(backs[backs.length - 1], 'data-xeno-btn', 'yellow');
-  labelled(trail).forEach(function (button) {
+  trailing.forEach(function (button) {
     mark(button, 'data-xeno-btn', button === more ? 'blue' : 'salmon');
   });
   var block = title.querySelector('[role="button"]');
@@ -208,7 +206,7 @@ function lay(chrome, more, tab) {
       if (j > 0 && getComputedStyle(part).position === 'absolute') mark(part, 'data-xeno-pill', 'alert');
     });
   });
-  return { tabRow: rows.tab, trail: trail };
+  return { tabRow: rows.tab, lead: lead, circles: backs.slice(-1).concat(trailing) };
 }
 ${TAP_OR_HOLD}
 function check() {
@@ -244,9 +242,18 @@ function check() {
   set(chrome, 'padding-left', '14px');
   set(chrome, 'padding-right', '14px');
   // The tab strip's row over the title row's empty middle: from just after back to just before the branch button.
+  // Between where back and the branch and menu circles really are, so the chip never lands on them.
+  var box = chrome.getBoundingClientRect();
+  var edges = laid.circles.reduce(function (at, button) {
+    var r = button.getBoundingClientRect();
+    if (r.width <= 0) return at;
+    if (laid.lead.contains(button)) at.left = Math.max(at.left, r.right - box.left);
+    else at.right = Math.max(at.right, box.right - r.left);
+    return at;
+  }, { left: 14 + ${DOT}, right: 14 + ${DOT} });
   set(laid.tabRow, 'top', getComputedStyle(chrome).paddingTop);
-  set(laid.tabRow, 'left', (14 + ${DOT} + 8) + 'px');
-  set(laid.tabRow, 'right', (14 + laid.trail.getBoundingClientRect().width + 8) + 'px');
+  set(laid.tabRow, 'left', Math.round(edges.left + 8) + 'px');
+  set(laid.tabRow, 'right', Math.round(edges.right + 8) + 'px');
   // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
@@ -261,6 +268,7 @@ function check() {
   set(chrome, 'height', 'auto');
   set(chrome, 'min-height', '0px');
   set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
+  set(chrome, '--xeno-fade-left', -pill.left + 'px'); set(chrome, '--xeno-fade-right', -pill.right + 'px');
   var content = list && list.firstElementChild;
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;

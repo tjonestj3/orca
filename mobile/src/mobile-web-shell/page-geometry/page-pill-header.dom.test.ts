@@ -2,16 +2,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { pagePillHeaderScript, type PagePill } from './page-pill-header'
 
-function place(el: Element, r: { top: number; height: number; width?: number }) {
+function place(el: Element, r: { top: number; height: number; width?: number; left?: number }) {
   const width = r.width ?? 400
+  const left = r.left ?? 0
   el.getBoundingClientRect = () => ({
-    x: 0,
+    x: left,
     y: r.top,
-    left: 0,
+    left,
     top: r.top,
     width,
     height: r.height,
-    right: width,
+    right: left + width,
     bottom: r.top + r.height,
     toJSON: () => r
   })
@@ -113,6 +114,22 @@ it('is Moshi’s row: back, tabs, the agent’s tab, the desktop chip, branch, m
   expect(document.getElementById('xeno-pill-style')!.textContent).toContain(
     'content: "Xeno Laptop"'
   )
+})
+
+it('keeps the tab row, and the chip at its end, clear of the circles wherever they sit', () => {
+  orcaHeader()
+  run(PILL)
+  // The chrome is 400 wide; back ends at 50, the branch circle starts at 300.
+  place(byId('back'), { top: 10, height: 22, width: 22, left: 28 })
+  place(byId('branch'), { top: 10, height: 22, width: 22, left: 300 })
+  place(byId('more'), { top: 10, height: 22, width: 22, left: 330 })
+  byId('content').append(' more')
+  run(PILL)
+  expect(style('tabbar', 'left')).toBe(`${50 + 8}px`)
+  expect(style('tabbar', 'right')).toBe(`${400 - 300 + 8}px`)
+  // The fade behind it runs out over the column the bar keeps clear of.
+  expect(style('chrome', '--xeno-fade-right')).toBe('-84px')
+  run(null)
 })
 
 describe('the agent’s tab in the bar', () => {
