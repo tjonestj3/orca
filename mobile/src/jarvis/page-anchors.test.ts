@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   PLUS_ORB,
+  pageAnchors,
   approvalOrbPlace,
   TERMINAL_MIC_ORB,
   micOrbPlace,
@@ -60,5 +61,21 @@ describe('where the orb goes', () => {
       right: 350,
       middle: 818
     })
+  })
+})
+
+describe('a page on its way out', () => {
+  it('says so while it is the page showing, and stops when another page shows or it comes back', () => {
+    pageAnchors.show('a', {})
+    pageAnchors.leave('a', true)
+    expect(pageAnchors.readLeaving()).toBe(true)
+    pageAnchors.leave('b', false) // another page can't call it back
+    expect(pageAnchors.readLeaving()).toBe(true)
+    pageAnchors.leave('a', false) // the swipe called off
+    expect(pageAnchors.readLeaving()).toBe(false)
+    pageAnchors.leave('a', true)
+    pageAnchors.show('b', {})
+    expect(pageAnchors.readLeaving()).toBe(false)
+    pageAnchors.forget('b')
   })
 })

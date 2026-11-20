@@ -13,7 +13,8 @@ import {
   plusOrbPlace,
   terminalMicOrbPlace,
   usePageAnchors,
-  usePageShowing
+  usePageShowing,
+  usePageLeaving
 } from './page-anchors'
 
 const BUBBLE_SIZE = 56
@@ -31,7 +32,9 @@ export function JarvisBubble() {
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
   const sheetOpen = usePageModalOpen()
-  if (sheetOpen || (view === 'chat' && question)) {
+  // Going back, the orb goes as the page starts to slide away, not once it has.
+  const leaving = usePageLeaving()
+  if (sheetOpen || leaving || (view === 'chat' && question)) {
     return null
   }
   if (!view && plus) {

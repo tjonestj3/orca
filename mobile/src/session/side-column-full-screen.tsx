@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { ColumnToggleButton } from '../layout/column-toggle'
 import { useSideColumn, useSideColumnFullScreen } from '../layout/side-rail'
+import { useScreenLeaving } from '../navigation/use-screen-leaving'
 
 /**
  * While this screen is the one showing, it may take the folded Duo's status column. A screen whose
@@ -17,8 +18,11 @@ export function useSessionFullScreen(
       return () => setFocused(false)
     }, [])
   )
+  // The toggle is drawn over the whole window: it goes as this screen starts to leave, or it would hang over the
+  // screen sliding in. Full screen itself stays until it has gone, so the column doesn't come back mid-swipe.
+  const leaving = useScreenLeaving()
   useSideColumnFullScreen(focused && options.enabled !== false, {
-    columnToggle: options.columnToggle,
+    columnToggle: options.columnToggle === true && !leaving,
     snap: options.snap
   })
 }

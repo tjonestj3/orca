@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import type { NativeSyntheticEvent } from 'react-native'
 import { useFocusEffect } from 'expo-router'
+import { useScreenLeaving } from '../navigation/use-screen-leaving'
 import type { MobileWebShellBridgeMessagePayload } from '../../modules/orca-mobile-web-shell/src/index'
 import { pageModals, readPageModalMessage } from './page-modal'
 import {
@@ -26,6 +27,12 @@ export function usePageModalWatch(
   useEffect(() => {
     anchors.current = {} // a new page reports its own
   }, [page])
+  const leaving = useScreenLeaving()
+  useEffect(() => {
+    if (page !== null) {
+      pageAnchors.leave(page, leaving)
+    }
+  }, [page, leaving])
   useFocusEffect(
     useCallback(() => {
       focused.current = true

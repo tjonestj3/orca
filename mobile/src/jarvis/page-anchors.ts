@@ -253,12 +253,15 @@ type Anchors = Readonly<Partial<Record<PageAnchorName, PageAnchor>>>
 function createPageAnchorStore() {
   let shown: Anchors = {}
   let owner: string | null = null
+  let leaving = false
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
   return {
     read: (): Anchors => shown,
     /** Whether a desktop page is the screen showing, whatever it has reported yet. */
     readShowing: (): boolean => owner !== null,
+    /** Whether the page showing has started to go (a back swipe), with the screen under it sliding in. */
+    readLeaving: (): boolean => owner !== null && leaving,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
@@ -267,13 +270,23 @@ function createPageAnchorStore() {
     },
     /** The focused page's anchors, replacing whatever another page showed. */
     show(page: string, anchors: Anchors): void {
+      if (owner !== page) {
+        leaving = false
+      }
       owner = page
       shown = anchors
       notify()
     },
+    leave(page: string, on: boolean): void {
+      if (owner === page && leaving !== on) {
+        leaving = on
+        notify()
+      }
+    },
     forget(page: string): void {
       if (owner === page) {
         owner = null
+        leaving = false
         shown = {}
         notify()
       }
@@ -289,6 +302,11 @@ export const pageAnchors = createPageAnchorStore()
  */
 export function usePageShowing(): boolean {
   return useSyncExternalStore(pageAnchors.subscribe, pageAnchors.readShowing)
+}
+
+/** Whether the desktop page showing has started to go: the orb goes with it, not over the screen coming in. */
+export function usePageLeaving(): boolean {
+  return useSyncExternalStore(pageAnchors.subscribe, pageAnchors.readLeaving)
 }
 
 /** The focused desktop page's anchors for Xeno's orb. */
