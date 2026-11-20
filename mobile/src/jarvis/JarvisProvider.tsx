@@ -12,6 +12,7 @@ import { AppState } from 'react-native'
 import { OrcaXenoTalk } from '../../modules/orca-xeno-talk/src'
 import { useSideRailPinned, useSideRailStrip } from '../layout/side-rail'
 import { onDictationStarting } from '../platform/microphone-handoff'
+import { useCallResume } from './jarvis-call-interruption'
 import { actionButtonPress, bubbleVisible, railOrbVisible } from './jarvis-bubble-policy'
 import { JarvisCall } from './jarvis-call'
 import {
@@ -68,6 +69,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   })
   const host = xeno.hosts.find((profile) => profile.id === hostId) ?? null
   const offerUrl = host ? jarvisOfferUrl(host.endpoint) : null
+  useCallResume(call, offerUrl, voice) // after Siri, a phone call or another app took the audio
   const reachable = hostId && xeno.checked ? xeno.reachable.has(hostId) : null
   // A call stays on the desktop it started on, wherever you go meanwhile.
   const chosenRef = useRef(hostId)
