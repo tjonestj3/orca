@@ -128,11 +128,16 @@ jobs:
 
       # React Native's ccache wrappers start ccache from $CCACHE_BINARY, a build setting Xcode doesn't hand the
       # compiler, so they ran plain clang: write them with this runner's ccache and cache settings in place.
+      # The compiler is known by Xcode's version, not its file's date: runners come from different image builds,
+      # whose same Xcode has different dates, and by date every file missed (0 of 1,599 on the second build).
+      # Debug writes what each compile's key was made of, to compare between two builds when files still miss.
       - name: Point React Native's ccache wrappers at ccache
         run: |
           set -euo pipefail
           dir="$(node -p "require('path').dirname(require.resolve('react-native/package.json'))")/scripts/xcode"
           ccache="$(command -v ccache)"
+          xcode="$(xcodebuild -version | tr -s '\n' ' ')"
+          mkdir -p "$RUNNER_TEMP/ccache-debug"
           for pair in "ccache-clang.sh:clang" "ccache-clang++.sh:clang++"; do
             file="$dir/${pair%%:*}"
             rm -f "$file"
@@ -140,6 +145,8 @@ jobs:
               echo '#!/bin/sh'
               echo "export CCACHE_CONFIGPATH='$dir/ccache.conf'"
               echo "export CCACHE_DIR='$CCACHE_DIR' CCACHE_BASEDIR='$CCACHE_BASEDIR' CCACHE_MAXSIZE='$CCACHE_MAXSIZE'"
+              echo "export CCACHE_COMPILERCHECK='string:$xcode'"
+              echo "export CCACHE_DEBUG=1 CCACHE_DEBUGDIR='$RUNNER_TEMP/ccache-debug' CCACHE_LOGFILE='$RUNNER_TEMP/ccache.log'"
               echo "exec '$ccache' ${pair##*:} \"\$@\""
             } > "$file"
             chmod +x "$file"
@@ -193,3 +200,19 @@ jobs:
             echo "clang compiles: $(grep -cE '^\s*(CompileC|SwiftCompile) ' "$log" || true)"
             grep -m1 -E 'ccache-clang|bin/clang ' "$log" | cut -c1-300 || true
           fi
+          ccache --version | head -1
+          xcodebuild -version | tr -s '\n' ' '; echo
+          if [ -f "$RUNNER_TEMP/ccache.log" ]; then
+            echo "why compiles missed:"
+            grep -oE '(No manifest|Did not find result|Got result key|Result: [a-z_ ]+)' "$RUNNER_TEMP/ccache.log" | sort | uniq -c || true
+          fi
+          tar -czf "$RUNNER_TEMP/ccache-debug.tgz" -C "$RUNNER_TEMP" ccache-debug ccache.log 2>/dev/null || true
+
+      - name: Upload ccache debug
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccache-debug
+          path: ${{ runner.temp }}/ccache-debug.tgz
+          retention-days: 5
+          if-no-files-found: ignore
