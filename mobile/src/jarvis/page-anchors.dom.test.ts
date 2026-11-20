@@ -182,9 +182,7 @@ it('says where a moving button is every frame until it holds still, not four tim
   document.body.innerHTML = '<div id="mic" aria-label="Dictate"></div>'
   const mic = document.getElementById('mic')!
   place(mic, { left: 358, top: height - 60, width: 36, height: 36 })
-  new Function(
-    pageAnchorsScript([{ name: 'mic', labels: ['Dictate'], near: 'bottom', pad: 0 }])
-  )()
+  new Function(pageAnchorsScript([{ name: 'mic', labels: ['Dictate'], near: 'bottom', pad: 0 }]))()
   const frame = () => new Promise((done) => requestAnimationFrame(() => done(null)))
   // The composer slides up as the keyboard comes, with nothing changing in the page for its watch to see.
   for (const top of [height - 100, height - 140, height - 180]) {

@@ -17,10 +17,12 @@ import { useSyncExternalStore } from 'react'
  *   sits just left of it, on the same row.
  * - `approval`: the button row of an agent's permission card ("Allow Bash?"), which also stands where the
  *   composer was; its row has room after its buttons, and the orb sits at its right end, level with them.
+ * - `keys`: a browser tab's click modifiers (found by Shift's label), on the one line its keys share
+ *   (page-browser-keys); the orb sits at that line's free right end, level with them.
  * - `question`: an agent's question in place of the composer (its options are radio buttons or checkboxes); its
  *   footer has no room, so the orb steps aside while it shows, as it does for a sheet.
  */
-export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus' | 'copy' | 'approval'
+export type PageAnchorName = 'header' | 'mic' | 'question' | 'plus' | 'copy' | 'approval' | 'keys'
 export type PageAnchor = { x: number; y: number; width: number; height: number }
 
 export const PAGE_ANCHOR_MESSAGE = 'xeno-page-anchor'
@@ -238,7 +240,8 @@ export function readPageAnchorMessage(
       parsed.name !== 'question' &&
       parsed.name !== 'plus' &&
       parsed.name !== 'copy' &&
-      parsed.name !== 'approval') ||
+      parsed.name !== 'approval' &&
+      parsed.name !== 'keys') ||
     !('at' in parsed) ||
     typeof parsed.at !== 'string'
   ) {

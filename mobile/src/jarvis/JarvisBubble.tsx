@@ -43,7 +43,10 @@ export function JarvisBubble() {
   const at = shown ?? last.current
   // The orb follows the composer every frame while it moves: only where it sits changes, not the orb drawn.
   const size = at?.size
-  const control = useMemo(() => (size === undefined ? null : <JarvisTalkControl size={size} />), [size])
+  const control = useMemo(
+    () => (size === undefined ? null : <JarvisTalkControl size={size} />),
+    [size]
+  )
   if (!at) {
     return null
   }
@@ -52,9 +55,7 @@ export function JarvisBubble() {
       pointerEvents={shown ? 'box-none' : 'none'}
       style={[StyleSheet.absoluteFill, !shown && styles.hidden]}
     >
-      <View style={at.style}>
-        {control}
-      </View>
+      <View style={at.style}>{control}</View>
     </View>
   )
 }
@@ -65,7 +66,7 @@ function useOrbSpot(): Spot | null {
   const view = useShowingSession()
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
-  const { plus, mic, copy, approval } = usePageAnchors()
+  const { plus, mic, copy, approval, keys } = usePageAnchors()
   const pageShowing = usePageShowing()
   const screen = useWindowDimensions()
   if (!view && plus) {
@@ -100,6 +101,13 @@ function useOrbSpot(): Spot | null {
       // A permission card where the composer was: the right end of its button row (page-anchors).
       const at = approvalOrbPlace(approval, place.size)
       return { style: [styles.anchored, { left: at.left, top: at.top }], size: place.size }
+    }
+    if (view === 'chat' && keys) {
+      // A browser tab: the free right end of the line its keys share (page-browser-keys), level with them.
+      return {
+        style: [styles.row, { top: keys.y + (keys.height - place.size) / 2, right: place.right }],
+        size: place.size
+      }
     }
     if (view === 'chat') {
       // A tab without a composer (a file, a browser): the bottom corner its controls leave free, not over the page.

@@ -18,6 +18,7 @@ import { pagePillHeaderScript } from './page-pill-header'
 import { useHostDisplay } from '../../host-descriptors/use-host-display'
 import { useHostProfile } from '../../host-catalog/use-host-profile'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
+import { pageBrowserKeysScript } from './page-browser-keys'
 
 const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
 
@@ -56,6 +57,10 @@ export function usePageRepaint(options: {
     t('dictation.controls.finishing', 'Finishing dictation'),
     t('dictation.controls.retry', 'Retry dictation')
   ].join('\n')
+  const modifier = (key: string) =>
+    t('browser.pointerModifiers.clickModifier', '{{key}} click modifier', { key })
+  const cmdModifier = modifier('Cmd')
+  const shiftModifier = modifier('Shift')
   const pad = options.headerClear && column?.extended ? column.width : 0
   // Room beside the + for Xeno's orb, wherever the orb floats rather than sitting in the folded Duo's rail.
   const plusRoom = options.headerClear && (!column || column.extended) ? PLUS_ORB_ROOM : 0
@@ -84,6 +89,7 @@ export function usePageRepaint(options: {
         : [
             { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
             { name: 'copy', labels: copy.split('\n'), near: 'bottom', pad: 0 },
+            { name: 'keys', labels: [shiftModifier], near: 'bottom', pad: 0 },
             {
               name: 'approval',
               labels: [],
@@ -103,7 +109,9 @@ export function usePageRepaint(options: {
             }
           ]
     )
-    const sessionOnly = options.headerClear ? [] : [PAGE_QUESTION_ROOM]
+    const sessionOnly = options.headerClear
+      ? []
+      : [PAGE_QUESTION_ROOM, pageBrowserKeysScript(cmdModifier)]
     const pill = pagePillHeaderScript(
       pillShown
         ? {
@@ -126,6 +134,8 @@ export function usePageRepaint(options: {
     plus,
     copy,
     mic,
+    cmdModifier,
+    shiftModifier,
     pad,
     plusRoom,
     micRoom,
