@@ -66,6 +66,29 @@ jobs:
         with:
           xcode-version: '27.1'
 
+      # React Native builds from source here (its patches), most of the archive's time: ccache keeps last build's
+      # compiled files, so a build recompiles only what changed. React Native's ccache-clang wrapper is set as the
+      # Pods' compiler by pod install when ccache is on PATH (app.json: ccacheEnabled).
+      - name: Install ccache
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: |
+          command -v ccache >/dev/null || brew install ccache
+          {
+            echo "CCACHE_DIR=$RUNNER_TEMP/ccache"
+            echo "CCACHE_BASEDIR=$GITHUB_WORKSPACE"
+            echo "CCACHE_MAXSIZE=3G"
+          } >> "$GITHUB_ENV"
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          # Each build saves its own; the next one starts from the latest.
+          key: ccache-ios-xcode27-${{ github.run_id }}
+          restore-keys: ccache-ios-xcode27-
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -132,4 +155,10 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: bundle exec fastlane ios build_and_upload
+        run: |
+          ccache --zero-stats
+          bundle exec fastlane ios build_and_upload
+
+      - name: ccache stats
+        if: always()
+        run: ccache --show-stats || true

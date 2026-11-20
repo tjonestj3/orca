@@ -154,7 +154,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "buildReactNativeFromSource": true
+            "buildReactNativeFromSource": true,
+            "ccacheEnabled": true
           },
           "android": {
             "usesCleartextTraffic": true
