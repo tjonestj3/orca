@@ -87,6 +87,8 @@ window.__orb = {
     if (typeof next.demo === 'boolean') want.demo = next.demo;
     if (typeof next.reduce === 'boolean') { want.reduce = next.reduce; F.reduce = next.reduce; }
     if (typeof next.state === 'string') setState(next.state);
+    // Asleep (no call), any change wakes it.
+    if (window.__orb.asleep) { window.__orb.asleep = false; requestAnimationFrame(frame); }
   }
 };
 function step(nowMs) {
@@ -130,8 +132,14 @@ function resting() {
   if (F.k < 1) return false;
   return F.cur === 'idle' || F.cur === 'listening' || (F.cur === 'error' && F.ts > 1.5);
 }
+// With no call (idle, settled) it holds still: one frame drawn, none more until the app says something changed.
+// A still orb reads as off, and nothing is drawn while you just use the app.
+function asleep() {
+  return F.cur === 'idle' && F.k >= 1 && !want.demo;
+}
 function frame(nowMs) {
   paint(nowMs);
+  if (asleep()) { window.__orb.asleep = true; return; }
   const due = 1000 / (resting() ? RESTING_FPS : ACTIVE_FPS);
   setTimeout(function () { requestAnimationFrame(frame); }, Math.max(0, due - (performance.now() - nowMs) - 4));
 }

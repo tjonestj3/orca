@@ -1,3 +1,4 @@
+import { View } from 'react-native'
 import { useSyncExternalStore } from 'react'
 import { useOrbTheme } from '../theme/mobile-appearance'
 import type { JarvisCall } from './jarvis-call'
@@ -34,16 +35,22 @@ export function ThemedOrb({
   readonly demo?: boolean
 }) {
   const drawing = ORB_THEMES[theme].drawing
-  if (drawing === null) {
-    return <JarvisClassicOrb phase={phase} level={level} size={size} />
-  }
+  // With no call the orb holds still and dims, so it reads as off.
   return (
-    <JarvisThemedOrb
-      drawing={drawing}
-      state={orbState(phase)}
-      level={level}
-      size={size}
-      demo={demo}
-    />
+    <View style={{ opacity: phase === 'idle' && !demo ? IDLE_OPACITY : 1 }}>
+      {drawing === null ? (
+        <JarvisClassicOrb phase={phase} level={level} size={size} demo={demo} />
+      ) : (
+        <JarvisThemedOrb
+          drawing={drawing}
+          state={orbState(phase)}
+          level={level}
+          size={size}
+          demo={demo}
+        />
+      )}
+    </View>
   )
 }
+
+const IDLE_OPACITY = 0.6

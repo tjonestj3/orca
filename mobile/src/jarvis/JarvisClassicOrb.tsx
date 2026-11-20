@@ -11,6 +11,8 @@ type Props = {
   /** The voice level the core swells with, 0 to 1: Xeno's while it speaks, yours while it hears you. */
   readonly level: number
   readonly size: number
+  /** Settings' preview: it moves even through "idle". */
+  readonly demo?: boolean
 }
 
 // Blue while Xeno waits or talks, purple while it's hearing you (however you got its attention), amber while it
@@ -64,9 +66,10 @@ const turn = (spin: Animated.Value, reverse = false) => ({
 })
 
 // The Classic orb theme: rings that turn, an amber sweep while thinking, a core that swells with whoever is talking.
-export function JarvisClassicOrb({ phase, level, size }: Props) {
+export function JarvisClassicOrb({ phase, level, size, demo = false }: Props) {
   useMobileColorScheme()
-  const still = useReducedMotionEnabled() !== false
+  // With no call the rings hold still: a still orb reads as off (Settings' preview, demo, always moves).
+  const still = useReducedMotionEnabled() !== false || (phase === 'idle' && !demo)
   const outer = useSpin(26_000, still)
   const inner = useSpin(9_000, still)
   const sweep = useSpin(2_200, still)

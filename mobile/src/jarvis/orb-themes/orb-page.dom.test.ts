@@ -34,10 +34,13 @@ function fakeContext(drawn: { count: number }) {
 
 afterEach(() => vi.restoreAllMocks())
 
-function openPage(drawing: string, size: number) {
+function openPage(drawing: string, size: number, frames?: FrameRequestCallback[]) {
   const drawn = { count: 0 }
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => fakeContext(drawn))
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    frames?.push(callback)
+    return 0
+  })
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: size })
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: size })
   const html = orbPageHtml(drawing)
@@ -71,4 +74,27 @@ describe('each drawn orb theme', () => {
       }
     })
   }
+})
+
+describe('a drawn orb with no call', () => {
+  it('holds still after one frame, and moves again once the call does', () => {
+    const drawing =
+      ORB_THEMES[ORB_THEME_IDS.find((id) => ORB_THEMES[id].drawing !== null)!].drawing!
+    const frames: FrameRequestCallback[] = []
+    const timers = vi.spyOn(window, 'setTimeout')
+    const { orb } = openPage(drawing, 60, frames)
+    expect(frames.length).toBeGreaterThan(0) // drawing
+    // Run frames until the change to idle has settled and the orb stops asking for more.
+    for (let i = 0, now = 1000; i < 200 && frames.length > 0; i += 1, now += 250) {
+      frames.shift()!(now)
+      const next = timers.mock.calls.at(-1)?.[0]
+      timers.mockClear()
+      if (typeof next === 'function') {
+        next()
+      }
+    }
+    expect(frames).toHaveLength(0)
+    orb.set({ state: 'listening' }) // the call again
+    expect(frames).toHaveLength(1)
+  })
 })
