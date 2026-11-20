@@ -55,6 +55,7 @@ import { usePageFoldDivision, usePublishedFoldDivision } from './page-geometry/p
 import { usePageRepaint } from './page-geometry/use-page-repaint'
 import { pillPlace } from './page-geometry/page-pill-header'
 import { useSessionSheet } from './session-sheet'
+import { useColumnToggleMessage } from './page-geometry/use-column-toggle-message'
 import { onShellLoadState } from './shell-load-state'
 import { useSideColumn } from '../layout/side-rail'
 import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
@@ -141,14 +142,10 @@ export function MobileWebShellScreen({
     updateNotice !== null && state.kind === 'ready' && noticeDismissedFor !== state.sessionId
   // Edge-to-edge disables adjustResize and zeroes WebView IME insets, so visualViewport never shrinks; publish native keyboard height to the page.
   const keyboardInset = Math.max(0, useKeyboardOcclusion())
-  // The desktop's pages take the folded Duo's status column, as Home and the Xeno chat do; a session's header
-  // has no full-screen button, so the column holds one beside it (the host list's header sits below the camera,
-  // where the column's would cover its menu). The host list's page opens sessions inside itself, so where it
-  // says it is counts, not only this screen's route. A page is resized at once, not eased (side-rail).
+  // The desktop's pages take the folded Duo's status column, as Home and the Xeno chat do. The host list's page
+  // opens sessions inside itself, so where it says it is counts, not only this screen's route.
   const [pageHref, setPageHref] = useState<string | null>(null)
   const showsSession = pageShowsSession(route.pathname, pageHref)
-  useSessionFullScreen({ columnToggle: showsSession, snap: true })
-
   // Only a session's header steps around the camera; others keep their top (see pageOverColumn).
   const pageFold = usePageFoldDivision({ raiseTop: showsSession })
   const pageInsets = pageSafeAreaInsets({
@@ -161,6 +158,10 @@ export function MobileWebShellScreen({
   useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
   const sideColumn = useSideColumn()
   const sheet = useSessionSheet(showsSession)
+  // A session's header has no full-screen button: the column holds one, or extended over it, the session's bar
+  // does (page-column-toggle), not the column over the page. A page is resized at once, not eased (side-rail).
+  const columnToggle = showsSession && !(sheet.on && sideColumn?.extended)
+  useSessionFullScreen({ columnToggle, snap: true })
   const pageRepaint = usePageRepaint({
     headerClear: !showsSession,
     terminal: showsSession && keyRail.terminalShowing,
@@ -327,7 +328,8 @@ export function MobileWebShellScreen({
   useShellPageStorageRefresh(refreshStorage, bridge.publishStorage)
   useEffect(() => bridge.publishRoute(pageRoute), [bridge.publishRoute, pageRoute])
   // The page's sheets and menus can't cover Xeno's orb, which the app draws over it; it hides while one is open.
-  const onBridgeMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage, sheet.pageTop)
+  const onPageMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage, sheet.pageTop)
+  const onBridgeMessage = useColumnToggleMessage(onPageMessage)
 
   usePublishedSafeAreaInsets(bridge.publishSafeAreaInsets, pageInsets)
   const publishKeyboardInset = bridge.publishKeyboardInset

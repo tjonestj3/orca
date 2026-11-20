@@ -1,6 +1,7 @@
 import { DOT, pillStyles, STYLE_ID } from './page-pill-styles'
 import { TAP_OR_HOLD } from './page-pill-tap'
 import { PROMPT_ROOM } from './page-prompt-room'
+import { COLUMN_TOGGLE, COLUMN_TOGGLE_CSS } from './page-column-toggle'
 
 /**
  * A session's header as one slim bar at the very top, like Moshi's: Orca's header (the title row and the tab strip)
@@ -26,6 +27,9 @@ export type PagePill = {
   readonly background: string
   /** The desktop's name, for the chip; null for none. */
   readonly chip: string | null
+  /** The side of the folded Duo's column the page extends over, whose full-screen toggle the bar holds. */
+  readonly toggle?: 'left' | 'right' | null
+  readonly toggleLabel?: string
 }
 
 // Under the bar, before the conversation's first line; and between the top inset and the bar's row.
@@ -36,11 +40,9 @@ export function pagePillHeaderScript(pill: PagePill | null): string {
   return String.raw`(function () {
 var state = window.__xenoPill || (window.__xenoPill = { held: [] });
 state.pill = ${JSON.stringify(pill)};
-state.css = ${JSON.stringify(pill ? pillStyles(pill.chip, pill.background) : '')};
+state.css = ${JSON.stringify(pill ? pillStyles(pill.chip, pill.background) + '\n' + COLUMN_TOGGLE_CSS : '')};
 state.marked = state.marked || [];
-function hold(el, prop) {
-  return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) };
-}
+function hold(el, prop) { return { el: el, prop: prop, inline: el.style.getPropertyValue(prop), priority: el.style.getPropertyPriority(prop) }; }
 // Sets a style over the page's own, remembering the page's latest: when the page writes that style while the pill
 // covers it (as Orca does once it has measured its header), that write is what goes back when the pill comes off,
 // not what the page had the moment the pill went on. What was set is read back as the browser keeps it ('rgba(0, 0,
@@ -68,6 +70,7 @@ function putBack(h) {
   else h.el.style.removeProperty(h.prop);
 }
 function restoreAll() {
+  columnToggle(null);
   state.held.forEach(putBack);
   state.held = [];
   state.marked.forEach(unmark);
@@ -159,9 +162,7 @@ function span(buttons) {
   var n = buttons.filter(function (b) { return getComputedStyle(b).display !== 'none'; }).length;
   return n > 0 ? n * ${DOT} + (n - 1) * 8 : 0;
 }
-function labelled(el) {
-  return Array.prototype.slice.call(el.querySelectorAll('[aria-label]'));
-}
+function labelled(el) { return Array.prototype.slice.call(el.querySelectorAll('[aria-label]')); }
 // Moshi's row: back (yellow), the tab count (green), the agent's tab as the name capsule, the desktop's chip, the
 // branch button (salmon) and the menu (blue).
 function lay(chrome, more, tab) {
@@ -214,11 +215,10 @@ function lay(chrome, more, tab) {
   });
   return { tabRow: rows.tab, lead: lead, trail: trail, backs: backs, trailing: trailing };
 }
-${TAP_OR_HOLD + PROMPT_ROOM}
+${TAP_OR_HOLD + PROMPT_ROOM + COLUMN_TOGGLE}
 function check() {
-  state.pending = false;
-  // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
-  if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
+  state.pending = false; // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
+  if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) { columnToggleHide(); return; }
   var pill = state.pill;
   var floating = state.at && state.at.isConnected && state.at.getBoundingClientRect().width > 0 ? state.at : null;
   var more = pill && byLabel(pill.moreLabel, floating);
@@ -263,7 +263,10 @@ function check() {
   var top = getComputedStyle(chrome).paddingTop;
   [laid.lead, laid.trail, laid.tabRow].forEach(function (el) { set(el, 'top', top); });
   set(laid.tabRow, 'left', (14 + span(laid.backs) + 8) + 'px');
-  set(laid.tabRow, 'right', (14 + span(laid.trailing) + 8) + 'px');
+  // The full-screen toggle, when the bar holds it, just before the branch and menu circles.
+  var end = 14 + span(laid.trailing) + 8, toggle = pill.toggle ? ${DOT} + 8 : 0;
+  set(laid.tabRow, 'right', (end + toggle) + 'px');
+  columnToggle(toggle ? { chrome: chrome, end: end } : null);
   if (mode === 'flow') return;
   var list = conversation(chrome);
   var content = list && list.firstElementChild;

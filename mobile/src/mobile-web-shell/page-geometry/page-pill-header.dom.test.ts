@@ -132,7 +132,9 @@ it('pins back and the branch and menu circles to the bar’s ends, the tab row b
   expect(css).toMatch(/\[data-xeno-pill="trail"\] \{ position: absolute !important; right: 14px/)
   expect(css).toMatch(/\[data-xeno-pill="line"\] \{ position: static !important/)
   // Each circle answers a fingertip 44 pt tall, not just its 22 pt.
-  expect(css).toMatch(/\[data-xeno-btn\]::before \{ content: ""; position: absolute; top: -11px; bottom: -11px/)
+  expect(css).toMatch(
+    /\[data-xeno-btn\]::before \{ content: ""; position: absolute; top: -11px; bottom: -11px/
+  )
   // The fade behind it runs out over the column the bar keeps clear of.
   expect(style('chrome', '--xeno-fade-right')).toBe('-84px')
   run(null)
@@ -217,7 +219,9 @@ it('leaves a sideways phone’s header, the tabs in the title’s row, as Orca h
   place(byId('tabbar'), { top: 10, height: 36, width: 200 })
   place(byId('new'), { top: 10, height: 36, width: 36 })
   run(PILL)
-  expect(document.querySelectorAll('[data-xeno-pill], [data-xeno-btn], [data-xeno-mode]')).toHaveLength(0)
+  expect(
+    document.querySelectorAll('[data-xeno-pill], [data-xeno-btn], [data-xeno-mode]')
+  ).toHaveLength(0)
   expect(document.getElementById('xeno-pill-style')).toBeNull()
   expect(style('chrome', 'position')).toBe('')
   expect(style('chrome', 'padding-top')).toBe('67px')
@@ -291,4 +295,24 @@ it('puts no chip on the bar without a desktop name', () => {
   run({ ...PILL, chip: null })
   expect(document.getElementById('xeno-pill-style')!.textContent).not.toContain('title"]::after')
   run(null)
+})
+
+it('holds the folded Duo’s full-screen toggle before its branch and menu circles, and says when it’s tapped', () => {
+  orcaHeader()
+  const posted: string[] = []
+  Object.defineProperty(window, 'orcaBridge', {
+    configurable: true,
+    value: { postMessage: (json: string) => posted.push(json) }
+  })
+  run({ ...PILL, toggle: 'right', toggleLabel: 'Show the side keys' })
+  const toggle = document.getElementById('xeno-column-toggle')!
+  const end = 14 + 22 + 8 + 22 + 8 // the menu and branch circles, and the gap before them
+  expect(style('tabbar', 'right')).toBe(`${end + 22 + 8}px`) // the tab row stops short of it
+  expect([toggle.style.top, toggle.style.left]).toEqual(['26px', `${400 - end - 22}px`])
+  expect(toggle.getAttribute('aria-label')).toBe('Show the side keys')
+  toggle.click()
+  expect(posted.map((json) => JSON.parse(json).type)).toEqual(['xeno-column-toggle'])
+  run(PILL) // the column back: the app draws its own
+  expect(document.getElementById('xeno-column-toggle')).toBeNull()
+  expect(style('tabbar', 'right')).toBe(`${end}px`)
 })

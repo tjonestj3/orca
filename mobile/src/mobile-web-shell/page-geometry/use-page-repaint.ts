@@ -76,6 +76,8 @@ export function usePageRepaint(options: {
   const pillLeft = at?.left ?? 0
   const pillRight = at?.right ?? 0
   const pillShown = at !== null
+  const pillToggle = at && column?.extended ? column.side : null
+  const toggleLabel = t('session.header.showSideColumn', 'Show the side keys')
   const pillChip = useHostDisplay(useHostProfile(options.pillHost ?? '')).title || null
   return useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
@@ -121,7 +123,9 @@ export function usePageRepaint(options: {
             left: pillLeft,
             right: pillRight,
             background: pillBackground,
-            chip: pillChip
+            chip: pillChip,
+            toggle: pillToggle,
+            toggleLabel
           }
         : null
     )
@@ -147,6 +151,8 @@ export function usePageRepaint(options: {
     pillTop,
     pillLeft,
     pillRight,
-    pillBackground
+    pillBackground,
+    pillToggle,
+    toggleLabel
   ])
 }
