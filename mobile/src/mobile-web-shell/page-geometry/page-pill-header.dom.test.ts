@@ -132,6 +132,19 @@ it('keeps the tab row, and the chip at its end, clear of the circles wherever th
   run(null)
 })
 
+it('lets a question’s card take the room under the bar, not Orca’s 60%, and gives it back', () => {
+  orcaHeader()
+  byId('card').outerHTML =
+    '<div id="card" style="max-height: 200px"><div id="ask" style="max-height: 120px"><div role="button">Carry color</div></div></div>'
+  place(byId('chatview'), { top: 0, height: 600 })
+  run(PILL)
+  // The chat's bottom, less the bar (44) and the card's gap under it (8).
+  expect(style('card', 'max-height')).toBe(`${600 - 44 - 8}px`)
+  expect(style('ask', 'max-height')).toBe('120px') // the card's own parts keep theirs
+  run(null)
+  expect(style('card', 'max-height')).toBe('200px')
+})
+
 describe('the agent’s tab in the bar', () => {
   function touch(el: Element, type: string) {
     const event = new Event(type, { bubbles: true, cancelable: true })

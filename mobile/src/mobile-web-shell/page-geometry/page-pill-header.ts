@@ -1,5 +1,6 @@
 import { DOT, pillStyles, STYLE_ID } from './page-pill-styles'
 import { TAP_OR_HOLD } from './page-pill-tap'
+import { PROMPT_ROOM } from './page-prompt-room'
 
 /**
  * A session's header as one slim bar at the very top, like Moshi's: Orca's header (the title row and the tab strip)
@@ -208,7 +209,7 @@ function lay(chrome, more, tab) {
   });
   return { tabRow: rows.tab, lead: lead, circles: backs.slice(-1).concat(trailing) };
 }
-${TAP_OR_HOLD}
+${TAP_OR_HOLD + PROMPT_ROOM}
 function check() {
   state.pending = false;
   // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
@@ -239,10 +240,8 @@ function check() {
   state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
   state.marked = state.next;
   set(chrome, 'padding-bottom', '8px');
-  set(chrome, 'padding-left', '14px');
-  set(chrome, 'padding-right', '14px');
-  // The tab strip's row over the title row's empty middle: from just after back to just before the branch button.
-  // Between where back and the branch and menu circles really are, so the chip never lands on them.
+  ['padding-left', 'padding-right'].forEach(function (side) { set(chrome, side, '14px'); });
+  // The tab strip's row over the title row's middle, between where back and the branch and menu circles really are.
   var box = chrome.getBoundingClientRect();
   var edges = laid.circles.reduce(function (at, button) {
     var r = button.getBoundingClientRect();
@@ -273,6 +272,7 @@ function check() {
   if (state.content && state.content !== content) restoreOn(state.content);
   state.content = content;
   if (content) set(content, 'padding-top', (chrome.getBoundingClientRect().height + ${PILL_GAP}) + 'px');
+  promptRoom(chrome);
   // React Native Web gives every view its own stacking layer, so the bar's z-index only counts within its
   // wrapper: lift each wrapper up to the one it shares with the conversation, which would draw over it otherwise.
   for (var up = chrome.parentElement; up && up !== document.body && !(list && up.contains(list)); up = up.parentElement) {
