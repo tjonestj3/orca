@@ -53,7 +53,11 @@ export function pillStyles(chip: string | null, background: string): string {
     `${bar} [data-xeno-pill="tblock"] * { font-family: ${mono} !important; font-size: 13px !important; font-weight: 400 !important; color: rgba(205, 214, 244, 0.75) !important; text-align: left !important; }`,
     `${bar} [data-xeno-pill="ttext"] { flex: 0 1 auto !important; min-width: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }`,
     `${bar} [data-xeno-pill="tmeta"] { display: flex !important; flex-direction: row !important; align-items: center !important; flex: 0 3 auto !important; min-width: 0 !important; gap: 0 !important; opacity: 0.7 !important; }`,
-    `${bar} [data-xeno-btn] { width: ${DOT}px !important; height: ${DOT}px !important; min-width: ${DOT}px !important; min-height: ${DOT}px !important; max-width: ${DOT}px !important; padding: 0 !important; margin: 0 !important; border-radius: ${DOT / 2}px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; }`,
+    `${bar} [data-xeno-btn] { position: relative !important; width: ${DOT}px !important; height: ${DOT}px !important; min-width: ${DOT}px !important; min-height: ${DOT}px !important; max-width: ${DOT}px !important; padding: 0 !important; margin: 0 !important; border-radius: ${DOT / 2}px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex: 0 0 auto !important; }`,
+    // A fingertip's reach around each small circle, short of its neighbours (8 px apart): 44 pt tall, as iOS's own
+    // buttons, and back's out to the screen's edge.
+    `${bar} [data-xeno-btn]::before { content: ""; position: absolute; top: -11px; bottom: -11px; left: -4px; right: -4px; }`,
+    `${bar} [data-xeno-btn="yellow"]::before { left: -14px; }`,
     `${bar} [data-xeno-btn] * { min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; color: ${INK} !important; font-family: ${system} !important; font-size: 12px !important; font-weight: 700 !important; }`,
     `${bar} [data-xeno-btn] svg { width: 13px !important; height: 13px !important; }`,
     `${bar} [data-xeno-btn] svg, ${bar} [data-xeno-btn] svg * { stroke: ${INK} !important; }`,

@@ -131,6 +131,8 @@ it('pins back and the branch and menu circles to the bar’s ends, the tab row b
   expect(css).toMatch(/\[data-xeno-pill="lead"\] \{ position: absolute !important; left: 14px/)
   expect(css).toMatch(/\[data-xeno-pill="trail"\] \{ position: absolute !important; right: 14px/)
   expect(css).toMatch(/\[data-xeno-pill="line"\] \{ position: static !important/)
+  // Each circle answers a fingertip 44 pt tall, not just its 22 pt.
+  expect(css).toMatch(/\[data-xeno-btn\]::before \{ content: ""; position: absolute; top: -11px; bottom: -11px/)
   // The fade behind it runs out over the column the bar keeps clear of.
   expect(style('chrome', '--xeno-fade-right')).toBe('-84px')
   run(null)
@@ -259,8 +261,11 @@ it('over a terminal keeps the bar in the page’s flow, and moves between the tw
   byId('chatview').remove() // switched to the terminal
   document.getElementById('pane')!.insertAdjacentHTML('beforeend', '<div class="xterm"></div>')
   run(PILL)
-  expect(style('chrome', 'position')).toBe('')
-  expect(style('chrome', 'padding-top')).toBe('26px') // in the page's flow, but at the very top still
+  expect(style('chrome', 'position')).toBe('relative') // in the page's flow, the circles placed on the bar
+  expect(style('chrome', 'padding-top')).toBe('26px') // at the very top still
+  expect([style('leading', 'top'), style('trailing', 'top')]).toEqual(['26px', '26px']) // where they sit over a chat
+  expect(style('chrome', 'margin-right')).toBe('84px') // clear of the column, as over a chat
+  expect(style('chrome', 'height')).toBe('auto') // its row's height, not Orca's header's
   expect(role('chrome')).toBe('bar')
   expect(byId('chrome').getAttribute('data-xeno-mode')).toBe('flow')
   expect(role('center')).toBe('ghost')

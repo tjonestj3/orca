@@ -244,8 +244,7 @@ function check() {
   // What was marked before and isn't now (the page redrew a part) loses its mark.
   state.marked.forEach(function (el) { if (state.next.indexOf(el) < 0) unmark(el); });
   state.marked = state.next;
-  set(chrome, 'padding-bottom', '8px');
-  ['padding-left', 'padding-right'].forEach(function (side) { set(chrome, side, '14px'); });
+  set(chrome, 'padding-bottom', '8px'); set(chrome, 'padding-left', '14px'); set(chrome, 'padding-right', '14px');
   // The tab strip's line across the top is gone with the strip's row.
   for (var row = tab.parentElement; row && row !== chrome; row = row.parentElement) {
     if (parseFloat(getComputedStyle(row).borderTopWidth) > 0) { set(row, 'border-top-width', '0px'); break; }
@@ -253,12 +252,11 @@ function check() {
   // At the very top over a terminal or a browser tab too, not under the camera's band Orca leaves for its header.
   set(chrome, 'padding-top', (pill.top + ${ROW_GAP}) + 'px');
   if (mode === 'float') {
-    set(chrome, 'position', 'absolute');
-    set(chrome, 'top', '0px'); set(chrome, 'left', pill.left + 'px');
-    set(chrome, 'right', pill.right + 'px');
-    set(chrome, 'z-index', '20'); set(chrome, 'height', 'auto');
-    set(chrome, 'min-height', '0px');
+    set(chrome, 'position', 'absolute'); set(chrome, 'top', '0px'); set(chrome, 'left', pill.left + 'px');
+    set(chrome, 'right', pill.right + 'px'); set(chrome, 'z-index', '20'); set(chrome, 'height', 'auto'); set(chrome, 'min-height', '0px');
     set(chrome, '--xeno-fade-left', -pill.left + 'px'); set(chrome, '--xeno-fade-right', -pill.right + 'px');
+  } else { // In the page's flow, the bar as over a chat: the box its circles sit on, clear of the column, its row's height.
+    set(chrome, 'position', 'relative'); set(chrome, 'margin-left', pill.left + 'px'); set(chrome, 'margin-right', pill.right + 'px'); set(chrome, 'height', 'auto'); set(chrome, 'min-height', '0px');
   }
   // Back at the bar's start, the branch and menu circles at its end and the tab strip's row between them, placed
   // on the bar itself at its row's height (once the bar is where it goes): Orca's title row needn't span the bar.
