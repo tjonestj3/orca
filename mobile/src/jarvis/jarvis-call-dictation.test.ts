@@ -37,9 +37,26 @@ describe('CallDictation', () => {
     await vi.waitFor(() => expect(c.sent).toHaveLength(2))
     expect(c.sent[1]).toEqual([
       'jarvis-dictation',
-      { state: 'text', text: 'what is waiting on me' }
+      { state: 'text', text: 'what is waiting on me', readyMs: expect.any(Number) }
     ])
     expect(c.snapshot()).toMatchObject({ dictating: null, heard: 'what is waiting on me' })
+  })
+
+  it('says how long after letting go the text was ready', async () => {
+    vi.useFakeTimers()
+    try {
+      const c = call({
+        begin: async () => true,
+        end: () => new Promise((done) => setTimeout(() => done('status'), 420))
+      })
+      c.dictation.begin(true)
+      await vi.advanceTimersByTimeAsync(0)
+      c.dictation.release()
+      await vi.advanceTimersByTimeAsync(420)
+      expect(c.sent[1]).toEqual(['jarvis-dictation', { state: 'text', text: 'status', readyMs: 420 }])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('sends a cancel when nothing was made out', async () => {

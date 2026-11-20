@@ -59,7 +59,7 @@ export class CallDictation {
       return false
     }
     this.turn = null
-    void this.sendText(this.host.generation())
+    void this.sendText(this.host.generation(), Date.now())
     return true
   }
 
@@ -83,13 +83,16 @@ export class CallDictation {
     }
   }
 
-  private async sendText(generation: number): Promise<void> {
+  // letGoAt is when the button was let go. readyMs, how long the phone then took to have the text, tells Xeno
+  // whether the phone hears faster than the desktop's Whisper; it's timed on this clock alone.
+  private async sendText(generation: number, letGoAt: number): Promise<void> {
     const { host } = this
     const text = (await this.dictation?.end()) ?? null
     if (generation !== host.generation()) {
       return
     }
+    const readyMs = Math.max(0, Math.round(Date.now() - letGoAt))
     host.set({ ...host.snapshot(), dictating: null, ...(text ? { heard: text } : {}) })
-    host.send('jarvis-dictation', text ? { state: 'text', text } : { state: 'cancel' })
+    host.send('jarvis-dictation', text ? { state: 'text', text, readyMs } : { state: 'cancel' })
   }
 }
