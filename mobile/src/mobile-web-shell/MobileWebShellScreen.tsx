@@ -431,7 +431,6 @@ export function MobileWebShellScreen({
           loaded: reportDocumentLoaded
         })}
       />
-      {sheet.handle}
       {overlay ? null : (
         <ShellPageCover label={SHELL_OPENING_LABEL} visible={pageFrame === 'unpainted'} />
       )}

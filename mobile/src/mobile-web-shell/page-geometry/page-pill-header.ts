@@ -307,9 +307,9 @@ check();
  * the camera tops.
  */
 // On the session sheet (session-sheet): it starts 10 pt down, which already clears that much of the top inset, and
-// its grab handle takes the sheet's top 11 pt. The bar's row goes just under the handle, as Moshi's does.
+// the bar's row goes a little under the sheet's top edge, as Moshi's does.
 const SHEET_TOP = 10
-const UNDER_HANDLE = 8
+const UNDER_SHEET_TOP = 8
 
 export function pillPlace(
   fold: { safeAreaInsets: { top: number }; raisedBy: number },
@@ -319,7 +319,7 @@ export function pillPlace(
   const over = column?.extended ? column : null
   return {
     top: sheet
-      ? Math.max(0, fold.safeAreaInsets.top - fold.raisedBy - SHEET_TOP) + UNDER_HANDLE
+      ? Math.max(0, fold.safeAreaInsets.top - fold.raisedBy - SHEET_TOP) + UNDER_SHEET_TOP
       : Math.max(0, fold.safeAreaInsets.top - fold.raisedBy),
     left: over?.side === 'left' ? over.width : 0,
     right: over?.side === 'right' ? over.width : 0
