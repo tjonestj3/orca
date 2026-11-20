@@ -49,15 +49,26 @@ describe('PhoneDictation', () => {
     phone.say('What is')
     expect(await dictation.end()).toBe('What is waiting on me?')
     expect(heard).toEqual(['What is'])
-    expect(phone.log).toEqual([
-      'pause',
-      'open',
-      'record true',
-      'record false',
-      'record false',
-      'close',
-      'resume true'
-    ])
+    await vi.waitFor(() =>
+      expect(phone.log).toEqual([
+        'pause',
+        'open',
+        'record true',
+        'record false',
+        'record false',
+        'close',
+        'resume true'
+      ])
+    )
+  })
+
+  it('hands back the text before the call audio comes back on, which takes the phone a moment', async () => {
+    const phone = fakeDevice()
+    const dictation = new PhoneDictation(phone.device)
+    await dictation.begin(() => {})
+    expect(await dictation.end()).toBe('What is waiting on me?')
+    expect(phone.log).not.toContain('resume true')
+    await vi.waitFor(() => expect(phone.log).toContain('resume true'))
   })
 
   it('keeps audio heard before the recognizer is armed, in order', async () => {
@@ -122,7 +133,7 @@ describe('PhoneDictation', () => {
     const dictation = new PhoneDictation(phone.device)
     await dictation.begin(() => {})
     expect(await dictation.end()).toBeNull()
-    expect(phone.log.at(-1)).toBe('resume true')
+    await vi.waitFor(() => expect(phone.log.at(-1)).toBe('resume true'))
   })
 
   it('a hold let go of while still setting up stops it and sends nothing', async () => {

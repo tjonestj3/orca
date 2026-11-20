@@ -143,7 +143,9 @@ export class PhoneDictation {
     } catch {
       text = null
     }
-    session.release()
+    // The text goes to Xeno first: turning the call's audio back on (the audio session, then the call's engine)
+    // takes the phone a moment that Xeno's answer shouldn't wait on, nor the hold's timing count.
+    setTimeout(() => session.release(), 0)
     return text
   }
 
