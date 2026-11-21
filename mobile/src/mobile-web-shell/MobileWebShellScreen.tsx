@@ -58,9 +58,8 @@ import { useSessionSheet } from './session-sheet'
 import { useShellPageMessages } from './page-geometry/use-shell-page-messages'
 import { onShellLoadState } from './shell-load-state'
 import { useSideColumn } from '../layout/side-rail'
-import { usePageModalWatch } from '../jarvis/use-page-modal-watch'
 import { useSessionFullScreen } from '../session/side-column-full-screen'
-import { useShowsSession } from '../session/showing-session'
+import { usePageOrb } from '../jarvis/use-page-orb'
 import { pageShowsSession } from './page-shows-session'
 import { usePublishedShellKeyRail, useShellKeyRail } from './terminal-controls/use-shell-key-rail'
 import { hostProfileUnreadableLine, pageFaultLine } from './diagnostics/shell-lifecycle-log'
@@ -155,7 +154,7 @@ export function MobileWebShellScreen({
   const readySessionId = state.kind === 'ready' ? state.sessionId : null
   const keyRail = useShellKeyRail({ sessionId: readySessionId, overlay, routeGrants })
   // Xeno's small orb sits by the session's own controls: the composer's mic, or the terminal's last line.
-  useShowsSession(showsSession ? (keyRail.terminalShowing ? 'terminal' : 'chat') : null)
+  const orb = usePageOrb(readySessionId, showsSession, keyRail.terminalShowing)
   const sideColumn = useSideColumn()
   const sheet = useSessionSheet(showsSession)
   // A session's header has no full-screen button: the column holds one, or extended over it, the session's bar
@@ -328,8 +327,7 @@ export function MobileWebShellScreen({
   useShellPageStorageRefresh(refreshStorage, bridge.publishStorage)
   useEffect(() => bridge.publishRoute(pageRoute), [bridge.publishRoute, pageRoute])
   // The page's sheets and menus can't cover Xeno's orb, which the app draws over it; it hides while one is open.
-  const onPageMessage = usePageModalWatch(readySessionId, bridge.onBridgeMessage, sheet.pageTop)
-  const onBridgeMessage = useShellPageMessages(onPageMessage)
+  const onBridgeMessage = useShellPageMessages(readySessionId, bridge, sheet.pageTop)
 
   usePublishedSafeAreaInsets(bridge.publishSafeAreaInsets, pageInsets)
   const publishKeyboardInset = bridge.publishKeyboardInset
@@ -436,6 +434,7 @@ export function MobileWebShellScreen({
       {overlay ? null : (
         <ShellPageCover label={SHELL_OPENING_LABEL} visible={pageFrame === 'unpainted'} />
       )}
+      {orb}
       <ShellDevFacts state={state} droppedBinaryFrames={droppedBinaryFrames} />
     </View>
   )

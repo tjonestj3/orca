@@ -16,6 +16,9 @@ export type JarvisContextValue = {
   readonly pickHost: (() => void) | null
   readonly adoptHost: (hostId: string) => void
   readonly openJarvisScreen: () => void
+  // Whether Xeno's floating orb shows on this screen (not on Home, the Xeno screens or beside the rail's): a
+  // desktop page's screen draws its own (PageOrb) when it does.
+  readonly orbShown: boolean
 }
 
 export const JarvisContext = createContext<JarvisContextValue | null>(null)

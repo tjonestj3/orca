@@ -28,6 +28,7 @@ export function usePageModalWatch(
   useEffect(() => (page === null ? undefined : () => pageModals.forget(page)), [page])
   useEffect(() => {
     anchors.current = {} // a new page reports its own
+    return page === null ? undefined : () => pageAnchors.drop(page)
   }, [page])
   const leaving = useScreenLeaving()
   useEffect(() => {
@@ -68,6 +69,7 @@ export function usePageModalWatch(
         const at = anchor.at ? { ...anchor.at, y: anchor.at.y + pageTop } : undefined
         const next = { ...anchors.current, [anchor.name]: at }
         anchors.current = next
+        pageAnchors.record(page, next) // for the orb the page's own screen draws (PageOrb)
         if (focused.current) {
           pageAnchors.show(page, next)
         }

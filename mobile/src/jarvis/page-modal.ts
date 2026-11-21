@@ -68,6 +68,7 @@ export function createPageModalStore() {
   }
   return {
     read: (): boolean => open.size > 0,
+    readFor: (page: string | null): boolean => page !== null && open.has(page),
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
@@ -85,4 +86,9 @@ export const pageModals = createPageModalStore()
 /** Whether any session page on screen has a sheet or menu open. */
 export function usePageModalOpen(): boolean {
   return useSyncExternalStore(pageModals.subscribe, pageModals.read)
+}
+
+/** Whether this page has a sheet or menu open. */
+export function usePageModalOpenFor(page: string | null): boolean {
+  return useSyncExternalStore(pageModals.subscribe, () => pageModals.readFor(page))
 }

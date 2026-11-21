@@ -92,4 +92,17 @@ describe('a page on its way out', () => {
     expect(pageAnchors.readLeaving()).toBe(false)
     pageAnchors.forget('list')
   })
+
+  it('keeps each page’s own anchors for the orb its screen draws, in front or not', () => {
+    const plus = { x: 300, y: 800, width: 44, height: 44 }
+    const mic = { x: 350, y: 700, width: 36, height: 36 }
+    pageAnchors.record('list', { plus })
+    pageAnchors.record('chat', { mic }) // the chat in front: the list's are kept all the same
+    expect(pageAnchors.readFor('list')).toEqual({ plus })
+    expect(pageAnchors.readFor('chat')).toEqual({ mic })
+    expect(pageAnchors.readFor(null)).toEqual({})
+    pageAnchors.drop('chat')
+    expect(pageAnchors.readFor('chat')).toEqual({})
+    pageAnchors.drop('list')
+  })
 })

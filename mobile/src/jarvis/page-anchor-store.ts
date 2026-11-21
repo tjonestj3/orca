@@ -4,6 +4,8 @@ import type { PageAnchor, PageAnchorName } from './page-anchors'
 /** The focused desktop page's anchors for Xeno's orb (page-anchors), and whether that page is coming or going. */
 type Anchors = Readonly<Partial<Record<PageAnchorName, PageAnchor>>>
 
+const NONE: Anchors = {}
+
 function createPageAnchorStore() {
   let shown: Anchors = {}
   let owner: string | null = null
@@ -11,10 +13,24 @@ function createPageAnchorStore() {
   // The page still sliding in (going back to it, or opening it). It takes focus as the slide starts, so its
   // anchors are the orb's while the screen leaving still covers it.
   let arriving: string | null = null
+  // Every page's own anchors, whether it's in front or not: each page's screen draws its own orb (PageOrb).
+  const byPage = new Map<string, Anchors>()
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
   return {
     read: (): Anchors => shown,
+    readFor: (page: string | null): Anchors => (page === null ? NONE : (byPage.get(page) ?? NONE)),
+    /** A page's anchors as it reports them, in front or not. */
+    record(page: string, anchors: Anchors): void {
+      byPage.set(page, anchors)
+      notify()
+    },
+    /** A page gone (unmounted, or a new session in its place). */
+    drop(page: string): void {
+      if (byPage.delete(page)) {
+        notify()
+      }
+    },
     /** Whether a desktop page is the screen showing, whatever it has reported yet. */
     readShowing: (): boolean => owner !== null,
     /** Whether the page showing has started to go (a back swipe), with the screen under it sliding in; or is
@@ -81,4 +97,9 @@ export function usePageLeaving(): boolean {
 /** The focused desktop page's anchors for Xeno's orb. */
 export function usePageAnchors(): Anchors {
   return useSyncExternalStore(pageAnchors.subscribe, pageAnchors.read)
+}
+
+/** One page's own anchors, for the orb its screen draws (PageOrb). */
+export function usePageAnchorsFor(page: string | null): Anchors {
+  return useSyncExternalStore(pageAnchors.subscribe, () => pageAnchors.readFor(page))
 }

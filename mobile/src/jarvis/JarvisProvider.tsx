@@ -221,6 +221,25 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     }
   }, [router, hostId])
 
+  const strip = useSideRailStrip()
+  const onJarvisScreen = pathname.endsWith('/jarvis')
+  const onHome = pathname === '/' // its tab bar holds Xeno (JarvisTabButton)
+  const railShown =
+    strip !== null &&
+    railOrbVisible({
+      hasStrip: true,
+      hasHost: needsPick || live || reachable === true,
+      onJarvisScreen,
+      onHome
+    })
+  const orbShown = bubbleVisible({
+    live,
+    reachable: needsPick || reachable,
+    onJarvisScreen,
+    onXenoChat: pathname.endsWith('/jarvis-transcript'),
+    onHome,
+    railAvailable: railShown
+  })
   const value = useMemo<JarvisContextValue>(
     () => ({
       call,
@@ -232,7 +251,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       hostName: host?.name ?? null,
       pickHost,
       adoptHost,
-      openJarvisScreen
+      openJarvisScreen,
+      orbShown
     }),
     [
       call,
@@ -244,41 +264,25 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       host,
       pickHost,
       adoptHost,
-      openJarvisScreen
+      openJarvisScreen,
+      orbShown
     ]
   )
   // The rail draws outside this provider, so its orb carries the context with it.
-  const strip = useSideRailStrip()
-  const onJarvisScreen = pathname.endsWith('/jarvis')
-  const onHome = pathname === '/' // its tab bar holds Xeno (JarvisTabButton)
   const railOrb = useMemo(
     () =>
-      strip &&
-      railOrbVisible({
-        hasStrip: true,
-        hasHost: needsPick || live || reachable === true,
-        onJarvisScreen,
-        onHome
-      }) ? (
+      strip && railShown ? (
         <JarvisContext.Provider value={value}>
           <JarvisRailOrb stripWidth={strip.width} />
         </JarvisContext.Provider>
       ) : null,
-    [strip, needsPick, live, reachable, value, onJarvisScreen, onHome]
+    [strip, railShown, value]
   )
   useSideRailPinned(railOrb)
-  const showBubble = bubbleVisible({
-    live,
-    reachable: needsPick || reachable,
-    onJarvisScreen,
-    onXenoChat: pathname.endsWith('/jarvis-transcript'),
-    onHome,
-    railAvailable: railOrb !== null
-  })
   return (
     <JarvisContext.Provider value={value}>
       {children}
-      {showBubble ? <JarvisBubble /> : null}
+      {orbShown ? <JarvisBubble /> : null}
       <JarvisHostPicker
         visible={picking}
         hosts={xeno.hosts.filter((profile) => xeno.reachable.has(profile.id))}
