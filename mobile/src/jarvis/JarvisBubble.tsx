@@ -1,6 +1,11 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native'
-import Animated from 'react-native-reanimated'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { spacing } from '../theme/mobile-theme'
 import { useSideColumn } from '../layout/side-rail'
@@ -21,6 +26,12 @@ import {
 } from './page-anchors'
 
 const BUBBLE_SIZE = 56
+// The orb is always drawn this size and scaled to its spot's: a drawn theme is a canvas in a web view, which
+// cleared and redrew when resized, so going from the small orb by a session's mic to the larger one by the
+// host list's + hiccuped (Nov 20). Scaled, it grows or shrinks smoothly instead. Drawn at the largest size, so
+// scaling only ever shrinks it and it stays sharp.
+const DRAWN_SIZE = BUBBLE_SIZE
+const RESIZE_MS = 180
 // No desktop name beside the orb here: in a session, a host list or settings, which desktop is clear (or doesn't
 // matter); Home's tab bar, where it isn't, names it (JarvisTabButton).
 
@@ -51,12 +62,15 @@ export function JarvisBubble() {
   }
   const shown = hide ? null : spot
   const at = shown ?? last.current
-  // The orb follows the composer every frame while it moves: only where it sits changes, not the orb drawn.
-  const size = at?.size
-  const control = useMemo(
-    () => (size === undefined ? null : <JarvisTalkControl size={size} />),
-    [size]
-  )
+  // The orb follows the composer every frame while it moves: only where it sits changes, not the orb drawn, and
+  // a new size only scales it (DRAWN_SIZE).
+  const scale = (at?.size ?? DRAWN_SIZE) / DRAWN_SIZE
+  const control = useMemo(() => <JarvisTalkControl size={DRAWN_SIZE} scale={scale} />, [scale])
+  const scaled = useSharedValue(scale)
+  useEffect(() => {
+    scaled.value = withTiming(scale, { duration: RESIZE_MS, easing: Easing.out(Easing.quad) })
+  }, [scale, scaled])
+  const scaling = useAnimatedStyle(() => ({ transform: [{ scale: scaled.value }] }))
   const ride = useOrbKeyboardRide(at?.top ?? 0, at?.rides ?? false, useSafeAreaInsets().bottom)
   if (!at) {
     return null
@@ -66,7 +80,17 @@ export function JarvisBubble() {
       pointerEvents={shown ? 'box-none' : 'none'}
       style={[StyleSheet.absoluteFill, !shown && styles.hidden]}
     >
-      <Animated.View style={[at.style, ride]}>{control}</Animated.View>
+      <Animated.View style={[at.style, ride, { width: at.size, height: at.size }]}>
+        <Animated.View
+          style={[
+            styles.drawn,
+            { left: (at.size - DRAWN_SIZE) / 2, top: (at.size - DRAWN_SIZE) / 2 },
+            scaling
+          ]}
+        >
+          {control}
+        </Animated.View>
+      </Animated.View>
     </View>
   )
 }
@@ -178,5 +202,6 @@ const styles = StyleSheet.create({
   corner: { position: 'absolute', alignItems: 'center', gap: spacing.xs },
   row: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   anchored: { position: 'absolute' },
+  drawn: { position: 'absolute', width: DRAWN_SIZE, height: DRAWN_SIZE },
   hidden: { opacity: 0 }
 })

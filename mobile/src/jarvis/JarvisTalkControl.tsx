@@ -17,7 +17,15 @@ const GRAB_SLOP = 8
 
 // Jarvis as a small live orb: hold to talk, tap to open the Jarvis screen (which hangs up). Used by the bubble, the
 // rail, the tab bar and beside a session's mic. No ✕ on it: holding it to talk, a thumb found the ✕ and hung up.
-export function JarvisTalkControl({ size }: { readonly size: number }) {
+// `scale`: how much it's shown scaled (the bubble draws it at one size and scales it to its spot): its grab area
+// and badge are scaled back, so they keep their size on screen.
+export function JarvisTalkControl({
+  size,
+  scale = 1
+}: {
+  readonly size: number
+  readonly scale?: number
+}) {
   useMobileColorScheme()
   const t = useMobileTranslation()
   const { call, offerUrl, voice, openJarvisScreen, pickHost, hostName } = useJarvis()
@@ -51,7 +59,7 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
         onPressIn={pickHost ? undefined : press.pressIn}
         onPressOut={pickHost ? undefined : press.pressOut}
         // Easier to catch than the orb itself, which can be small beside the mic.
-        hitSlop={GRAB_SLOP}
+        hitSlop={GRAB_SLOP / scale}
         style={({ pressed }) => [
           styles.orb,
           // A drawn theme draws its own ground; a grey one under it peeked out as the web view lagged a slide.
@@ -72,7 +80,11 @@ export function JarvisTalkControl({ size }: { readonly size: number }) {
       </Pressable>
       {live ? (
         <View
-          style={[styles.badge, styles.listening]}
+          style={[
+            styles.badge,
+            styles.listening,
+            scale !== 1 && { transform: [{ scale: 1 / scale }] }
+          ]}
           // A press on the badge is a press on the orb.
           pointerEvents="none"
           accessible
