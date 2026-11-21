@@ -12,6 +12,7 @@ import {
   type BridgePageGeometry
 } from '../bridge/page-geometry/bridge-page-geometry'
 import { getFoldSplit } from '../../layout/fold-division'
+import { noteLayout, rect } from '../../layout/layout-notes'
 import { useReservedRegions } from '../../layout/reserved-regions'
 import type { BridgeFoldDivision } from '../bridge/page-geometry/bridge-fold-division'
 import type { BridgeSafeAreaInsets } from '../bridge/page-geometry/bridge-safe-area-insets'
@@ -48,6 +49,7 @@ export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
     const { x, y, width, height } = layout
     rootRef.current?.measureInWindow((rootX, rootY) => {
       const next = { x: rootX + x, y: rootY + y, width, height }
+      noteLayout('page', { frame: rect(next) })
       setFrame((held) =>
         held !== null &&
         held.x === next.x &&

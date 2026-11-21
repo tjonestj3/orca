@@ -30,6 +30,7 @@ import { JarvisHostPicker } from './JarvisHostPicker'
 import { useXenoHosts } from './use-xeno-hosts'
 import { loadJarvisHost, rememberJarvisHost } from './jarvis-host-preference'
 import { openInClaude } from './jarvis-open-in-claude'
+import { subscribeLayoutNotes } from '../layout/layout-notes'
 import { viewingTarget } from './jarvis-viewing'
 import {
   DEFAULT_JARVIS_VOICE,
@@ -197,12 +198,15 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       return
     }
     const device = OrcaXenoTalk?.addListener('onDevice', (note) => call.reportDevice(note))
+    // The window, fold, column and panes as they change, and the last few from before the call (layout-notes).
+    const layout = subscribeLayoutNotes((note) => call.reportDevice(note))
     const app = AppState.addEventListener('change', (state) =>
       call.reportDevice({ kind: `app-${state}` })
     )
     return () => {
       device?.remove()
       app.remove()
+      layout()
     }
   }, [call, live])
   useEffect(() => {

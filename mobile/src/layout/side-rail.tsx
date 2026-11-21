@@ -32,6 +32,7 @@ import {
   useFoldedFullScreen
 } from './folded-full-screen'
 import { ColumnToggle } from './column-toggle'
+import { noteLayout, rect } from './layout-notes'
 
 type RailStore = ReturnType<typeof createRailStore>
 
@@ -188,6 +189,21 @@ export function SideRailProvider({ children }: { children: ReactNode }) {
           : strip,
     [extendedSide, strip, toggleSlot]
   )
+  useEffect(() => {
+    noteLayout('rail', {
+      window: `${Math.round(width)}x${Math.round(height)}`,
+      insets: `${Math.round(insets.left)},${Math.round(insets.right)}`,
+      occlusions: occlusions.map(rect).join(' | '),
+      fold: hasFoldDivision,
+      strip: unoccludedStrip
+        ? `${unoccludedStrip.side} ${Math.round(unoccludedStrip.width)}`
+        : 'none',
+      column: column
+        ? `${column.side} ${Math.round(column.width)}${column.extended ? ' extended' : ''}`
+        : 'none',
+      fullScreenAsked: requested
+    })
+  }, [width, height, insets, occlusions, hasFoldDivision, unoccludedStrip, column, requested])
   const value = useMemo(
     () => ({
       strip: railStrip,

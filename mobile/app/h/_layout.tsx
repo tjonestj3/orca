@@ -6,6 +6,7 @@ import { themedStyleSheet } from '../../src/theme/themed-styles'
 import { useMobileColorScheme } from '../../src/theme/use-mobile-color-scheme'
 import { useResponsiveLayout } from '../../src/layout/responsive-layout'
 import { useFoldSplit } from '../../src/layout/use-fold-split'
+import { noteLayout } from '../../src/layout/layout-notes'
 import {
   HOST_SIDEBAR_DEFAULT_WIDTH,
   HOST_SIDEBAR_MAX_WIDTH,
@@ -88,6 +89,27 @@ export default function HostGroupLayout() {
       : null
   const foldGap = foldSidebarWidth === null || !foldSplit ? 0 : foldSplit.end - foldSplit.start
   const canCollapseSidebar = showSidebar && detailHasContent && foldSidebarWidth === null
+  useEffect(() => {
+    noteLayout('panes', {
+      wide: isWideLayout,
+      window: Math.round(windowWidth),
+      split: foldSplit
+        ? `${foldSplit.axis} ${Math.round(foldSplit.start)}-${Math.round(foldSplit.end)} of ${Math.round(foldSplit.size)}`
+        : 'none',
+      sidebar: showSidebar ? Math.round(foldSidebarWidth ?? sidebarWidth) : 0,
+      sidebarOpen,
+      gap: Math.round(foldGap)
+    })
+  }, [
+    isWideLayout,
+    windowWidth,
+    foldSplit,
+    showSidebar,
+    foldSidebarWidth,
+    sidebarWidth,
+    sidebarOpen,
+    foldGap
+  ])
 
   // Base host detail is a placeholder; hiding its sidebar would leave nothing useful.
   useEffect(() => {
