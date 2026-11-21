@@ -117,6 +117,20 @@ export function usePageFoldDivision(options: { raiseTop?: boolean } = {}): {
   const safeAreaInsets = overColumn.insets
   // How far the top was raised to clear the camera, which a header beside a session's gives back (page-anchors).
   const raisedBy = Math.max(0, overColumn.insets.top - measuredInsets.top)
+  // What the page is told, for the log (layout-notes): a page narrower than its frame is the page's own doing.
+  useEffect(() => {
+    const i = safeAreaInsets
+    noteLayout('page-told', {
+      frame: rect(frame),
+      insets: `t${Math.round(i.top)} r${Math.round(i.right)} b${Math.round(i.bottom)} l${Math.round(i.left)}`,
+      division: division
+        ? `${division.axis} ${Math.round(division.start)}-${Math.round(division.end)}`
+        : 'none',
+      rail: sideRail,
+      occlusions: geometry.occlusions.map(rect).join(' | '),
+      raiseTop: options.raiseTop === true
+    })
+  }, [frame, safeAreaInsets, division, sideRail, geometry.occlusions, options.raiseTop])
   return {
     division,
     geometry,
