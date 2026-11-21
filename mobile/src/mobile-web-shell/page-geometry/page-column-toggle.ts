@@ -5,8 +5,6 @@
  * it sat over the page (a browser tab's view switch, a chat's words). Tapped, it tells the app (COLUMN_TOGGLE_MESSAGE),
  * which brings the column back. Its own element on the page's body, not one of Orca's: React owns those.
  */
-import { DOT } from './page-pill-styles'
-
 export const COLUMN_TOGGLE_MESSAGE = 'xeno-column-toggle'
 export const COLUMN_TOGGLE_ID = 'xeno-column-toggle'
 
@@ -20,42 +18,38 @@ export function columnToggleIcon(side: 'left' | 'right'): string {
   return `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/>${ICON_PATH[side]}</svg>`
 }
 
-/** Its look, in the bar's stylesheet: a mauve circle like the bar's others, answering a fingertip 44 pt tall. */
+/** Its look, in the bar's stylesheet: one of the bar's circles (data-xeno-btn), mauve, a button reset to bare. */
 export const COLUMN_TOGGLE_CSS = [
-  `#${COLUMN_TOGGLE_ID} { position: fixed; z-index: 2147483000; width: ${DOT}px; height: ${DOT}px; padding: 0; margin: 0; border: 0; border-radius: ${DOT / 2}px; background: #c6a0f6; color: #1e1e2e; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; cursor: pointer; }`,
-  `#${COLUMN_TOGGLE_ID}::before { content: ""; position: absolute; top: -11px; bottom: -11px; left: -4px; right: -4px; }`
+  `[data-xeno-pill="bar"] [data-xeno-btn="mauve"] { background-color: #c6a0f6 !important; border: 0 !important; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-appearance: none; appearance: none; }`
 ].join('\n')
 
-/** The script's part: at is { chrome, end } (the bar, and how far from its right edge the circle ends), or null. */
-export const COLUMN_TOGGLE = String.raw`function columnToggle(at) {
+/**
+ * The script's part: columnToggle(trail) puts it first among the bar's branch and menu circles (null: none). It
+ * lives in their row, so it's laid out, layered and covered by the page's menus and sheets just as they are
+ * (Nov 20: drawn on the page's body above everything, it had to be hidden whenever a menu opened). React leaves
+ * an element it didn't make where it is among its own.
+ */
+export const COLUMN_TOGGLE = String.raw`function columnToggle(trail) {
   var button = document.getElementById('${COLUMN_TOGGLE_ID}');
   var side = state.pill && state.pill.toggle;
-  if (!at || !side) { if (button) button.remove(); return; }
+  if (!trail || !side) { if (button) button.remove(); return; }
   if (!button) {
     button = document.createElement('button');
     button.id = '${COLUMN_TOGGLE_ID}';
     button.type = 'button';
+    button.setAttribute('data-xeno-btn', 'mauve');
     button.addEventListener('click', function () {
       try { window.orcaBridge.postMessage(JSON.stringify({ type: '${COLUMN_TOGGLE_MESSAGE}' })); } catch (e) {}
     });
-    document.body.appendChild(button);
   }
+  if (button.parentElement !== trail || trail.firstElementChild !== button) trail.insertBefore(button, trail.firstElementChild);
   if (button.getAttribute('data-side') !== side) {
     button.setAttribute('data-side', side);
     button.innerHTML = side === 'left' ? ${JSON.stringify(columnToggleIcon('left'))} : ${JSON.stringify(columnToggleIcon('right'))};
   }
-  button.setAttribute('aria-label', state.pill.toggleLabel || '');
-  var r = at.chrome.getBoundingClientRect();
-  var top = Math.round(r.top + (parseFloat(getComputedStyle(at.chrome).paddingTop) || 0)) + 'px';
-  var left = Math.round(r.right - at.end - ${DOT}) + 'px';
-  if (button.style.top !== top) button.style.top = top;
-  if (button.style.left !== left) button.style.left = left;
-  if (button.style.display) button.style.display = '';
+  if (button.getAttribute('aria-label') !== (state.pill.toggleLabel || '')) button.setAttribute('aria-label', state.pill.toggleLabel || '');
 }
-function columnToggleHide() {
-  var button = document.getElementById('${COLUMN_TOGGLE_ID}');
-  if (button && button.style.display !== 'none') button.style.display = 'none';
-}`
+function isColumnToggle(el) { return el.id === '${COLUMN_TOGGLE_ID}'; }`
 
 /** Whether a message from the page is the bar's full-screen toggle being tapped. */
 export function isColumnToggleMessage(json: string): boolean {

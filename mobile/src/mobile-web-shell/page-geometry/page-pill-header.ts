@@ -186,7 +186,7 @@ function lay(chrome, more, tab) {
   mark(trail, 'data-xeno-pill', 'trail');
   // The worktree's name and branch stay, unseen, holding the middle: tapping the agent's tab opens their card.
   mark(title, 'data-xeno-pill', 'ghost');
-  var backs = labelled(lead), trailing = labelled(trail);
+  var backs = labelled(lead), trailing = labelled(trail).filter(function (b) { return !isColumnToggle(b); });
   backs.forEach(function (button, i) { mark(button, 'data-xeno-btn', i === backs.length - 1 ? 'yellow' : 'blue'); });
   trailing.forEach(function (button) {
     mark(button, 'data-xeno-btn', button === more ? 'blue' : 'salmon');
@@ -218,7 +218,7 @@ function lay(chrome, more, tab) {
 ${TAP_OR_HOLD + PROMPT_ROOM + COLUMN_TOGGLE}
 function check() {
   state.pending = false; // Nothing moves under a sheet or menu: leave the bar as it is until it closes.
-  if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) { columnToggleHide(); return; }
+  if (state.pill && state.at && document.querySelector('[aria-modal="true"]')) return;
   var pill = state.pill;
   var floating = state.at && state.at.isConnected && state.at.getBoundingClientRect().width > 0 ? state.at : null;
   var more = pill && byLabel(pill.moreLabel, floating);
@@ -266,7 +266,7 @@ function check() {
   // The full-screen toggle, when the bar holds it, just before the branch and menu circles.
   var end = 14 + span(laid.trailing) + 8, toggle = pill.toggle ? ${DOT} + 8 : 0;
   set(laid.tabRow, 'right', (end + toggle) + 'px');
-  columnToggle(toggle ? { chrome: chrome, end: end } : null);
+  columnToggle(toggle ? laid.trail : null);
   if (mode === 'flow') return;
   var list = conversation(chrome);
   var content = list && list.firstElementChild;

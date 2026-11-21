@@ -306,7 +306,7 @@ it('puts no chip on the bar without a desktop name', () => {
   run(null)
 })
 
-it('holds the folded Duo’s full-screen toggle before its branch and menu circles, and says when it’s tapped', () => {
+it('holds the folded Duo’s full-screen toggle among its branch and menu circles, and says when it’s tapped', () => {
   orcaHeader()
   const posted: string[] = []
   Object.defineProperty(window, 'orcaBridge', {
@@ -315,12 +315,20 @@ it('holds the folded Duo’s full-screen toggle before its branch and menu circl
   })
   run({ ...PILL, toggle: 'right', toggleLabel: 'Show the side keys' })
   const toggle = document.getElementById('xeno-column-toggle')!
+  // One of the bar's circles, first in their row: laid out, layered and covered by menus as they are.
+  expect(toggle.parentElement).toBe(byId('trailing'))
+  expect(byId('trailing').firstElementChild).toBe(toggle)
+  expect(toggle.getAttribute('data-xeno-btn')).toBe('mauve')
   const end = 14 + 22 + 8 + 22 + 8 // the menu and branch circles, and the gap before them
   expect(style('tabbar', 'right')).toBe(`${end + 22 + 8}px`) // the tab row stops short of it
-  expect([toggle.style.top, toggle.style.left]).toEqual(['26px', `${400 - end - 22}px`])
   expect(toggle.getAttribute('aria-label')).toBe('Show the side keys')
   toggle.click()
   expect(posted.map((json) => JSON.parse(json).type)).toEqual(['xeno-column-toggle'])
+  // A menu opening leaves it where it is, like the others.
+  document.body.insertAdjacentHTML('beforeend', '<div aria-modal="true"></div>')
+  run({ ...PILL, toggle: 'right', toggleLabel: 'Show the side keys' })
+  expect(document.getElementById('xeno-column-toggle')).toBe(toggle)
+  document.querySelector('[aria-modal]')!.remove()
   run(PILL) // the column back: the app draws its own
   expect(document.getElementById('xeno-column-toggle')).toBeNull()
   expect(style('tabbar', 'right')).toBe(`${end}px`)
