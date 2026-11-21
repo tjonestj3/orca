@@ -133,14 +133,24 @@ describe('xenoTabVisible', () => {
 })
 
 describe('actionButtonPress', () => {
+  const free = { holding: false, canPick: false, canTalk: true }
+
   it('starts talking, then sends on the next press, like holding and letting go', () => {
-    expect(actionButtonPress({ holding: false, canPick: false, canTalk: true })).toBe('press')
-    expect(actionButtonPress({ holding: true, canPick: false, canTalk: true })).toBe('release')
+    expect(actionButtonPress({ ...free, wake: false, inCall: false })).toBe('press')
+    expect(actionButtonPress({ ...free, wake: true, inCall: true })).toBe('press')
+    expect(actionButtonPress({ ...free, holding: true, wake: true, inCall: true })).toBe('release')
+  })
+
+  it('with Hey Xeno on, a press with no call starts one listening, not held for a second press', () => {
+    // Nov 21: launched from the shortcut, the call began held, so Xeno heard every word and answered none until
+    // the orb was tapped in the app.
+    expect(actionButtonPress({ ...free, wake: true, inCall: false })).toBe('start')
   })
 
   it('asks which desktop first when several run Xeno, and does nothing with none', () => {
-    expect(actionButtonPress({ holding: false, canPick: true, canTalk: false })).toBe('pick')
-    expect(actionButtonPress({ holding: false, canPick: false, canTalk: false })).toBeNull()
+    const none = { holding: false, wake: true, inCall: false }
+    expect(actionButtonPress({ ...none, canPick: true, canTalk: false })).toBe('pick')
+    expect(actionButtonPress({ ...none, canPick: false, canTalk: false })).toBeNull()
   })
 })
 

@@ -21,6 +21,7 @@ import {
 import { JarvisLevelMeter, levelPoller, levelsMatter } from './jarvis-call-levels'
 import { micShouldBeOpen, openingClientMessages } from './jarvis-mic-gate'
 import { CallMusic, openCallMicrophone } from './jarvis-call-music'
+import { HeldNotes } from './jarvis-held-notes'
 import type { JarvisVoice } from './jarvis-voice-preference'
 
 type DataChannel = ReturnType<RTCPeerConnection['createDataChannel']>
@@ -33,6 +34,7 @@ export class JarvisCall {
   private readonly meter = new JarvisLevelMeter((note) => this.reportDevice(note))
   private readonly listeners = new Set<() => void>()
   private readonly music = new CallMusic()
+  private readonly heldNotes = new HeldNotes()
   private pc: RTCPeerConnection | null = null
   private mic: MediaStream | null = null
   private channel: DataChannel | null = null
@@ -106,7 +108,10 @@ export class JarvisCall {
     readonly at?: number
     readonly [detail: string]: unknown
   }): void {
-    this.sendClientMessage('jarvis-device', { ...note, at: note.at ?? Date.now() })
+    const noted = { ...note, at: note.at ?? Date.now() }
+    if (!this.sendClientMessage('jarvis-device', noted)) {
+      this.heldNotes.keep(noted) // sent once a call connects
+    }
   }
 
   // The worktree the app has open, so "this" means it; sent now or when the call connects.
@@ -183,6 +188,7 @@ export class JarvisCall {
         holding: this.snapshot.holding,
         wake: this.snapshot.wake
       }).forEach(([type, data]) => this.sendClientMessage(type, data))
+      this.heldNotes.take(Date.now()).forEach((note) => this.sendClientMessage('jarvis-device', note))
       // The server treats a call without pings for three seconds as gone.
       this.every(1000, () => {
         if (channel.readyState === 'open') {

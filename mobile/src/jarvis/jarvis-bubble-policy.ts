@@ -112,18 +112,25 @@ export function xenoTabVisible(s: {
 
 // The Action Button (or "Talk to Xeno" in Shortcuts and Siri): a press starts talking, the next one sends, like
 // holding the bubble and letting go. With several desktops and none picked yet, it asks which first.
+// With "Hey Xeno" on and no call yet, a press only starts the call, listening as a call started in the app does:
+// held, Xeno heard every word and answered none until the orb was tapped in the app (Nov 21, from the shortcut).
 export function actionButtonPress(s: {
   holding: boolean
   canPick: boolean
   canTalk: boolean
-}): 'press' | 'release' | 'pick' | null {
+  wake: boolean
+  inCall: boolean
+}): 'press' | 'release' | 'pick' | 'start' | null {
   if (s.holding) {
     return 'release'
   }
   if (s.canPick) {
     return 'pick'
   }
-  return s.canTalk ? 'press' : null
+  if (!s.canTalk) {
+    return null
+  }
+  return s.wake && !s.inCall ? 'start' : 'press'
 }
 
 /** The small Xeno orb in a session, beside the controls Orca's page draws (measured on the iPhone Duo). */

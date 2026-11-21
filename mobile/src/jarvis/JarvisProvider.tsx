@@ -143,10 +143,13 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setPendingPress(true)
       return
     }
+    const { holding: held, phase: now } = call.getSnapshot()
     const action = actionButtonPress({
-      holding: call.getSnapshot().holding,
+      holding: held,
       canPick: needsPick,
-      canTalk: offerUrl !== null
+      canTalk: offerUrl !== null,
+      wake,
+      inCall: now !== 'idle' && now !== 'error'
     })
     // For Xeno's server log: what the shortcut found, and what the press did here.
     call.reportDevice({
@@ -160,6 +163,8 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       setPicking(true)
     } else if (action === 'press' && offerUrl) {
       call.pressTalk(offerUrl, voice)
+    } else if (action === 'start' && offerUrl) {
+      void call.start(offerUrl, voice)
     }
   }
   useEffect(() => {
