@@ -56,4 +56,12 @@ describe('the orb riding with the keyboard', () => {
     ride.keyboardMoves(KEYBOARD, 0, 10)
     expect(ride.report(400, 20)).toEqual({ top: 400, keyboard: KEYBOARD })
   })
+
+  it('coming to a control from a spot that doesn’t ride takes the page’s word even mid-move', () => {
+    const ride = new OrbKeyboardRide(KEYBOARD)
+    ride.keyboardMoves(0, 250, 1000)
+    expect(ride.report(400, 1100)).toBeNull() // riding: it would wait
+    expect(ride.arrive(700)).toEqual({ top: 700, keyboard: 0 }) // arriving: there's nothing to ride from
+    expect(ride.settle(1000 + 250 + RIDE_SLACK_MS)).toEqual({ top: 700, keyboard: 0 })
+  })
 })

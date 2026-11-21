@@ -1,13 +1,13 @@
 /**
  * Xeno's orb riding with the keyboard. The orb sits by a control on the desktop's page (the composer's mic), placed
  * where the page last said that control was. The page's word that the control moved can come up to a quarter
- * second late, so the orb used to drop after the keyboard had gone; a glide of its own, started when the app heard
- * of the keyboard, still trailed it a little (Nov 20).
+ * second late, so the orb used to drop after the keyboard had gone (Nov 20).
  *
- * So the orb's place is worked out every frame from the keyboard's own position (useAnimatedKeyboard, on the UI
- * thread): where the page last put the control, shifted by how far the keyboard has moved since. The control
- * rests on the keyboard while it's up and on the screen's bottom inset while it's down, so it moves by the change
- * in whichever of the two is higher. That's the keyboard's own frames, its curve and its start, not a copy.
+ * The page doesn't slide its mic with the keyboard: the shell gives it the keyboard's final height the moment the
+ * keyboard starts to move, and it puts the mic there at once. A glide of the orb's own trailed it, and so did
+ * following the keyboard's slide frame by frame (Nov 20). So the orb takes the same number: where the page last
+ * put the control, shifted by the change in that height. The control rests on the keyboard while it's up and on
+ * the screen's bottom inset while it's down, so it moves by the change in whichever of the two is higher.
  *
  * While the keyboard moves, the page's reports wait (one measured mid-move would be read against the wrong
  * keyboard height); when it's done, the orb takes the last one, easing there if the control came to rest a little
@@ -47,6 +47,13 @@ export class OrbKeyboardRide {
     if (top === undefined || now < this.until) {
       return null // the keyboard is moving; what the page said is taken when it's done
     }
+    return { top, keyboard: this.keyboard }
+  }
+
+  /** The orb has just come to a control (from a spot that doesn't ride the keyboard): the page's word at once,
+   * whatever the keyboard's doing, as there's nothing to ride from. */
+  arrive(top: number): OrbBase {
+    this.target = top
     return { top, keyboard: this.keyboard }
   }
 

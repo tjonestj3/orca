@@ -24,9 +24,15 @@ const BUBBLE_SIZE = 56
 // No desktop name beside the orb here: in a session, a host list or settings, which desktop is clear (or doesn't
 // matter); Home's tab bar, where it isn't, names it (JarvisTabButton).
 
-// `top`, for a spot by a control on the page: where the page last said it is, which the orb rides from with the
-// keyboard (use-orb-keyboard-ride) rather than waiting for the page to say where it went.
-type Spot = { readonly style: StyleProp<ViewStyle>; readonly size: number; readonly top?: number }
+// `top` is always given, not left to the style: it goes through use-orb-keyboard-ride, which would otherwise keep
+// a top it set earlier (Nov 20: off centre by the + after a back swipe). `rides`: by a control on the page that
+// moves with the keyboard, so the orb follows the keyboard frame by frame.
+type Spot = {
+  readonly style: StyleProp<ViewStyle>
+  readonly size: number
+  readonly top: number
+  readonly rides: boolean
+}
 
 export function JarvisBubble() {
   const spot = useOrbSpot()
@@ -51,7 +57,7 @@ export function JarvisBubble() {
     () => (size === undefined ? null : <JarvisTalkControl size={size} />),
     [size]
   )
-  const ride = useOrbKeyboardRide(at?.top, useSafeAreaInsets().bottom)
+  const ride = useOrbKeyboardRide(at?.top ?? 0, at?.rides ?? false, useSafeAreaInsets().bottom)
   if (!at) {
     return null
   }
@@ -78,7 +84,12 @@ function useOrbSpot(): Spot | null {
     // The host list: just right of its + button, in the room its bar made (page-anchors).
     const place = plusOrbPlace(plus)
     // Its bar isn't known to ride the keyboard, so the orb waits for the page there.
-    return { style: [styles.anchored, { left: place.left, top: place.top }], size: place.size }
+    return {
+      style: [styles.anchored, { left: place.left }],
+      top: place.top,
+      rides: false,
+      size: place.size
+    }
   }
   if (view) {
     // In a session Xeno is a small orb by the page's own controls.
@@ -96,35 +107,54 @@ function useOrbSpot(): Spot | null {
       return {
         style: [styles.row, { right: screen.width - at.right }],
         top: at.middle - place.size / 2,
+        rides: true,
         size: place.size
       }
     }
     if (view === 'terminal' && mic) {
       // Just right of the live input row's mic, in the room the row made (page-anchors).
       const at = terminalMicOrbPlace(mic)
-      return { style: [styles.anchored, { left: at.left }], top: at.top, size: at.size }
+      return {
+        style: [styles.anchored, { left: at.left }],
+        top: at.top,
+        rides: true,
+        size: at.size
+      }
     }
     if (view === 'chat' && approval) {
       // A permission card where the composer was: the right end of its button row (page-anchors).
       const at = approvalOrbPlace(approval, place.size)
-      return { style: [styles.anchored, { left: at.left }], top: at.top, size: place.size }
+      return {
+        style: [styles.anchored, { left: at.left }],
+        top: at.top,
+        rides: true,
+        size: place.size
+      }
     }
     if (view === 'chat' && keys) {
       // A browser tab: the free right end of the line its keys share (page-browser-keys), level with them.
       return {
         style: [styles.row, { right: place.right }],
         top: keys.y + (keys.height - place.size) / 2,
+        rides: true,
         size: place.size
       }
     }
     if (view === 'chat') {
       // A tab without a composer (a file, a browser): the bottom corner its controls leave free, not over the page.
       return {
-        style: [styles.row, { bottom: place.bottom, left: insets.left + spacing.lg }],
+        style: [styles.row, { left: insets.left + spacing.lg }],
+        top: screen.height - place.bottom - place.size,
+        rides: false,
         size: place.size
       }
     }
-    return { style: [styles.row, { bottom: place.bottom, right: place.right }], size: place.size }
+    return {
+      style: [styles.row, { right: place.right }],
+      top: screen.height - place.bottom - place.size,
+      rides: false,
+      size: place.size
+    }
   }
   if (pageShowing) {
     // A desktop page that hasn't said where the orb goes yet (it's still opening): wait, rather than flash in the
@@ -137,7 +167,9 @@ function useOrbSpot(): Spot | null {
       ? Math.max(spacing.xs, (column.width - BUBBLE_SIZE) / 2)
       : insets.right + spacing.lg
   return {
-    style: [styles.corner, { bottom: insets.bottom + spacing.xl, right }],
+    style: [styles.corner, { right }],
+    top: screen.height - (insets.bottom + spacing.xl) - BUBBLE_SIZE,
+    rides: false,
     size: BUBBLE_SIZE
   }
 }

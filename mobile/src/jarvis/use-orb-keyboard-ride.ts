@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import {
   Easing,
   runOnUI,
-  useAnimatedKeyboard,
   useAnimatedStyle,
   useSharedValue,
   withTiming
@@ -20,32 +19,50 @@ import {
 } from './orb-keyboard-ride'
 
 /**
- * The orb's top as an animated style, riding with the keyboard frame by frame (orb-keyboard-ride): `top` is where
- * the page last said it goes, or undefined for a spot placed some other way, which the style then leaves alone.
+ * The orb's top as an animated style. `top` is where it goes; `rides` says it's by a control on the page that
+ * moves with the keyboard (the composer's mic), so it moves with that control as the keyboard comes and goes
+ * (orb-keyboard-ride).
+ * Every spot's top comes through here, riding or not: a top this style once set stays on the view until it sets
+ * another, so a spot placed only by React (the host list's +) kept the session mic's height after a back swipe
+ * (Nov 20).
  */
-export function useOrbKeyboardRide(top: number | undefined, bottomInset: number) {
-  // The keyboard's own position, every frame on the UI thread: the orb moves with it, not after hearing of it.
-  const keyboard = useAnimatedKeyboard()
-  const base = useSharedValue<OrbBase>({ top: top ?? 0, keyboard: currentSoftKeyboardHeight() })
+export function useOrbKeyboardRide(top: number, rides: boolean, bottomInset: number) {
+  // The keyboard's height as the page is given it: its final height, the moment it starts to move (the shell
+  // publishes that to the page, which moves its mic there at once). The orb takes the same number, so it moves
+  // with the mic rather than with the keyboard's slide.
+  const keyboard = useSharedValue(currentSoftKeyboardHeight())
+  const base = useSharedValue<OrbBase>({ top, keyboard: currentSoftKeyboardHeight() })
   // Easing out a guess that was a few points off, once the keyboard is still (0 otherwise).
   const settling = useSharedValue(0)
+  const still = useSharedValue(top) // a spot that doesn't ride: just here
+  const riding = useSharedValue(rides)
   const inset = useSharedValue(bottomInset)
-  const placed = useSharedValue(top !== undefined)
   const ride = useRef<OrbKeyboardRide | null>(null)
   ride.current ??= new OrbKeyboardRide(currentSoftKeyboardHeight())
+  const rode = useRef(rides)
 
   useEffect(() => {
     inset.value = bottomInset
   }, [bottomInset, inset])
 
   useEffect(() => {
-    placed.value = top !== undefined
-    const next = ride.current!.report(top, Date.now())
+    const arriving = rides && !rode.current
+    rode.current = rides
+    if (!rides) {
+      still.value = top
+      riding.value = false
+      return
+    }
+    const next = arriving ? ride.current!.arrive(top) : ride.current!.report(top, Date.now())
     if (next) {
       base.value = next
+      if (arriving) {
+        settling.value = 0
+      }
     }
+    riding.value = true
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only shared values are written
-  }, [top])
+  }, [top, rides])
 
   useEffect(() => {
     // The page's word once the keyboard is still: taken on the UI thread in one go, from where the orb is then.
@@ -63,6 +80,7 @@ export function useOrbKeyboardRide(top: number | undefined, bottomInset: number)
     })
     let timer: ReturnType<typeof setTimeout> | undefined
     const moves = (height: number, ms: number) => {
+      keyboard.value = height
       ride.current!.keyboardMoves(height, ms, Date.now())
       if (ms <= 0) {
         return
@@ -70,7 +88,7 @@ export function useOrbKeyboardRide(top: number | undefined, bottomInset: number)
       clearTimeout(timer)
       timer = setTimeout(() => {
         const next = ride.current!.settle(Date.now())
-        if (next) {
+        if (next && rode.current) {
           settle(next)
         }
       }, ms + RIDE_SLACK_MS)
@@ -83,9 +101,9 @@ export function useOrbKeyboardRide(top: number | undefined, bottomInset: number)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only shared values are written
   }, [])
 
-  return useAnimatedStyle(() =>
-    placed.value
-      ? { top: orbTop(base.value, keyboard.height.value, inset.value) + settling.value }
-      : {}
-  )
+  return useAnimatedStyle(() => ({
+    top: riding.value
+      ? orbTop(base.value, keyboard.value, inset.value) + settling.value
+      : still.value
+  }))
 }
