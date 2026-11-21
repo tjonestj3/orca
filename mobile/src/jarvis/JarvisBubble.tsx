@@ -94,12 +94,14 @@ export function PageOrb({
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
   const hide = sheetOpen || (view === 'chat' && anchors.question !== undefined)
-  if (!orbShown || !visible) {
+  if (!orbShown) {
     return null
   }
+  // Out of front it's hidden, not taken away: put back, a drawn theme's canvas would load and draw again from
+  // blank each time the screen came back (Nov 20).
   return (
     <View pointerEvents="box-none" style={StyleSheet.absoluteFill} onLayout={onLayout}>
-      <Orb spot={spot} hide={hide} />
+      <Orb spot={spot} hide={hide || !visible} />
     </View>
   )
 }
