@@ -94,6 +94,36 @@ it('finds an agent’s question by its options, whatever they say', () => {
   })
 })
 
+it('unfolded, makes room in the host list sidebar’s own bar, not past the sidebar', () => {
+  listen()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="page" style="display: flex; flex-direction: row">' +
+    '<div id="sidebar"><div id="bar" style="display: flex; flex-direction: row">' +
+    '<div id="search"></div><div><div id="plus" aria-label="New workspace"></div></div>' +
+    '</div></div><div id="detail"></div></div>'
+  place(document.getElementById('page')!, { left: 0, top: 0, width, height })
+  place(document.getElementById('bar')!, {
+    left: 0,
+    top: height - 80,
+    width: width * 0.3,
+    height: 60
+  })
+  place(document.getElementById('plus')!, {
+    left: width * 0.3 - 50,
+    top: height - 70,
+    width: 37,
+    height: 37
+  })
+  const plus = [
+    { name: 'plus' as const, labels: ['New workspace'], near: 'bottom' as const, pad: 56 }
+  ]
+  new Function(pageAnchorsScript(plus))()
+  expect(document.getElementById('bar')!.style.getPropertyValue('padding-right')).toBe('56px')
+  expect(document.getElementById('page')!.style.getPropertyValue('padding-right')).toBe('')
+})
+
 it('in a split view makes room in the mic’s own row, not the whole page around it', () => {
   listen()
   const width = window.innerWidth

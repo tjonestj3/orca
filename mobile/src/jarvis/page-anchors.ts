@@ -58,12 +58,15 @@ var state = window.__xenoAnchors || (window.__xenoAnchors = { rows: {}, lifts: {
 state.lifts = state.lifts || {};
 state.found = state.found || {};
 state.watches = ${JSON.stringify(watches)};
-// The bar to make room in: the nearest row at least half the page wide. Not simply the first full-width box: on the
-// unfolded Duo a session shares the page with the host list, and that box is the whole page.
+// The bar to make room in: the nearest row a few buttons wide around it. Not simply the first full-width box: on the
+// unfolded Duo a session shares the page with the host list, and that box is the whole page. Nor one at least half
+// the page wide: unfolded, the host list's own bar (+ and search) is its sidebar's, narrower, so it made no room
+// and the orb stood out past the sidebar, over the divider (Nov 20).
 function bar(button) {
   var el = button.parentElement;
+  var wide = button.getBoundingClientRect().width * 3;
   while (el && el !== document.body) {
-    if (el.getBoundingClientRect().width >= window.innerWidth * 0.5 && getComputedStyle(el).flexDirection === 'row') {
+    if (el.getBoundingClientRect().width >= wide && getComputedStyle(el).flexDirection === 'row') {
       return el;
     }
     el = el.parentElement;
