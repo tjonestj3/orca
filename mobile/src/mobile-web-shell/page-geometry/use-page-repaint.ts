@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
+import { useIsFocused } from 'expo-router'
 import {
   useMobileDarkTheme,
   useSessionMonospace,
@@ -80,7 +81,7 @@ export function usePageRepaint(options: {
   const pillToggle = at && column?.extended ? column.side : null
   const toggleLabel = t('session.header.showSideColumn', 'Show the side keys')
   const pillChip = useHostDisplay(useHostProfile(options.pillHost ?? '')).title || null
-  return useMemo(() => {
+  const script = useMemo(() => {
     const code = themed && RAISED_ROLE ? { raised: themed[RAISED_ROLE], text: themed.yellow } : null
     const repaint = pageRepaintScript(themed ? themePairs(themed) : [], monospace, code)
     const anchors = pageAnchorsScript(
@@ -164,4 +165,14 @@ export function usePageRepaint(options: {
     pillToggle,
     toggleLabel
   ])
+  // Out of sight (another screen over it, such as source control), the page keeps its script: the status column
+  // comes back for that screen and goes again on return, and following it there and back rebuilt what the script
+  // adds to the page (Nov 20: the bar's full-screen toggle popped in again on return). Back in front, it takes
+  // whatever changed, which is usually nothing.
+  const focused = useIsFocused()
+  const held = useRef(script)
+  if (focused) {
+    held.current = script
+  }
+  return held.current
 }
