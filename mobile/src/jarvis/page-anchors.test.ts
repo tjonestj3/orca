@@ -78,4 +78,18 @@ describe('a page on its way out', () => {
     expect(pageAnchors.readLeaving()).toBe(false)
     pageAnchors.forget('b')
   })
+
+  it('keeps the orb waiting while the page going back to is still sliding in (Nov 20)', () => {
+    // Going back from a chat to the host list: the list takes focus as the slide starts.
+    pageAnchors.show('chat', {})
+    pageAnchors.leave('chat', true)
+    pageAnchors.arrive('list', true)
+    pageAnchors.show('list', {})
+    expect(pageAnchors.readLeaving()).toBe(true) // the chat still covers it: no orb by its + yet
+    pageAnchors.arrive('chat', false) // another page's slide ending doesn't count
+    expect(pageAnchors.readLeaving()).toBe(true)
+    pageAnchors.arrive('list', false) // all the way in
+    expect(pageAnchors.readLeaving()).toBe(false)
+    pageAnchors.forget('list')
+  })
 })
