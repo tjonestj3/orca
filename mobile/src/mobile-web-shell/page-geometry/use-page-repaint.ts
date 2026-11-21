@@ -20,6 +20,7 @@ import { useHostDisplay } from '../../host-descriptors/use-host-display'
 import { useHostProfile } from '../../host-catalog/use-host-profile'
 import { PAGE_QUESTION_ROOM } from './page-question-room'
 import { pageBrowserKeysScript } from './page-browser-keys'
+import { pageEnterSendsScript } from './page-enter-sends'
 import { PAGE_SCROLLBAR_NUDGE } from './page-scrollbar-nudge'
 
 const RAISED_ROLE = ORCA_DARK_ROLES[ORCA_RAISED]
@@ -61,6 +62,10 @@ export function usePageRepaint(options: {
   ].join('\n')
   const modifier = (key: string) =>
     t('browser.pointerModifiers.clickModifier', '{{key}} click modifier', { key })
+  const sendLabels = [
+    t('chat.composer.sendMessage', 'Send message'),
+    t('chat.composer.saveEditedMessage', 'Save edited message')
+  ].join('\n')
   const cmdModifier = modifier('Cmd')
   const shiftModifier = modifier('Shift')
   const pad = options.headerClear && column?.extended ? column.width : 0
@@ -115,7 +120,11 @@ export function usePageRepaint(options: {
     )
     const sessionOnly = options.headerClear
       ? []
-      : [PAGE_QUESTION_ROOM, pageBrowserKeysScript(cmdModifier)]
+      : [
+          PAGE_QUESTION_ROOM,
+          pageBrowserKeysScript(cmdModifier),
+          pageEnterSendsScript(sendLabels.split('\n'))
+        ]
     const pill = pagePillHeaderScript(
       pillShown
         ? {
@@ -150,6 +159,7 @@ export function usePageRepaint(options: {
     mic,
     cmdModifier,
     shiftModifier,
+    sendLabels,
     pad,
     plusRoom,
     micRoom,
