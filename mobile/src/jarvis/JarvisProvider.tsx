@@ -20,6 +20,8 @@ import { JarvisContext, type JarvisContextValue } from './jarvis-context'
 import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
 import { jarvisOfferUrl } from './jarvis-endpoint'
+import { xenoKeys } from './jarvis-key'
+import { callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
 import {
   CALL_FOLLOWS_AFTER_MS,
   callMoveTarget,
@@ -51,7 +53,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [callHostId, setCallHostId] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [voice, setVoiceState] = useState<JarvisVoice>(DEFAULT_JARVIS_VOICE)
-  const { phase, opening, holding } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const { phase, opening, holding, heard } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
   const routeHostId = hostIdFromPath(pathname)
@@ -115,6 +117,40 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     OrcaXenoTalk?.setTalkState?.(live, holding)
   }, [live, holding])
   useEffect(() => call.setViewing(viewingTarget(pathname, hostId)), [call, pathname, hostId])
+  // The call on the lock screen and in the Dynamic Island; with no call (as when the app starts) it ends any left.
+  const hostName = host?.name ?? null
+  useEffect(() => {
+    const activity = callActivity({ phase, heard, holding, host: hostName })
+    OrcaXenoTalk?.setCallActivity?.(activity.phase, activity.heard, activity.holding, activity.host)
+  }, [phase, heard, holding, hostName])
+  // Xeno's widgets fetch the desktop's glance themselves: they get its address and the key here, again each time
+  // the app comes to the front (the key may have arrived meanwhile), and are asked to refresh then too.
+  const endpoint = host?.endpoint ?? null
+  useEffect(() => {
+    if (!endpoint || !OrcaXenoTalk?.shareWidgetAccess) {
+      return
+    }
+    let gone = false
+    const share = (): void => {
+      void xenoKeys.load().then(() => {
+        const access = widgetAccess(endpoint, xenoKeys.headers()['X-Xeno-Key'], hostName)
+        if (!gone && access) {
+          OrcaXenoTalk?.shareWidgetAccess?.(access)
+        }
+      })
+    }
+    share()
+    const active = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        share()
+        OrcaXenoTalk?.reloadWidgets?.()
+      }
+    })
+    return () => {
+      gone = true
+      active.remove()
+    }
+  }, [endpoint, hostName])
   useEffect(() => onDictationStarting(() => call.endFor('dictation')), [call])
 
   const setVoice = useCallback(
@@ -184,9 +220,19 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     }
     take() // a press that launched the app
     const talk = OrcaXenoTalk.addListener('onTalk', () => actionPress.current())
+    // The Live Activity's buttons: Talk works like the Action Button, End hangs up.
+    const button = OrcaXenoTalk.addListener('onCallAction', (note) => {
+      const action = callActionOf(note)
+      if (action === 'talk') {
+        actionPress.current()
+      } else if (action === 'end') {
+        call.hangUp()
+      }
+    })
     const active = AppState.addEventListener('change', (state) => state === 'active' && take())
     return () => {
       talk.remove()
+      button.remove()
       active.remove()
     }
   }, [])

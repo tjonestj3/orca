@@ -2,6 +2,7 @@ import AVFoundation
 import ExpoModulesCore
 import ObjectiveC
 import UIKit
+import WidgetKit
 
 // The Talk to Xeno App Intent lives in the app target (plugins/ios-xeno-talk-intent.js). It leaves a pending press
 // in UserDefaults and posts a notification; this hands the press to JS, now or once JS asks after starting up.
@@ -124,11 +125,12 @@ func duckOtherAudio(_ on: Bool) -> [String: Any] {
 
 public class OrcaXenoTalkModule: Module {
   private var observer: NSObjectProtocol?
+  private var callActionObserver: NSObjectProtocol?
   private var deviceObservers: [NSObjectProtocol] = []
 
   public func definition() -> ModuleDefinition {
     Name("OrcaXenoTalk")
-    Events("onTalk", "onDevice")
+    Events("onTalk", "onDevice", "onCallAction")
 
     // A call left marked live by an app that was closed isn't one: the Talk to Xeno shortcut would think it could
     // toggle talking without opening the app.
@@ -145,6 +147,14 @@ public class OrcaXenoTalkModule: Module {
           self?.sendEvent("onTalk", [:])
         }
       }
+      // A button on the call's Live Activity (targets/_shared/XenoWidgetIntents.swift).
+      self.callActionObserver = NotificationCenter.default.addObserver(
+        forName: xenoCallActionNotification, object: nil, queue: .main
+      ) { [weak self] note in
+        if let action = note.userInfo?["action"] as? String {
+          self?.sendEvent("onCallAction", ["action": action])
+        }
+      }
       self.observeDevice()
     }
 
@@ -153,6 +163,10 @@ public class OrcaXenoTalkModule: Module {
         NotificationCenter.default.removeObserver(observer)
       }
       self.observer = nil
+      if let observer = self.callActionObserver {
+        NotificationCenter.default.removeObserver(observer)
+      }
+      self.callActionObserver = nil
       self.deviceObservers.forEach { NotificationCenter.default.removeObserver($0) }
       self.deviceObservers = []
     }
@@ -191,6 +205,22 @@ public class OrcaXenoTalkModule: Module {
     // Before a call starts: whether music from other apps keeps playing through it.
     Function("setMusicMixing") { (on: Bool) -> Bool in
       musicMixing(on)
+    }
+
+    // Where the widgets fetch Xeno's glance, and the key to get in (JSON: glance, key, host).
+    Function("shareWidgetAccess") { (json: String) -> Bool in
+      writeXenoWidgetAccess(json)
+    }
+
+    Function("reloadWidgets") {
+      WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    // The call's Live Activity: started, updated, or (phase nil) ended.
+    Function("setCallActivity") { (phase: String?, heard: String, holding: Bool, host: String) in
+      if #available(iOS 16.2, *) {
+        setXenoCallActivity(phase: phase, heard: heard, holding: holding, host: host)
+      }
     }
 
     Function("duckMusic") { (on: Bool) -> Bool in

@@ -12,4 +12,6 @@ Pod::Spec.new do |s|
   s.static_framework = true
   s.dependency 'ExpoModulesCore'
   s.source_files = '**/*.swift'
+  # Live Activities need iOS 16.1; the module loads on older iOS without them.
+  s.weak_frameworks = 'ActivityKit', 'WidgetKit'
 end

@@ -25,6 +25,12 @@ export function jarvisWorktreesUrl(endpoint: string): string | null {
   return base && `${base}/api/jarvis/worktrees`
 }
 
+// What the phone's widgets show: what needs you, the agents, the last reply (fetched by the widgets themselves).
+export function jarvisGlanceUrl(endpoint: string): string | null {
+  const base = jarvisBaseUrl(endpoint)
+  return base && `${base}/api/jarvis/glance`
+}
+
 export function jarvisHistoryUrl(endpoint: string): string | null {
   const base = jarvisBaseUrl(endpoint)
   return base && `${base}/api/jarvis/history`

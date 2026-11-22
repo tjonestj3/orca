@@ -61,7 +61,8 @@
           "UIInterfaceOrientationPortraitUpsideDown",
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
-        ]
+        ],
+        "NSSupportsLiveActivities": true
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -127,6 +128,7 @@
       "./plugins/ios-pod-deployment-target-floor.js",
       "./plugins/ios-scene-lifecycle.js",
       "./plugins/ios-xeno-talk-intent.js",
+      "@bacons/apple-targets",
       "./plugins/ios-bundle-phase-quoted-script-path.js",
       [
         "expo-splash-screen",

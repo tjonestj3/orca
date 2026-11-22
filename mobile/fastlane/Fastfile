@@ -14,6 +14,12 @@ WORKSPACE = File.join(MOBILE_ROOT, "ios", "Orca.xcworkspace")
 BUILD_OUTPUT_DIRECTORY = File.join(MOBILE_ROOT, "build")
 SCHEME = "Orca"
 BUNDLE_ID = ENV["IOS_BUNDLE_IDENTIFIER"] || "com.stably.orca.mobile"
+# Xeno's widgets (targets/XenoWidgets, built in by @bacons/apple-targets): an extension with its own App ID and
+# profile. Its Xcode target is named after its folder.
+WIDGETS_BUNDLE_ID = "#{BUNDLE_ID}.widgets"
+WIDGETS_TARGET = "XenoWidgets"
+APP_TARGET = "Orca"
+XCODEPROJ = File.join(MOBILE_ROOT, "ios", "Orca.xcodeproj")
 TESTFLIGHT_GROUPS = ["peeps"].freeze
 DEFAULT_TESTFLIGHT_CHANGELOG = "Latest Orca Mobile updates and fixes.".freeze
 TESTFLIGHT_PROCESSING_TIMEOUT_SECONDS = 20 * 60
@@ -47,6 +53,24 @@ end
 
 def load_mobile_app_config
   JSON.parse(File.read(APP_CONFIG_PATH))
+end
+
+# The widgets' App ID, registered with the API key the first time (no capabilities: they share the app's data
+# through a keychain group, which every profile of the team allows).
+def ensure_widgets_bundle_id
+  return if Spaceship::ConnectAPI::BundleId.find(WIDGETS_BUNDLE_ID)
+
+  Spaceship::ConnectAPI::BundleId.create(
+    name: "Xeno Widgets",
+    identifier: WIDGETS_BUNDLE_ID,
+    platform: Spaceship::ConnectAPI::BundleIdPlatform::IOS,
+  )
+  UI.success("Registered #{WIDGETS_BUNDLE_ID}")
+rescue StandardError => error
+  UI.user_error!(
+    "Couldn't register the widgets' App ID #{WIDGETS_BUNDLE_ID} (#{error.message}). Register it once at " \
+    "developer.apple.com > Identifiers (no capabilities needed), then run the build again.",
+  )
 end
 
 def android_package
@@ -193,7 +217,7 @@ platform :ios do
 
     team_id = ENV.fetch("APPLE_TEAM_ID")
 
-    # Fetch/install an explicit API-key profile for manual archive/export.
+    # Fetch/install an explicit API-key profile for manual archive/export: the app's, then the widgets'.
     get_provisioning_profile(
       api_key: api_key,
       app_identifier: BUNDLE_ID,
@@ -201,6 +225,31 @@ platform :ios do
     )
     # This fastlane exposes the chosen profile through SIGH_NAME, not SIGH_PROFILE_MAPPING.
     profile_name = lane_context[SharedValues::SIGH_NAME]
+    ensure_widgets_bundle_id
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: WIDGETS_BUNDLE_ID,
+      force: true,
+    )
+    widgets_profile_name = lane_context[SharedValues::SIGH_NAME]
+
+    # Each target signs with its own profile, so the profile is set per target, not as one xcarg for all.
+    { APP_TARGET => profile_name, WIDGETS_TARGET => widgets_profile_name }.each do |target, profile|
+      update_code_signing_settings(
+        path: XCODEPROJ,
+        targets: [target],
+        use_automatic_signing: false,
+        team_id: team_id,
+        code_sign_identity: "Apple Distribution",
+        profile_name: profile,
+      )
+    end
+
+    # The widgets' version has to match the app's (App Store Connect checks), and their target doesn't take it
+    # from app.json: both get it here.
+    config = load_mobile_app_config
+    version = current_mobile_version(config)
+    build_number = config.fetch("expo").fetch("ios").fetch("buildNumber")
 
     # With ccache (CI sets CCACHE_DIR), React Native's ccache wrapper compiles the Pods; Xcode's explicit modules
     # don't take the wrapper as a compiler and compile without it, so they're off.
@@ -215,13 +264,15 @@ platform :ios do
       xcargs: "DEVELOPMENT_TEAM=#{team_id} " \
         "CODE_SIGN_STYLE=Manual " \
         "CODE_SIGN_IDENTITY='Apple Distribution' " \
-        "PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'" \
+        "MARKETING_VERSION=#{version} " \
+        "CURRENT_PROJECT_VERSION=#{build_number}" \
         "#{ccache_xcargs}",
       export_options: {
         teamID: team_id,
         signingStyle: "manual",
         provisioningProfiles: {
           BUNDLE_ID => profile_name,
+          WIDGETS_BUNDLE_ID => widgets_profile_name,
         },
       },
       output_directory: BUILD_OUTPUT_DIRECTORY,

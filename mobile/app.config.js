@@ -20,7 +20,16 @@ module.exports = ({ config }) => ({
     ...(IOS_APP_NAME
       ? { infoPlist: { ...config.ios?.infoPlist, CFBundleDisplayName: IOS_APP_NAME } }
       : {}),
-    entitlements: { ...config.ios?.entitlements, 'aps-environment': APS_ENVIRONMENT }
+    entitlements: {
+      ...config.ios?.entitlements,
+      'aps-environment': APS_ENVIRONMENT,
+      // Xeno's widgets (targets/XenoWidgets) read the desktop's address and key from "<bundle id>.shared". The app's
+      // own group stays first, so its keychain items keep the group they've always had.
+      'keychain-access-groups': [
+        `$(AppIdentifierPrefix)${IOS_BUNDLE_IDENTIFIER ?? config.ios?.bundleIdentifier}`,
+        `$(AppIdentifierPrefix)${IOS_BUNDLE_IDENTIFIER ?? config.ios?.bundleIdentifier}.shared`
+      ]
+    }
   },
   plugins: (config.plugins ?? []).map((plugin) =>
     plugin === 'expo-notifications'

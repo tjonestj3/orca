@@ -12,6 +12,8 @@ type XenoTalkEvents = {
   /** The Talk to Xeno App Intent ran: the Action Button, a Shortcut or Siri. */
   onTalk: () => void
   onDevice: (note: XenoDeviceNote) => void
+  /** A button on the call's Live Activity: "talk" or "end". */
+  onCallAction: (note: { readonly action: string }) => void
 }
 
 declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
@@ -29,6 +31,12 @@ declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
   setMusicMixing?(on: boolean): boolean
   /** Turns music from other apps down under Xeno, or back up; false if iOS wouldn't. */
   duckMusic?(on: boolean): boolean
+  /** Where Xeno's widgets fetch the glance and the key to get in (JSON); they reload if it changed. */
+  shareWidgetAccess?(json: string): boolean
+  /** Asks the widgets to fetch again (iOS decides when). */
+  reloadWidgets?(): void
+  /** The call's Live Activity: started, updated, or (phase null) ended. */
+  setCallActivity?(phase: string | null, heard: string, holding: boolean, host: string): void
 }
 
 /** Null on Android, the web and in a binary built before the module existed. */
