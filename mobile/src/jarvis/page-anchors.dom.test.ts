@@ -227,3 +227,69 @@ it('says where a moving button is every frame until it holds still, not four tim
   }
   expect(posted.length).toBe(told) // held still: nothing more to say
 })
+
+it('unfolded beside a session, the orb keeps to the host list’s +: the terminal’s row makes no room for it', () => {
+  const posted = listen()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="page" style="display: flex; flex-direction: row">' +
+    '<div id="sidebar"><div id="bar" style="display: flex; flex-direction: row">' +
+    '<div id="search"></div><div><div id="plus" aria-label="New workspace"></div></div>' +
+    '</div></div>' +
+    '<div id="detail"><div id="row" style="display: flex; flex-direction: row">' +
+    '<div id="input"></div><div><div id="mic" aria-label="Dictate"></div></div></div></div></div>'
+  place(document.getElementById('page')!, { left: 0, top: 0, width, height })
+  place(document.getElementById('bar')!, { left: 0, top: height - 80, width: width * 0.3, height: 60 })
+  place(document.getElementById('plus')!, { left: width * 0.3 - 50, top: height - 70, width: 37, height: 37 })
+  place(document.getElementById('row')!, { left: width * 0.3, top: height - 60, width: width * 0.7, height: 44 })
+  place(document.getElementById('mic')!, { left: width - 50, top: height - 56, width: 36, height: 36 })
+  const watches = [
+    { name: 'plus' as const, labels: ['New workspace'], near: 'bottom' as const, pad: 56 },
+    { name: 'mic' as const, labels: ['Dictate'], near: 'bottom' as const, pad: 48, unless: 'plus' as const }
+  ]
+  new Function(pageAnchorsScript(watches))()
+  expect(document.getElementById('bar')!.style.getPropertyValue('padding-right')).toBe('56px')
+  expect(document.getElementById('row')!.style.getPropertyValue('padding-right')).toBe('')
+  // Both are still said, for the orb to choose from.
+  expect(posted.map((p) => p?.name)).toEqual(expect.arrayContaining(['plus', 'mic']))
+})
+
+it('folded, with no host list beside it, the terminal’s row still makes room', () => {
+  listen()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="row" style="display: flex; flex-direction: row">' +
+    '<div id="input"></div><div><div id="mic" aria-label="Dictate"></div></div></div>'
+  place(document.getElementById('row')!, { left: 0, top: height - 60, width, height: 44 })
+  place(document.getElementById('mic')!, { left: width - 50, top: height - 56, width: 36, height: 36 })
+  const watches = [
+    { name: 'plus' as const, labels: ['New workspace'], near: 'bottom' as const, pad: 56 },
+    { name: 'mic' as const, labels: ['Dictate'], near: 'bottom' as const, pad: 48, unless: 'plus' as const }
+  ]
+  new Function(pageAnchorsScript(watches))()
+  expect(document.getElementById('row')!.style.getPropertyValue('padding-right')).toBe('48px')
+})
+
+it('a host list kept off-screen (folded, slid away) doesn’t count: the terminal’s row still makes room', () => {
+  const posted = listen()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  document.body.innerHTML =
+    '<div id="bar" style="display: flex; flex-direction: row">' +
+    '<div id="search"></div><div><div id="plus" aria-label="New workspace"></div></div></div>' +
+    '<div id="row" style="display: flex; flex-direction: row">' +
+    '<div id="input"></div><div><div id="mic" aria-label="Dictate"></div></div></div>'
+  place(document.getElementById('bar')!, { left: -width, top: height - 80, width, height: 60 })
+  place(document.getElementById('plus')!, { left: -60, top: height - 70, width: 37, height: 37 })
+  place(document.getElementById('row')!, { left: 0, top: height - 60, width, height: 44 })
+  place(document.getElementById('mic')!, { left: width - 50, top: height - 56, width: 36, height: 36 })
+  const watches = [
+    { name: 'plus' as const, labels: ['New workspace'], near: 'bottom' as const, pad: 56 },
+    { name: 'mic' as const, labels: ['Dictate'], near: 'bottom' as const, pad: 48, unless: 'plus' as const }
+  ]
+  new Function(pageAnchorsScript(watches))()
+  expect(document.getElementById('row')!.style.getPropertyValue('padding-right')).toBe('48px')
+  expect(posted.filter((p) => p?.name === 'plus' && p.at !== null)).toEqual([])
+})

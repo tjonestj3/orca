@@ -69,8 +69,9 @@ export function usePageRepaint(options: {
   const cmdModifier = modifier('Cmd')
   const shiftModifier = modifier('Shift')
   const pad = options.headerClear && column?.extended ? column.width : 0
-  // Room beside the + for Xeno's orb, wherever the orb floats rather than sitting in the folded Duo's rail.
-  const plusRoom = options.headerClear && (!column || column.extended) ? PLUS_ORB_ROOM : 0
+  // Room beside the + for Xeno's orb, wherever the orb floats rather than sitting in the folded Duo's rail: on the
+  // host list, and beside a session unfolded, where the orb stays with the host list's bottom buttons.
+  const plusRoom = !column || column.extended ? PLUS_ORB_ROOM : 0
   // In a terminal the live input row makes room beside its mic, wherever the orb isn't in the folded Duo's rail.
   const micRoom = options.terminal && (!column || column.extended) ? TERMINAL_MIC_ROOM : 0
   const lift = Math.round(options.hostHeaderLift ?? 0)
@@ -96,7 +97,10 @@ export function usePageRepaint(options: {
             { name: 'plus', labels: [plus], near: 'bottom', pad: plusRoom }
           ]
         : [
-            { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom },
+            // Unfolded, the host list beside the session: the orb keeps to its + (page-anchors), so the terminal's
+            // row makes no room while the + is there.
+            { name: 'plus', labels: [plus], near: 'bottom', pad: plusRoom },
+            { name: 'mic', labels: mic.split('\n'), near: 'bottom', pad: micRoom, unless: 'plus' },
             { name: 'copy', labels: copy.split('\n'), near: 'bottom', pad: 0 },
             { name: 'keys', labels: [shiftModifier], near: 'bottom', pad: 0 },
             {

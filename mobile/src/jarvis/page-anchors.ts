@@ -6,7 +6,9 @@
  *   only keeps below the top inset, so instead of pushing it down the camera's height the script pads the bar it's
  *   in clear of the column, which the camera tops.
  * - `plus`: the host list's "New workspace" button, bottom right. The script pads its bar on the right (the search
- *   field gives up the room) and the orb sits just right of the button.
+ *   field gives up the room) and the orb sits just right of the button. Unfolded, the host list shows beside a
+ *   session too, and the orb keeps to its + there, so it stays put as you go between workspaces (Nov 22: it jumped
+ *   from the + to the session's mic and back).
  * - `mic`: a session's mic, near the page's bottom. In chat the composer has room and the orb sits just left of it;
  *   a tab without a composer (a file, a browser) has none, and the orb keeps to a corner instead of floating over
  *   the page. In a terminal the live input row is full, so the script pads it on the right (the input field gives
@@ -46,6 +48,8 @@ export type PageAnchorWatch = {
   readonly pad: number
   /** Take this much off the top padding of the box above it that has at least that much; 0 puts it back. */
   readonly lift?: number
+  /** Make no room while this anchor (listed earlier) is on the page: the orb sits by that one instead. */
+  readonly unless?: PageAnchorName
 }
 
 // The top band: a header's button sits under the top inset at most.
@@ -80,7 +84,8 @@ function find(watch) {
   document.querySelectorAll(watch.selector || '[aria-label]').forEach(function (el) {
     if (!watch.selector && watch.labels.indexOf(el.getAttribute('aria-label')) < 0) return;
     var r = el.getBoundingClientRect();
-    if (!(r.width > 0)) return;
+    // Not one off the screen's side: folded, a host list slid away beside a session.
+    if (!(r.width > 0) || r.right <= 0 || r.left >= window.innerWidth) return;
     if (watch.near === 'top') {
       if (!found && r.top >= 0 && r.top < ${TOP_REACH}) found = el;
     } else if (r.top >= ${TOP_REACH} && r.top > foundTop) {
@@ -147,8 +152,9 @@ function check() {
   if (document.querySelector('[aria-modal="true"]')) return;
   state.watches.forEach(function (watch) {
     var button = find(watch);
+    var room = watch.unless && state.found[watch.unless] ? 0 : watch.pad;
     // Only a bar asked to make room is touched; padding is put back when it's no longer asked for.
-    if (watch.pad > 0 || state.rows[watch.name]) pad(watch.name, button ? bar(button) : null, watch.pad);
+    if (room > 0 || state.rows[watch.name]) pad(watch.name, button ? bar(button) : null, room);
     if (watch.lift > 0 || state.lifts[watch.name]) lifted(watch.name, button, watch.lift || 0);
     state.found[watch.name] = button;
     // A button that moved is likely still moving (the composer sliding as the keyboard goes, a message sent).

@@ -93,7 +93,8 @@ export function PageOrb({
   const spot = useOrbSpot(view, anchors, area ?? window, !reported)
   // Drawn over Orca's page, which can't cover it: a sheet or menu the page opens would sit under it, and an
   // agent's question has no room in its footer.
-  const hide = sheetOpen || (view === 'chat' && anchors.question !== undefined)
+  const hide =
+    sheetOpen || (view === 'chat' && anchors.question !== undefined && anchors.plus === undefined)
   if (!orbShown) {
     return null
   }
@@ -161,9 +162,10 @@ function useOrbSpot(
   const keyboard = Math.max(0, useKeyboardOcclusion())
   const column = useSideColumn()
   const { plus, mic, copy, approval, keys } = anchors
-  if (!view && plus) {
-    // The host list: just right of its + button, in the room its bar made (page-anchors). Its bar isn't known to
-    // ride the keyboard, so the orb waits for the page there.
+  if (plus) {
+    // The host list: just right of its + button, in the room its bar made (page-anchors). Unfolded that's beside a
+    // session too, so the orb stays with the host list's bottom buttons as you go between workspaces. Its bar isn't
+    // known to ride the keyboard, so the orb waits for the page there.
     const place = plusOrbPlace(plus)
     return { left: place.left, top: place.top, rides: false, size: place.size }
   }
