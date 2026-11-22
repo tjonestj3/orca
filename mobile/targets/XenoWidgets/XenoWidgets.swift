@@ -53,8 +53,8 @@ struct NeedsYouView: View {
           .widgetAccentable()
         if let first = asks.first {
           Text("\(first.who): \(first.text)").font(.caption).lineLimit(2)
-        } else if let resets = entry.glance?.limitResets {
-          Text("Claude limit until \(resets)").font(.caption)
+        } else if let limit = limitLine(entry.glance?.limitResets) {
+          Text(limit).font(.caption)
         } else {
           Text(entry.stale ? "Desktop away" : "All quiet").font(.caption)
         }
@@ -93,7 +93,7 @@ struct NeedsYouView: View {
   private var footer: String {
     if entry.stale { return "desktop away" }
     if let wait = waited(since: asks.first?.since, now: entry.date) { return "oldest \(wait)" }
-    if let resets = entry.glance?.limitResets { return "limit until \(resets)" }
+    if let resets = entry.glance?.limitResets { return resets.isEmpty ? "Claude limit hit" : "limit until \(resets)" }
     return entry.host ?? "Xeno"
   }
 }
@@ -138,8 +138,8 @@ struct AgentsView: View {
         AgentRow(agent: agent, roomy: family == .systemLarge)
       }
       Spacer(minLength: 0)
-      if family == .systemLarge, let resets = entry.glance?.limitResets {
-        Text("Claude limit until \(resets)")
+      if family == .systemLarge, let limit = limitLine(entry.glance?.limitResets) {
+        Text(limit)
           .font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.amber)
       }
     }

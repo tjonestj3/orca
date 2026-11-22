@@ -147,7 +147,7 @@ public class OrcaXenoTalkModule: Module {
           self?.sendEvent("onTalk", [:])
         }
       }
-      // A button on the call's Live Activity (targets/_shared/XenoWidgetIntents.swift).
+      // A button on the call's Live Activity (targets/XenoWidgets/_shared/XenoWidgetIntents.swift).
       self.callActionObserver = NotificationCenter.default.addObserver(
         forName: xenoCallActionNotification, object: nil, queue: .main
       ) { [weak self] note in

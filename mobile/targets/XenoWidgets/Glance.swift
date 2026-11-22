@@ -212,6 +212,12 @@ struct OrbView: View {
   }
 }
 
+/// Claude's usage limit as a line: "" means hit with no reset time given; nil, not hit.
+func limitLine(_ resets: String?) -> String? {
+  guard let resets else { return nil }
+  return resets.isEmpty ? "Claude limit hit" : "Claude limit until \(resets)"
+}
+
 /// "12 min", "3 h": how long something has waited.
 func waited(since ms: Double?, now: Date) -> String? {
   guard let ms else { return nil }

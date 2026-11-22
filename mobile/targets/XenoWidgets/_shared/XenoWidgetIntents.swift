@@ -1,7 +1,7 @@
 import AppIntents
 import Foundation
 
-// Built into both the app and the widgets (@bacons/apple-targets links targets/_shared to each): a widget button,
+// Built into both the app and the widgets (@bacons/apple-targets links a target's _shared folder to the app too): a widget button,
 // a control or a Live Activity button names one of these, and iOS runs it in the app, where modules/orca-xeno-talk
 // hands it to JS. The names and keys below match that module's.
 

@@ -89,13 +89,14 @@ struct XenoCallAttributes: ActivityAttributes {
 /// Starts the call's Live Activity, updates it, or (phase nil) ends it. Only one at a time.
 @available(iOS 16.2, *)
 func setXenoCallActivity(phase: String?, heard: String, holding: Bool, host: String) {
-  let running = Activity<XenoCallAttributes>.activities
   guard let phase else {
-    for activity in running {
+    for activity in Activity<XenoCallAttributes>.activities {
       Task { await activity.end(nil, dismissalPolicy: .immediate) }
     }
     return
   }
+  // One that ended but still shows (iOS ends them after 8 hours) can't be updated: a new one starts instead.
+  let running = Activity<XenoCallAttributes>.activities.filter { $0.activityState == .active }
   let content = ActivityContent(
     state: XenoCallAttributes.ContentState(phase: phase, heard: heard, holding: holding), staleDate: nil)
   if let activity = running.first {

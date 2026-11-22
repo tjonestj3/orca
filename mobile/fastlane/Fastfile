@@ -245,12 +245,6 @@ platform :ios do
       )
     end
 
-    # The widgets' version has to match the app's (App Store Connect checks), and their target doesn't take it
-    # from app.json: both get it here.
-    config = load_mobile_app_config
-    version = current_mobile_version(config)
-    build_number = config.fetch("expo").fetch("ios").fetch("buildNumber")
-
     # With ccache (CI sets CCACHE_DIR), React Native's ccache wrapper compiles the Pods; Xcode's explicit modules
     # don't take the wrapper as a compiler and compile without it, so they're off.
     ccache_xcargs = ENV["CCACHE_DIR"] ? " CLANG_ENABLE_EXPLICIT_MODULES=NO" : ""
@@ -263,9 +257,7 @@ platform :ios do
       export_method: "app-store",
       xcargs: "DEVELOPMENT_TEAM=#{team_id} " \
         "CODE_SIGN_STYLE=Manual " \
-        "CODE_SIGN_IDENTITY='Apple Distribution' " \
-        "MARKETING_VERSION=#{version} " \
-        "CURRENT_PROJECT_VERSION=#{build_number}" \
+        "CODE_SIGN_IDENTITY='Apple Distribution'" \
         "#{ccache_xcargs}",
       export_options: {
         teamID: team_id,
