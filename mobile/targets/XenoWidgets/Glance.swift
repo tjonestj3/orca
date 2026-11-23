@@ -19,6 +19,8 @@ struct Glance: Codable {
   }
 
   struct Worktree: Codable, Hashable {
+    /// The worktree's id in Orca; a tap opens it in the app. Missing from a desktop that doesn't send it yet.
+    var id: String?
     var name: String
     var state: String
     var line: String?
@@ -47,10 +49,12 @@ struct Glance: Codable {
       Ask(who: "Xeno", text: "Want me to start the build?", since: nil),
     ],
     worktrees: [
-      Worktree(name: "orca-jarvis-next", state: "needs you", line: "Wants to run git push", artifact: nil),
-      Worktree(name: "barge-in-no-wake-word", state: "working", line: "Writing the spoken-numbers tests", artifact: nil),
+      Worktree(id: nil, name: "orca-jarvis-next", state: "needs you", line: "Wants to run git push", artifact: nil),
       Worktree(
-        name: "elemental-tactician", state: "done", line: "Combo balance pass is published",
+        id: nil, name: "barge-in-no-wake-word", state: "working", line: "Writing the spoken-numbers tests",
+        artifact: nil),
+      Worktree(
+        id: nil, name: "elemental-tactician", state: "done", line: "Combo balance pass is published",
         artifact: Artifact(title: "Combo tuning", url: "https://claude.ai")),
     ],
     limitResets: nil,

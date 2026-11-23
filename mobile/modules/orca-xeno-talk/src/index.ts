@@ -14,6 +14,8 @@ type XenoTalkEvents = {
   onDevice: (note: XenoDeviceNote) => void
   /** A button on the call's Live Activity: "talk" or "end". */
   onCallAction: (note: { readonly action: string }) => void
+  /** An agent tapped in the Agents widget: its worktree. */
+  onOpenAgent: (note: { readonly worktree: string }) => void
 }
 
 declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
@@ -21,6 +23,8 @@ declare class OrcaXenoTalkModule extends NativeModule<XenoTalkEvents> {
   takePending(): boolean
   /** What the last Talk to Xeno press found, for Xeno's server log; taking it clears it. */
   takeTrace?(): string | null
+  /** An agent tapped in the Agents widget before JS was listening; taking it clears it. */
+  takeOpenAgent?(): string | null
   /** Stops the call's audio so the phone's dictation can have the microphone; false if it couldn't. */
   pauseCallAudio?(): boolean
   /** Starts the call's audio again after dictation; activate is false when the call is ending anyway. */

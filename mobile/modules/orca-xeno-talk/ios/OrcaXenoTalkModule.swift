@@ -16,6 +16,17 @@ let xenoCallLiveKey = "orca.xenoCallLive"
 let xenoCallHoldingKey = "orca.xenoCallHolding"
 let xenoCallProcessKey = "orca.xenoCallProcess"
 
+// An agent tapped in the Agents widget (XenoOpenAgentIntent): its worktree, left for JS to take.
+let xenoOpenAgentNotification = Notification.Name("OrcaXenoOpenAgent")
+let xenoOpenAgentKey = "orca.xenoOpenAgent"
+
+func takeXenoOpenAgent() -> String? {
+  let defaults = UserDefaults.standard
+  guard let worktree = defaults.string(forKey: xenoOpenAgentKey) else { return nil }
+  defaults.removeObject(forKey: xenoOpenAgentKey)
+  return worktree.isEmpty ? nil : worktree
+}
+
 func takeXenoTalkPress() -> Bool {
   let defaults = UserDefaults.standard
   guard defaults.bool(forKey: xenoTalkPendingKey) else { return false }
@@ -126,11 +137,12 @@ func duckOtherAudio(_ on: Bool) -> [String: Any] {
 public class OrcaXenoTalkModule: Module {
   private var observer: NSObjectProtocol?
   private var callActionObserver: NSObjectProtocol?
+  private var openAgentObserver: NSObjectProtocol?
   private var deviceObservers: [NSObjectProtocol] = []
 
   public func definition() -> ModuleDefinition {
     Name("OrcaXenoTalk")
-    Events("onTalk", "onDevice", "onCallAction")
+    Events("onTalk", "onDevice", "onCallAction", "onOpenAgent")
 
     // A call left marked live by an app that was closed isn't one: the Talk to Xeno shortcut would think it could
     // toggle talking without opening the app.
@@ -155,6 +167,13 @@ public class OrcaXenoTalkModule: Module {
           self?.sendEvent("onCallAction", ["action": action])
         }
       }
+      self.openAgentObserver = NotificationCenter.default.addObserver(
+        forName: xenoOpenAgentNotification, object: nil, queue: .main
+      ) { [weak self] _ in
+        if let worktree = takeXenoOpenAgent() {
+          self?.sendEvent("onOpenAgent", ["worktree": worktree])
+        }
+      }
       self.observeDevice()
     }
 
@@ -167,12 +186,21 @@ public class OrcaXenoTalkModule: Module {
         NotificationCenter.default.removeObserver(observer)
       }
       self.callActionObserver = nil
+      if let observer = self.openAgentObserver {
+        NotificationCenter.default.removeObserver(observer)
+      }
+      self.openAgentObserver = nil
       self.deviceObservers.forEach { NotificationCenter.default.removeObserver($0) }
       self.deviceObservers = []
     }
 
     Function("takePending") { () -> Bool in
       takeXenoTalkPress()
+    }
+
+    // An agent tapped in the Agents widget while JS wasn't listening, as when the tap launched the app.
+    Function("takeOpenAgent") { () -> String? in
+      takeXenoOpenAgent()
     }
 
     // What the last Talk to Xeno press found (live call, holding, its process), for Xeno's server log; taking it

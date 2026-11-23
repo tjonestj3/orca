@@ -21,7 +21,7 @@ import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
 import { jarvisOfferUrl } from './jarvis-endpoint'
 import { xenoKeys } from './jarvis-key'
-import { callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
+import { agentOf, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
 import {
   CALL_FOLLOWS_AFTER_MS,
   callMoveTarget,
@@ -236,6 +236,43 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       active.remove()
     }
   }, [])
+  // An agent tapped in the Agents widget: its worktree opens on Xeno's desktop and a call starts, unless one is on.
+  // Held until the desktop is known, as when the tap launched the app.
+  const [agentTapped, setAgentTapped] = useState<string | null>(null)
+  useEffect(() => {
+    if (!OrcaXenoTalk) {
+      return
+    }
+    const take = (): void => {
+      const worktree = OrcaXenoTalk?.takeOpenAgent?.()
+      if (worktree) {
+        setAgentTapped(worktree)
+      }
+    }
+    take() // a tap that launched the app
+    const tapped = OrcaXenoTalk.addListener('onOpenAgent', (note) => {
+      const worktree = agentOf(note)
+      if (worktree) {
+        setAgentTapped(worktree)
+      }
+    })
+    const active = AppState.addEventListener('change', (state) => state === 'active' && take())
+    return () => {
+      tapped.remove()
+      active.remove()
+    }
+  }, [])
+  useEffect(() => {
+    if (!agentTapped || !hostId) {
+      return
+    }
+    setAgentTapped(null)
+    router.push({ pathname: '/h/[hostId]/session/[worktreeId]', params: { hostId, worktreeId: agentTapped } })
+    const { phase: now } = call.getSnapshot()
+    if (now === 'idle' || now === 'error') {
+      actionPress.current()
+    }
+  }, [agentTapped, hostId, router, call])
   // Xeno was asked to open an artifact: open it in the Claude app. Each request is a new object; other updates
   // carry the same one along, so this runs once per request.
   useEffect(() => {

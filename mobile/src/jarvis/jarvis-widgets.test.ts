@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
+import { agentOf, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
 
 describe("the call's Live Activity", () => {
   it('follows a live call: its phase, what Xeno heard, whether talk is held', () => {
@@ -56,5 +56,14 @@ describe('a Live Activity button', () => {
     expect(callActionOf({ action: 'end' })).toBe('end')
     expect(callActionOf({ action: 'mute' })).toBeNull()
     expect(callActionOf(null)).toBeNull()
+  })
+})
+
+describe('an agent tapped in the Agents widget', () => {
+  it('is its worktree; an empty or missing one is nothing to open', () => {
+    expect(agentOf({ worktree: 'repo::/home/me/dev/app' })).toBe('repo::/home/me/dev/app')
+    expect(agentOf({ worktree: '' })).toBeNull()
+    expect(agentOf({ worktree: 7 })).toBeNull()
+    expect(agentOf(null)).toBeNull()
   })
 })

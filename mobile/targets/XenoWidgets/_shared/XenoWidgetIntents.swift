@@ -5,19 +5,52 @@ import Foundation
 // a control or a Live Activity button names one of these, and iOS runs it in the app, where modules/orca-xeno-talk
 // hands it to JS. The names and keys below match that module's.
 
-/// Talk to Xeno from a widget or a control: opens Xeno and presses talk, as the Talk to Xeno shortcut does with no
-/// call (a call starts, listening).
+/// What the app's own build adds to an intent that has to decide there (plugins/ios-xeno-talk-intent.js). The
+/// widgets' build doesn't have it, and never runs these: iOS runs them in the app.
 @available(iOS 17.0, *)
-struct XenoTalkControlIntent: AppIntent {
+protocol XenoRunsInApp {
+  @MainActor
+  func runInApp() async throws
+}
+
+/// Talk to Xeno from a widget or a control. During a call it only presses talk (or sends, while held), and the app
+/// stays in the background; with no call it opens Xeno, which starts one, listening.
+@available(iOS 17.0, *)
+struct XenoTalkIntent: LiveActivityIntent {
   static let title: LocalizedStringResource = "Talk to Xeno"
-  static let description = IntentDescription("Open Xeno and start talking.")
-  static let openAppWhenRun = true
+  static let description = IntentDescription(
+    "Start talking to Xeno; during a call, talk or send without opening the app.")
   static let isDiscoverable = false
 
   @MainActor
   func perform() async throws -> some IntentResult {
-    UserDefaults.standard.set(true, forKey: "orca.xenoTalkPending")
-    NotificationCenter.default.post(name: Notification.Name("OrcaXenoTalkRequested"), object: nil)
+    try await (self as Any as? XenoRunsInApp)?.runInApp()
+    return .result()
+  }
+}
+
+/// An agent tapped in the Agents widget: opens its worktree in Xeno and starts a call, if there isn't one.
+@available(iOS 17.0, *)
+struct XenoOpenAgentIntent: AppIntent {
+  static let title: LocalizedStringResource = "Open an agent with Xeno"
+  static let openAppWhenRun = true
+  static let isDiscoverable = false
+
+  @Parameter(title: "Worktree")
+  var worktree: String
+
+  init() {
+    worktree = ""
+  }
+
+  init(worktree: String) {
+    self.worktree = worktree
+  }
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    UserDefaults.standard.set(worktree, forKey: "orca.xenoOpenAgent")
+    NotificationCenter.default.post(name: Notification.Name("OrcaXenoOpenAgent"), object: nil)
     return .result()
   }
 }

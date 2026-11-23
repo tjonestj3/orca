@@ -100,7 +100,7 @@ struct NeedsYouView: View {
 
 // MARK: - Agents
 
-/// Every agent's state and what it's doing, needs-you first.
+/// Every agent's state and what it's doing, needs-you first. Tap one to open it in Xeno with a call started.
 struct XenoAgentsWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "XenoAgents", provider: GlanceProvider()) { entry in
@@ -109,8 +109,8 @@ struct XenoAgentsWidget: Widget {
         .widgetURL(URL(string: "orca://"))
     }
     .configurationDisplayName("Agents")
-    .description("Your agents at a glance: who's working, who's done, who needs you.")
-    .supportedFamilies([.systemMedium, .systemLarge])
+    .description("Your agents at a glance. Tap one to open it and talk it over with Xeno.")
+    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }
 
@@ -118,24 +118,46 @@ struct AgentsView: View {
   @Environment(\.widgetFamily) private var family
   let entry: GlanceEntry
 
+  private var shown: Int {
+    switch family {
+    case .systemSmall: return 4
+    case .systemLarge: return 5
+    default: return 2
+    }
+  }
+
   private var agents: [Glance.Worktree] {
-    Array((entry.glance?.agents ?? []).prefix(family == .systemLarge ? 5 : 2))
+    Array((entry.glance?.agents ?? []).prefix(shown))
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Text("Agents").font(.headline).foregroundStyle(Xeno.text)
-        Spacer()
-        Text(summary).font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+    VStack(alignment: .leading, spacing: family == .systemSmall ? 5 : 8) {
+      if family == .systemSmall {
+        HStack(alignment: .firstTextBaseline) {
+          Text("AGENTS")
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundStyle(Xeno.secondary)
+          Spacer(minLength: 4)
+          Text(counts).font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Xeno.amber)
+        }
+      } else {
+        HStack {
+          Text("Agents").font(.headline).foregroundStyle(Xeno.text)
+          Spacer()
+          Text(summary).font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+        }
       }
       if entry.unpaired {
         Text("Open Xeno once to connect this widget.").font(.footnote).foregroundStyle(Xeno.secondary)
       } else if agents.isEmpty {
-        Text("No agents running.").font(.footnote).foregroundStyle(Xeno.secondary)
+        Text(entry.stale ? "Desktop away." : "No agents running.").font(.footnote).foregroundStyle(Xeno.secondary)
       }
       ForEach(agents, id: \.self) { agent in
-        AgentRow(agent: agent, roomy: family == .systemLarge)
+        if family == .systemSmall {
+          AgentChip(agent: agent)
+        } else {
+          AgentRow(agent: agent, roomy: family == .systemLarge)
+        }
       }
       Spacer(minLength: 0)
       if family == .systemLarge, let limit = limitLine(entry.glance?.limitResets) {
@@ -153,6 +175,60 @@ struct AgentsView: View {
     let waiting = all.filter { $0.state == "needs you" }.count
     return "\(working) working · \(waiting) waiting"
   }
+
+  /// The small widget's corner: how many wait on you, or that the desktop is away.
+  private var counts: String {
+    if entry.stale { return "away" }
+    let waiting = (entry.glance?.agents ?? []).filter { $0.state == "needs you" }.count
+    return waiting > 0 ? "\(waiting) YOU" : ""
+  }
+}
+
+/// An agent's tap: opens its worktree in Xeno and starts a call. Without its id (a desktop that doesn't send it yet)
+/// the widget's own tap opens Xeno instead.
+struct AgentTap<Content: View>: View {
+  let agent: Glance.Worktree
+  let content: Content
+
+  init(agent: Glance.Worktree, @ViewBuilder content: () -> Content) {
+    self.agent = agent
+    self.content = content()
+  }
+
+  var body: some View {
+    if let id = agent.id, !id.isEmpty {
+      Button(intent: XenoOpenAgentIntent(worktree: id)) { content }
+        .buttonStyle(.plain)
+    } else {
+      content
+    }
+  }
+}
+
+/// The small widget's row: the agent's state and name.
+struct AgentChip: View {
+  let agent: Glance.Worktree
+
+  var body: some View {
+    AgentTap(agent: agent) {
+      HStack(spacing: 6) {
+        Circle().fill(Xeno.stateColor(agent.state)).frame(width: 7, height: 7)
+        Text(agent.name).font(.caption.weight(.semibold)).foregroundStyle(Xeno.text).lineLimit(1)
+        Spacer(minLength: 0)
+      }
+      .padding(.vertical, 5)
+      .padding(.horizontal, 8)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(
+        RoundedRectangle(cornerRadius: 9, style: .continuous)
+          .fill(Xeno.raised)
+          .overlay(
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+              .stroke(agent.state == "needs you" ? Xeno.amber.opacity(0.5) : .clear, lineWidth: 1)
+          )
+      )
+    }
+  }
 }
 
 struct AgentRow: View {
@@ -161,33 +237,29 @@ struct AgentRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
-      HStack(spacing: 8) {
-        Circle().fill(Xeno.stateColor(agent.state)).frame(width: 8, height: 8)
-        Text(agent.name).font(.subheadline.weight(.semibold)).foregroundStyle(Xeno.text).lineLimit(1)
-        Spacer(minLength: 4)
-        Text(Xeno.stateLabel(agent.state))
-          .font(.system(size: 10, weight: .medium, design: .monospaced))
-          .foregroundStyle(agent.state == "done" ? Xeno.secondary : Xeno.stateColor(agent.state))
-      }
-      if let line = agent.line, !line.isEmpty {
-        Text(line).font(.caption).foregroundStyle(Xeno.text.opacity(0.8)).lineLimit(roomy ? 2 : 1)
-          .padding(.leading, 16)
-      }
-      if roomy {
-        if agent.state == "needs you" {
-          Button(intent: XenoTalkControlIntent()) {
-            Text("Talk it over").font(.caption.weight(.semibold))
+      AgentTap(agent: agent) {
+        VStack(alignment: .leading, spacing: 4) {
+          HStack(spacing: 8) {
+            Circle().fill(Xeno.stateColor(agent.state)).frame(width: 8, height: 8)
+            Text(agent.name).font(.subheadline.weight(.semibold)).foregroundStyle(Xeno.text).lineLimit(1)
+            Spacer(minLength: 4)
+            Text(Xeno.stateLabel(agent.state))
+              .font(.system(size: 10, weight: .medium, design: .monospaced))
+              .foregroundStyle(agent.state == "done" ? Xeno.secondary : Xeno.stateColor(agent.state))
           }
-          .buttonStyle(.borderedProminent)
-          .tint(Xeno.teal)
-          .foregroundStyle(Xeno.navy)
-          .padding(.leading, 16)
-        } else if let artifact = agent.artifact, let url = URL(string: artifact.url) {
-          Link(destination: url) {
-            Text("Open “\(artifact.title)” in Claude ›").font(.caption).foregroundStyle(Xeno.teal)
+          if let line = agent.line, !line.isEmpty {
+            Text(line).font(.caption).foregroundStyle(Xeno.text.opacity(0.8)).lineLimit(roomy ? 2 : 1)
+              .padding(.leading, 16)
           }
-          .padding(.leading, 16)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+      }
+      if roomy, let artifact = agent.artifact, let url = URL(string: artifact.url) {
+        Link(destination: url) {
+          Text("Open “\(artifact.title)” in Claude ›").font(.caption).foregroundStyle(Xeno.teal)
+        }
+        .padding(.leading, 16)
       }
     }
     .padding(.vertical, roomy ? 8 : 6)
@@ -213,7 +285,7 @@ struct XenoTalkWidget: Widget {
         .containerBackground(for: .widget) { Xeno.surface }
     }
     .configurationDisplayName("Talk to Xeno")
-    .description("Start a call with Xeno, already listening.")
+    .description("Start a call with Xeno, listening. During a call: talk, then send, without opening the app.")
     .supportedFamilies([.systemSmall, .accessoryCircular])
   }
 }
@@ -224,7 +296,7 @@ struct TalkView: View {
 
   var body: some View {
     if family == .accessoryCircular {
-      Button(intent: XenoTalkControlIntent()) {
+      Button(intent: XenoTalkIntent()) {
         ZStack {
           AccessoryWidgetBackground()
           Image(systemName: "waveform").font(.system(size: 22, weight: .semibold))
@@ -241,7 +313,7 @@ struct TalkView: View {
             .lineLimit(1)
         }
         Spacer(minLength: 0)
-        Button(intent: XenoTalkControlIntent()) {
+        Button(intent: XenoTalkIntent()) {
           ZStack {
             OrbView(size: 76, glowing: entry.glance?.call == true)
             Image(systemName: "mic.fill").font(.system(size: 24, weight: .semibold)).foregroundStyle(Xeno.navy)
@@ -261,11 +333,11 @@ struct TalkView: View {
 struct XenoTalkControl: ControlWidget {
   var body: some ControlWidgetConfiguration {
     StaticControlConfiguration(kind: "XenoTalkControl") {
-      ControlWidgetButton(action: XenoTalkControlIntent()) {
+      ControlWidgetButton(action: XenoTalkIntent()) {
         Label("Talk to Xeno", systemImage: "waveform")
       }
     }
     .displayName("Talk to Xeno")
-    .description("Start a call with Xeno, already listening.")
+    .description("Start a call with Xeno, listening. During a call: talk, then send, without opening the app.")
   }
 }

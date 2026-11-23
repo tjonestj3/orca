@@ -48,6 +48,39 @@ struct TalkToXenoIntent: AppIntent, ForegroundContinuableIntent {
     UserDefaults.standard.set(true, forKey: "orca.xenoTalkPending")
     NotificationCenter.default.post(name: Notification.Name("OrcaXenoTalkRequested"), object: nil)
   }
+
+  // A call this app process is in: the module clears the flag as the app starts and stamps it with its process, so
+  // a flag left by an app that was closed (and relaunched in the background for this press) doesn't count.
+  @MainActor
+  static var callLive: Bool {
+    let defaults = UserDefaults.standard
+    return defaults.bool(forKey: "orca.xenoCallLive")
+      && defaults.integer(forKey: "orca.xenoCallProcess") == Int(ProcessInfo.processInfo.processIdentifier)
+  }
+}
+
+// The widgets' and the control's Talk to Xeno (targets/XenoWidgets/_shared): iOS runs it here, in the background.
+// During a call it presses talk and the app stays where it is; with none it brings the app forward, which starts one.
+@available(iOS 17.0, *)
+extension XenoTalkIntent: ForegroundContinuableIntent, XenoRunsInApp {
+  @available(iOS 26.0, *)
+  static var supportedModes: IntentModes { [.background, .foreground(.dynamic)] }
+
+  @MainActor
+  func runInApp() async throws {
+    if TalkToXenoIntent.callLive {
+      TalkToXenoIntent.press()
+      return
+    }
+    if #available(iOS 26.0, *) {
+      try await continueInForeground(alwaysConfirm: false)
+      TalkToXenoIntent.press()
+    } else {
+      throw needsToContinueInForegroundError("Opening Xeno to start a call.") {
+        TalkToXenoIntent.press()
+      }
+    }
+  }
 }
 
 @available(iOS 16.0, *)

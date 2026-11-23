@@ -49,3 +49,9 @@ export function callActionOf(note: unknown): 'talk' | 'end' | null {
   const action = (note as { action?: unknown } | null)?.action
   return action === 'talk' || action === 'end' ? action : null
 }
+
+/** An agent tapped in the Agents widget: its worktree, or null. */
+export function agentOf(note: unknown): string | null {
+  const worktree = (note as { worktree?: unknown } | null)?.worktree
+  return typeof worktree === 'string' && worktree !== '' ? worktree : null
+}
