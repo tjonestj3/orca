@@ -1,4 +1,4 @@
-import type { JarvisPhase } from './jarvis-call-state'
+import type { JarvisPhase, JarvisWorktreeCard } from './jarvis-call-state'
 import { jarvisGlanceUrl } from './jarvis-endpoint'
 
 // What the app hands Xeno's widgets (targets/XenoWidgets): where to fetch the desktop's glance and the key to get
@@ -54,4 +54,12 @@ export function callActionOf(note: unknown): 'talk' | 'end' | null {
 export function agentOf(note: unknown): string | null {
   const worktree = (note as { worktree?: unknown } | null)?.worktree
   return typeof worktree === 'string' && worktree !== '' ? worktree : null
+}
+
+/** Each agent's state, as one string that changes only when one does (a new line or artifact doesn't count). */
+export function agentStates(cards: readonly Pick<JarvisWorktreeCard, 'id' | 'state'>[]): string {
+  return cards
+    .map((card) => `${card.id}=${card.state}`)
+    .sort()
+    .join('\n')
 }

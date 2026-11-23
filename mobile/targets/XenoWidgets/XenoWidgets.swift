@@ -80,21 +80,21 @@ struct NeedsYouView: View {
           Text("\(asks.count)").font(.system(size: 48, weight: .bold, design: .rounded)).foregroundStyle(Xeno.text)
           Text(asks.count == 1 ? "thing" : "things").font(.footnote).foregroundStyle(Xeno.secondary)
         }
-        Text(asks.first.map { "\($0.who): \($0.text)" } ?? "All quiet.")
+        Text(asks.first.map { "\($0.who): \($0.text)" } ?? limitLine(entry.glance?.limitResets) ?? "All quiet.")
           .font(.footnote).foregroundStyle(Xeno.text.opacity(0.85)).lineLimit(3)
         Spacer(minLength: 0)
         Text(footer)
-          .font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary).lineLimit(1)
+          .font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+          .lineLimit(1).minimumScaleFactor(0.8)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
 
+  /// How old this is: what's on the desktop now may differ.
   private var footer: String {
-    if entry.stale { return "desktop away" }
-    if let wait = waited(since: asks.first?.since, now: entry.date) { return "oldest \(wait)" }
-    if let resets = entry.glance?.limitResets { return resets.isEmpty ? "Claude limit hit" : "limit until \(resets)" }
-    return entry.host ?? "Xeno"
+    guard let age = entry.age else { return entry.stale ? "desktop away" : entry.host ?? "Xeno" }
+    return entry.stale ? "away · \(age)" : age
   }
 }
 
@@ -120,7 +120,7 @@ struct AgentsView: View {
 
   private var shown: Int {
     switch family {
-    case .systemSmall: return 4
+    case .systemSmall: return 3
     case .systemLarge: return 5
     default: return 2
     }
@@ -141,10 +141,13 @@ struct AgentsView: View {
           Text(counts).font(.system(size: 11, weight: .semibold, design: .monospaced)).foregroundStyle(Xeno.amber)
         }
       } else {
-        HStack {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
           Text("Agents").font(.headline).foregroundStyle(Xeno.text)
-          Spacer()
+          Text(entry.age ?? "").font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+            .lineLimit(1).minimumScaleFactor(0.8)
+          Spacer(minLength: 4)
           Text(summary).font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+            .lineLimit(1).minimumScaleFactor(0.8)
         }
       }
       if entry.unpaired {
@@ -160,6 +163,10 @@ struct AgentsView: View {
         }
       }
       Spacer(minLength: 0)
+      if family == .systemSmall, let age = entry.age {
+        Text(age).font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.secondary)
+          .lineLimit(1).minimumScaleFactor(0.8)
+      }
       if family == .systemLarge, let limit = limitLine(entry.glance?.limitResets) {
         Text(limit)
           .font(.system(size: 11, design: .monospaced)).foregroundStyle(Xeno.amber)
@@ -173,7 +180,7 @@ struct AgentsView: View {
     let all = entry.glance?.agents ?? []
     let working = all.filter { $0.state == "working" }.count
     let waiting = all.filter { $0.state == "needs you" }.count
-    return "\(working) working · \(waiting) waiting"
+    return "\(working) busy · \(waiting) waiting"
   }
 
   /// The small widget's corner: how many wait on you, or that the desktop is away.

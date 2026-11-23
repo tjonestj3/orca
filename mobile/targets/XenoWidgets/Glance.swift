@@ -118,6 +118,21 @@ struct GlanceEntry: TimelineEntry {
     return false
   }
 
+  /// When the desktop gave what's shown.
+  var asOf: Date? {
+    glance?.at.map { Date(timeIntervalSince1970: $0 / 1000) }
+  }
+
+  /// "9:12 · 18 min ago": how old what's shown is, as of this entry.
+  var age: String? {
+    asOf.map { ageLine($0, now: date) }
+  }
+
+  /// The same glance, shown at a later time (its age counts on).
+  func at(_ later: Date) -> GlanceEntry {
+    GlanceEntry(date: later, state: state, host: host)
+  }
+
   static let sample = GlanceEntry(date: Date(), state: .ready(.sample), host: "Desktop")
 }
 
@@ -161,9 +176,13 @@ struct GlanceProvider: TimelineProvider {
   func getTimeline(in context: Context, completion: @escaping (Timeline<GlanceEntry>) -> Void) {
     Task {
       let entry = await GlanceLoader.load()
-      // iOS decides when it actually reloads; the app also asks for a reload whenever it's opened.
+      // iOS decides when it actually reloads, often much later than asked; the app also asks whenever it's opened
+      // or left, and when an agent changes during a call. Meanwhile the same glance, a minute later each time for
+      // an hour (then every 10 min up to 3 h), so its age keeps counting: these don't use up any reloads.
       let next = Date().addingTimeInterval(entry.stale ? 5 * 60 : 15 * 60)
-      completion(Timeline(entries: [entry], policy: .after(next)))
+      let minutes = Array(0..<60) + Array(stride(from: 60, through: 180, by: 10))
+      let entries = minutes.map { entry.at(entry.date.addingTimeInterval(Double($0) * 60)) }
+      completion(Timeline(entries: entries, policy: .after(next)))
     }
   }
 }
@@ -220,6 +239,14 @@ struct OrbView: View {
 func limitLine(_ resets: String?) -> String? {
   guard let resets else { return nil }
   return resets.isEmpty ? "Claude limit hit" : "Claude limit until \(resets)"
+}
+
+/// "9:12 · 18 min ago", "9:12 · just now".
+func ageLine(_ asOf: Date, now: Date) -> String {
+  let clock = DateFormatter()
+  clock.dateFormat = "h:mm"
+  let ago = waited(since: asOf.timeIntervalSince1970 * 1000, now: now) ?? "now"
+  return "\(clock.string(from: asOf)) · \(ago == "now" ? "just now" : "\(ago) ago")"
 }
 
 /// "12 min", "3 h": how long something has waited.

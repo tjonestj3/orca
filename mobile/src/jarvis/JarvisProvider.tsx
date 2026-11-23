@@ -21,7 +21,7 @@ import { JarvisBubble } from './JarvisBubble'
 import { JarvisRailOrb } from './JarvisRailOrb'
 import { jarvisOfferUrl } from './jarvis-endpoint'
 import { xenoKeys } from './jarvis-key'
-import { agentOf, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
+import { agentOf, agentStates, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
 import {
   CALL_FOLLOWS_AFTER_MS,
   callMoveTarget,
@@ -53,7 +53,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
   const [callHostId, setCallHostId] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const [voice, setVoiceState] = useState<JarvisVoice>(DEFAULT_JARVIS_VOICE)
-  const { phase, opening, holding, heard } = useSyncExternalStore(call.subscribe, call.getSnapshot)
+  const { phase, opening, holding, heard, cards } = useSyncExternalStore(call.subscribe, call.getSnapshot)
   const live = phase !== 'idle' && phase !== 'error'
   const xeno = useXenoHosts()
   const routeHostId = hostIdFromPath(pathname)
@@ -140,9 +140,12 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       })
     }
     share()
+    // Also as the app is left, so the home screen shows what's current: iOS alone refreshes them only now and then.
     const active = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         share()
+        OrcaXenoTalk?.reloadWidgets?.()
+      } else if (state === 'background') {
         OrcaXenoTalk?.reloadWidgets?.()
       }
     })
@@ -151,6 +154,15 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       active.remove()
     }
   }, [endpoint, hostName])
+  // During a call Xeno tells the app as an agent starts, finishes or needs you: the widgets refresh then too.
+  const agents = agentStates(cards)
+  const seenAgents = useRef(agents)
+  useEffect(() => {
+    if (agents !== seenAgents.current) {
+      seenAgents.current = agents
+      OrcaXenoTalk?.reloadWidgets?.()
+    }
+  }, [agents])
   useEffect(() => onDictationStarting(() => call.endFor('dictation')), [call])
 
   const setVoice = useCallback(

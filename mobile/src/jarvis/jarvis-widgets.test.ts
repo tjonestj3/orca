@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agentOf, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
+import { agentOf, agentStates, callActionOf, callActivity, widgetAccess } from './jarvis-widgets'
 
 describe("the call's Live Activity", () => {
   it('follows a live call: its phase, what Xeno heard, whether talk is held', () => {
@@ -65,5 +65,15 @@ describe('an agent tapped in the Agents widget', () => {
     expect(agentOf({ worktree: '' })).toBeNull()
     expect(agentOf({ worktree: 7 })).toBeNull()
     expect(agentOf(null)).toBeNull()
+  })
+})
+
+describe("the agents' states, for refreshing the widgets", () => {
+  it('change when an agent changes state or comes or goes, not when the list reorders', () => {
+    const a = { id: 'a', state: 'working' }
+    const b = { id: 'b', state: 'done' }
+    expect(agentStates([a, b])).toBe(agentStates([b, a]))
+    expect(agentStates([a, b])).not.toBe(agentStates([{ ...a, state: 'needs you' }, b]))
+    expect(agentStates([a, b])).not.toBe(agentStates([a]))
   })
 })
