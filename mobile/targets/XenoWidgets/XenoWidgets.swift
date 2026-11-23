@@ -100,7 +100,7 @@ struct NeedsYouView: View {
 
 // MARK: - Agents
 
-/// Every agent's state and what it's doing, needs-you first. Tap one to open it in Xeno with a call started.
+/// Every agent's state and what it's doing, needs-you first. Tap one to open it in Xeno.
 struct XenoAgentsWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: "XenoAgents", provider: GlanceProvider()) { entry in
@@ -109,7 +109,7 @@ struct XenoAgentsWidget: Widget {
         .widgetURL(URL(string: "orca://"))
     }
     .configurationDisplayName("Agents")
-    .description("Your agents at a glance. Tap one to open it and talk it over with Xeno.")
+    .description("Your agents at a glance. Tap one to open it in Xeno.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }
@@ -184,7 +184,7 @@ struct AgentsView: View {
   }
 }
 
-/// An agent's tap: opens its worktree in Xeno and starts a call. Without its id (a desktop that doesn't send it yet)
+/// An agent's tap: opens its worktree in Xeno. Without its id (a desktop that doesn't send it yet)
 /// the widget's own tap opens Xeno instead.
 struct AgentTap<Content: View>: View {
   let agent: Glance.Worktree

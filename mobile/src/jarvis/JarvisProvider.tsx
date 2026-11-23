@@ -236,7 +236,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
       active.remove()
     }
   }, [])
-  // An agent tapped in the Agents widget: its worktree opens on Xeno's desktop and a call starts, unless one is on.
+  // An agent tapped in the Agents widget: its worktree opens on Xeno's desktop. Only Talk to Xeno starts a call.
   // Held until the desktop is known, as when the tap launched the app.
   const [agentTapped, setAgentTapped] = useState<string | null>(null)
   useEffect(() => {
@@ -268,11 +268,7 @@ export function JarvisProvider({ children }: { readonly children: ReactNode }) {
     }
     setAgentTapped(null)
     router.push({ pathname: '/h/[hostId]/session/[worktreeId]', params: { hostId, worktreeId: agentTapped } })
-    const { phase: now } = call.getSnapshot()
-    if (now === 'idle' || now === 'error') {
-      actionPress.current()
-    }
-  }, [agentTapped, hostId, router, call])
+  }, [agentTapped, hostId, router])
   // Xeno was asked to open an artifact: open it in the Claude app. Each request is a new object; other updates
   // carry the same one along, so this runs once per request.
   useEffect(() => {

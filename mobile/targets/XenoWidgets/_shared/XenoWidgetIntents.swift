@@ -29,7 +29,7 @@ struct XenoTalkIntent: LiveActivityIntent {
   }
 }
 
-/// An agent tapped in the Agents widget: opens its worktree in Xeno and starts a call, if there isn't one.
+/// An agent tapped in the Agents widget: opens its worktree in Xeno. It doesn't start a call; Talk to Xeno does.
 @available(iOS 17.0, *)
 struct XenoOpenAgentIntent: AppIntent {
   static let title: LocalizedStringResource = "Open an agent with Xeno"
